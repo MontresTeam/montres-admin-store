@@ -16,9 +16,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 const metadata = {
-  title: "Cards & Content Containers | WowDash Admin Dashboard",
+  title: "Cards & Content Containers | Monters Admin Dashboard",
   description:
-    "Showcase versatile card components and content containers for organized layout in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Showcase versatile card components and content containers for organized layout in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 

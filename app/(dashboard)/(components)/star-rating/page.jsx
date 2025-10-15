@@ -4,9 +4,9 @@ import { Star } from "lucide-react";
 import  { Metadata } from "next";
 
 const metadata = {
-  title: "Star Ratings & Review Components | WowDash Admin Dashboard",
+  title: "Star Ratings & Review Components | Monters Admin Dashboard",
   description:
-    "Display and customize star rating components for user reviews and feedback in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Display and customize star rating components for user reviews and feedback in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const TypographyPage = () => {

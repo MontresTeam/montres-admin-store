@@ -8,9 +8,9 @@ import  { Metadata } from "next";
 import { useState } from "react";
 
 const metadata = {
-  title: "Switches & Toggle Controls | WowDash Admin Dashboard",
+  title: "Switches & Toggle Controls | Monters Admin Dashboard",
   description:
-    "Manage and customize switch and toggle controls for interactive settings in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Manage and customize switch and toggle controls for interactive settings in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const TypographyPage = () => {

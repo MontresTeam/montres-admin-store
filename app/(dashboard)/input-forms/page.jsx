@@ -16,9 +16,9 @@ import { Copy, Mail } from "lucide-react";
 import Image from "next/image";
 
 const metadata = {
-    title: "Input Forms & Field Elements | WowDash Admin Dashboard",
+    title: "Input Forms & Field Elements | Monters Admin Dashboard",
     description:
-        "Design and manage input forms, fields, and form elements for data collection in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+        "Design and manage input forms, fields, and form elements for data collection in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const InputForms = () => {

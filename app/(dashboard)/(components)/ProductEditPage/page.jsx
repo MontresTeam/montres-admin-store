@@ -1,4 +1,5 @@
 "use client";
+import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
 import { useState } from "react";
 import { FiUpload, FiX, FiSave, FiArrowLeft, FiDollarSign, FiPackage, FiImage, FiTag } from "react-icons/fi";
 
@@ -77,7 +78,9 @@ const ProductEditPage = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <>
+    <DashboardBreadcrumb title="Colors" text="Colors" />
+    <div className="min-h-screen  py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -383,6 +386,7 @@ const ProductEditPage = () => {
         </form>
       </div>
     </div>
+    </>
   );
 };
 

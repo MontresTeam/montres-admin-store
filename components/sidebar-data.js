@@ -9,6 +9,7 @@ import {
   Server,
   Settings,
   ShieldCheck,
+  ShoppingBasket,
   StickyNote,
   UsersRound,
 } from "lucide-react";
@@ -17,8 +18,20 @@ export const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/ecommerce",
+      url: "/dashboard",
       icon: House,
+      isActive: true
+    },
+    {
+      title: "Product Management",
+      url: "/productmanage",
+      icon:ShoppingBasket ,
+      isActive: true
+    },
+    {
+      title: "User Management",
+      url: "/users-list",
+      icon: UsersRound,
       isActive: true
     },
     {
@@ -48,11 +61,6 @@ export const data = {
       icon: Component,
       isActive: true,
       items: [
-        {
-          title: "Product managment",
-          url: "/productmanage",
-          circleColor: "bg-primary",
-        },
         {
           title: "Colors",
           url: "/colors",

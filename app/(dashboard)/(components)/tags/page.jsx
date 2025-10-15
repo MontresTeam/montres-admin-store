@@ -6,9 +6,9 @@ import  { Metadata } from "next";
 import Image from "next/image";
 
 const metadata = {
-  title: "Tags & Label Elements | WowDash Admin Dashboard",
+  title: "Tags & Label Elements | Monters Admin Dashboard",
   description:
-    "Manage and display tag components and label elements for categorization and UI organization in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Manage and display tag components and label elements for categorization and UI organization in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const TypographyPage = () => {

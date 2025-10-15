@@ -11,9 +11,9 @@ import { CircleHelp } from "lucide-react";
 import  { Metadata } from "next";
 
 const metadata = {
-  title: "Tooltips & Hover Information | WowDash Admin Dashboard",
+  title: "Tooltips & Hover Information | Monters Admin Dashboard",
   description:
-    "Enhance user experience with customizable tooltips and hover-based information displays in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Enhance user experience with customizable tooltips and hover-based information displays in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const TypographyPage = () => {

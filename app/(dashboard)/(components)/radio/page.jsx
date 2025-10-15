@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import  { Metadata } from "next";
 
 const metadata = {
-  title: "Radio Buttons & Selection Controls | WowDash Admin Dashboard",
+  title: "Radio Buttons & Selection Controls | Monters Admin Dashboard",
   description:
-    "Explore customizable radio buttons and selection controls in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Explore customizable radio buttons and selection controls in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const TypographyPage = () => {

@@ -11,9 +11,9 @@ import { Suspense } from "react";
 import LoadingSkeleton from "@/components/loading-skeleton";
 
 const metadata = {
-    title: "Basic Tables & Data Display | WowDash Admin Dashboard",
+    title: "Basic Tables & Data Display | Monters Admin Dashboard",
     description:
-        "Present structured data using basic table components with responsive design in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+        "Present structured data using basic table components with responsive design in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const BasicTablePage = () => {

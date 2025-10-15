@@ -13,9 +13,9 @@ import  { Metadata } from "next";
 import { saveProfileAction } from "./actions";
 
 const metadata = {
-    title: "Company Profile & Details | WowDash Admin Dashboard",
+    title: "Company Profile & Details | Monters Admin Dashboard",
     description:
-        "View and manage company profiles, business details, and related information in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+        "View and manage company profiles, business details, and related information in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const ViewProfile = () => {

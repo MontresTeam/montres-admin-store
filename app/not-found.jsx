@@ -25,7 +25,7 @@ export default function NotFound() {
             Sorry, the page you are looking for doesn't exist{" "}
           </p>
           <Button variant="default" asChild className={cn(" mt-10")}>
-            <Link href="/" className={cn("rounded-lg px-10 py-6")}>
+            <Link href="/dashboard" className={cn("rounded-lg px-10 py-6")}>
               Back to Home
             </Link>
           </Button>

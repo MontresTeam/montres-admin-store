@@ -15,9 +15,9 @@ import { Lock, Mail, PhoneCall, UserRound } from "lucide-react";
 
 
 const metadata = {
-    title: "Input Layouts & Form Structure | WowDash Admin Dashboard",
+    title: "Input Layouts & Form Structure | Monters Admin Dashboard",
     description:
-        "Organize and customize input layouts and form structures for optimal user experience in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+        "Organize and customize input layouts and form structures for optimal user experience in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const InputLayout = () => {

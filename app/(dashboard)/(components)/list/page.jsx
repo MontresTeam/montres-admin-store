@@ -10,9 +10,9 @@ import  { Metadata } from "next";
 import Image from "next/image";
 
 const metadata = {
-  title: "User List & Management | WowDash Admin Dashboard",
+  title: "User List & Management | Monters Admin Dashboard",
   description:
-    "View, manage, and organize users with the user list and management features in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "View, manage, and organize users with the user list and management features in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const TypographyPage = () => {

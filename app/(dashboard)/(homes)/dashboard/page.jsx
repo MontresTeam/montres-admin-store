@@ -12,16 +12,16 @@ import TopSellingProductCard from "./component/top-selling-product-card";
 import StockReportCard from "./component/stock-report-card";
 
 const metadata = {
-  title: "E-commerce Dashboard | WowDash Admin Panel",
+  title: "E-commerce Dashboard | Monters Admin Panel",
   description:
-    "Manage orders, monitor sales, and track product performance with the E-commerce Dashboard in WowDash Admin Template.",
+    "Manage orders, monitor sales, and track product performance with the E-commerce Dashboard in Monters Admin Template.",
 };
 
 
 const EcommercePage = () => {
   return (
     <>
-      <DashboardBreadcrumb title="eCommerce" text="eCommerce" />
+      <DashboardBreadcrumb title="Dashboard" text="Dashboard" />
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 

@@ -12,9 +12,9 @@ import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Ellipsis, EllipsisVe
 import  { Metadata } from "next";
 
 const metadata = {
-  title: "Dropdowns & Menu Navigation | WowDash Admin Dashboard",
+  title: "Dropdowns & Menu Navigation | Monters Admin Dashboard",
   description:
-    "Manage and customize dropdown menus and navigation components in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Manage and customize dropdown menus and navigation components in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const DropdownPage = () => {
