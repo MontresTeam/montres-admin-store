@@ -5,6 +5,7 @@ import { fetchProduct, updateProduct } from "@/service/productService";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const ProductEditPage = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const ProductEditPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [formData, setFormData] = useState({
     sku: "",
     name: "",
@@ -30,13 +32,13 @@ const ProductEditPage = () => {
     metaBrands: "",
     discount: "",
   });
+
   const loadProducts = async () => {
     setLoading(true);
     try {
       const { data, error } = await fetchProduct({ id });
       if (!error && data) {
         console.log(data);
-        // ✅ Assuming your API returns { product: {...} }
         const product = data.product || data;
 
         setFormData({
@@ -54,9 +56,13 @@ const ProductEditPage = () => {
           visibility: product.visibility || "visible",
           tags: product.tags?.join(", ") || "",
           images: product.images || [],
-          // metaBrands: productbrands.|| product.meta || "",
           discount: product.discount || "",
         });
+
+        // Set image previews for existing images
+        if (product.images && product.images.length > 0) {
+          setImagePreviews(product.images);
+        }
       } else {
         console.error("❌ Error fetching product:", error);
       }
@@ -73,86 +79,108 @@ const ProductEditPage = () => {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (files) {
-      setFormData({ ...formData, [name]: files });
+    
+    if (name === "images" && files) {
+      const newImages = Array.from(files);
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: [...prev.images, ...newImages] 
+      }));
+      
+      // Create preview URLs for new images
+      const newPreviews = newImages.map(file => URL.createObjectURL(file));
+      setImagePreviews(prev => [...prev, ...newPreviews]);
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError(null);
-  setSuccess(false);
-
-  try {
-    // Create FormData instance
-    const payload = new FormData();
-
-    // Append all fields from formData
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key === "images" && value.length > 0) {
-        // Append multiple files
-        Array.from(value).forEach((file) => payload.append("images", file));
-      } else if (key === "tags") {
-        payload.append(key, value); // you can convert comma-separated string if needed
-      } else {
-        payload.append(key, value ?? "");
-      }
+  const removeImage = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+    
+    setImagePreviews(prev => {
+      const newPreviews = prev.filter((_, i) => i !== index);
+      // Revoke the object URL to avoid memory leaks
+      URL.revokeObjectURL(prev[index]);
+      return newPreviews;
     });
+  };
 
-    const { data, error } = await updateProduct(id, payload); // updateProduct should accept FormData
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
 
-    if (error) {
-      setError("Failed to update product");
-      console.error(error);
-    } else {
-      setSuccess(true);
-      console.log("✅ Product updated:", data);
-      router.push(`/productmanage`);
+    try {
+      const payload = new FormData();
+
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key === "images" && value.length > 0) {
+          Array.from(value).forEach((file) => payload.append("images", file));
+        } else if (key === "tags") {
+          payload.append(key, value);
+        } else {
+          payload.append(key, value ?? "");
+        }
+      });
+
+      const { data, error } = await updateProduct(id, payload);
+
+      if (error) {
+        setError("Failed to update product");
+        console.error(error);
+      } else {
+        setSuccess(true);
+        console.log("✅ Product updated:", data);
+        router.push(`/productmanage`);
+      }
+    } catch (err) {
+      setError("Unexpected error occurred");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError("Unexpected error occurred");
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
   const handleCancel = () => {
+    // Clean up object URLs
+    imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
     router.push(`/productmanage`);
   };
 
   return (
     <>
       <DashboardBreadcrumb title="Colors" text="Colors" />
-      <div className="min-h-screen  py-8">
+      <div className="min-h-screen py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
             <DashboardBreadcrumb text="Update product information and details" />
             <div className="mt-4 flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold ">Edit Product</h1>
-                <p className="mt-1 text-sm ">
-                  Update your product details, pricing, and inventory
-                  information
+                <h1 className="text-2xl font-bold">Edit Product</h1>
+                <p className="mt-1 text-sm">
+                  Update your product details, pricing, and inventory information
                 </p>
               </div>
             </div>
           </div>
 
           {/* Form Container */}
-          <div className=" rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <form onSubmit={handleSubmit} className="p-6 space-y-8">
               {/* Basic Information Section */}
               <div className="space-y-6">
                 <div className="border-b border-gray-200 pb-4">
-                  <h2 className="text-lg font-semibold  flex items-center gap-2">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
                     <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                     Basic Information
                   </h2>
-                  <p className="text-sm  mt-1">
+                  <p className="text-sm mt-1">
                     Product identity and core details
                   </p>
                 </div>
@@ -160,7 +188,7 @@ const ProductEditPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* SKU */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       SKU <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -176,7 +204,7 @@ const ProductEditPage = () => {
 
                   {/* Name */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Product Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -195,11 +223,11 @@ const ProductEditPage = () => {
               {/* Pricing & Inventory Section */}
               <div className="space-y-6">
                 <div className="border-b border-gray-200 pb-4">
-                  <h2 className="text-lg font-semibold  flex items-center gap-2">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-600 rounded-full"></div>
                     Pricing & Inventory
                   </h2>
-                  <p className="text-sm  mt-1">
+                  <p className="text-sm mt-1">
                     Price details and stock management
                   </p>
                 </div>
@@ -207,19 +235,19 @@ const ProductEditPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {/* Regular Price */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Regular Price
                     </label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                        $
+                        AED
                       </span>
                       <input
                         type="number"
                         name="regularPrice"
                         value={formData.regularPrice}
                         onChange={handleChange}
-                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                         placeholder="0.00"
                       />
                     </div>
@@ -227,19 +255,19 @@ const ProductEditPage = () => {
 
                   {/* Sale Price */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Sale Price
                     </label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                        $
+                        AED
                       </span>
                       <input
                         type="number"
                         name="salePrice"
                         value={formData.salePrice}
                         onChange={handleChange}
-                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                         placeholder="0.00"
                       />
                     </div>
@@ -247,7 +275,7 @@ const ProductEditPage = () => {
 
                   {/* Discount */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Discount
                     </label>
                     <div className="relative">
@@ -267,7 +295,7 @@ const ProductEditPage = () => {
 
                   {/* Stock Quantity */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Stock Quantity
                     </label>
                     <input
@@ -301,7 +329,7 @@ const ProductEditPage = () => {
 
                   {/* Visibility */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Visibility
                     </label>
                     <select
@@ -320,11 +348,11 @@ const ProductEditPage = () => {
               {/* Category & Classification Section */}
               <div className="space-y-6">
                 <div className="border-b border-gray-200 pb-4">
-                  <h2 className="text-lg font-semibold  flex items-center gap-2">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
                     <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
                     Category & Classification
                   </h2>
-                  <p className="text-sm  mt-1">
+                  <p className="text-sm mt-1">
                     Product categorization and targeting
                   </p>
                 </div>
@@ -332,7 +360,7 @@ const ProductEditPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {/* Gender */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">Gender</label>
+                    <label className="block text-sm font-medium">Gender</label>
                     <select
                       name="gender"
                       value={formData.gender}
@@ -348,7 +376,7 @@ const ProductEditPage = () => {
 
                   {/* Category */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Category
                     </label>
                     <input
@@ -363,7 +391,7 @@ const ProductEditPage = () => {
 
                   {/* Subcategory */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Subcategory
                     </label>
                     <input
@@ -380,7 +408,7 @@ const ProductEditPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Brands */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">Brand</label>
+                    <label className="block text-sm font-medium">Brand</label>
                     <input
                       type="text"
                       name="metaBrands"
@@ -393,7 +421,7 @@ const ProductEditPage = () => {
 
                   {/* Tags */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">Tags</label>
+                    <label className="block text-sm font-medium">Tags</label>
                     <input
                       type="text"
                       name="tags"
@@ -409,58 +437,17 @@ const ProductEditPage = () => {
               {/* Media Section */}
               <div className="space-y-6">
                 <div className="border-b border-gray-200 pb-4">
-                  <h2 className="text-lg font-semibold  flex items-center gap-2">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
                     <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                     Media
                   </h2>
-                  <p className="text-sm  mt-1">Product images and thumbnails</p>
+                  <p className="text-sm mt-1">Product images and thumbnails</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Thumbnail */}
+                {/* Gallery Images with Preview */}
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
-                      Thumbnail Image
-                    </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
-                      {/* <input
-                        type="file"
-                        name="thumbnail"
-                        onChange={handleChange}
-                        className="hidden"
-                        id="thumbnail"
-                      /> */}
-                      <label htmlFor="thumbnail" className="cursor-pointer">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <svg
-                              className="w-6 h-6 text-blue-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                          <span className="text-sm ">
-                            Click to upload thumbnail
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            PNG, JPG, WEBP up to 5MB
-                          </span>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Gallery Images */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Gallery Images
                     </label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
@@ -469,6 +456,7 @@ const ProductEditPage = () => {
                         name="images"
                         onChange={handleChange}
                         multiple
+                        accept="image/*"
                         className="hidden"
                         id="gallery"
                       />
@@ -489,27 +477,71 @@ const ProductEditPage = () => {
                               />
                             </svg>
                           </div>
-                          <span className="text-sm ">
+                          <span className="text-sm">
                             Click to upload multiple images
                           </span>
                           <span className="text-xs text-gray-500">
-                            Multiple files allowed
+                            Multiple files allowed (PNG, JPG, WEBP up to 5MB each)
                           </span>
                         </div>
                       </label>
                     </div>
                   </div>
+
+                  {/* Image Previews */}
+                  {imagePreviews.length > 0 && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium">
+                        Image Previews ({imagePreviews.length} images)
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {imagePreviews.map((preview, index) => (
+                          <div key={index} className="relative group">
+                            <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
+                              <img
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              Click × to remove
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Description Section */}
               <div className="space-y-6">
                 <div className="border-b border-gray-200 pb-4">
-                  <h2 className="text-lg font-semibold  flex items-center gap-2">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
                     <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
                     Description
                   </h2>
-                  <p className="text-sm  mt-1">
+                  <p className="text-sm mt-1">
                     Product descriptions and details
                   </p>
                 </div>
@@ -517,7 +549,7 @@ const ProductEditPage = () => {
                 <div className="space-y-6">
                   {/* Short Description */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Short Description
                     </label>
                     <textarea
@@ -532,7 +564,7 @@ const ProductEditPage = () => {
 
                   {/* Full Description */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium ">
+                    <label className="block text-sm font-medium">
                       Full Description
                     </label>
                     <textarea
@@ -551,7 +583,7 @@ const ProductEditPage = () => {
               <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
                 <Button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r  from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-7 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-7 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg
@@ -573,7 +605,7 @@ const ProductEditPage = () => {
                 <button
                   onClick={handleCancel}
                   type="button"
-                  className="px-6 py-4 border border-gray-300   font-medium rounded-lg hover:bg-red-100 transition-colors duration-200"
+                  className="px-6 py-4 border border-gray-300 font-medium rounded-lg hover:bg-red-100 transition-colors duration-200"
                 >
                   Cancel
                 </button>
