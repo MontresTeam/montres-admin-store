@@ -1,12 +1,11 @@
-
 "use client";
 
+import React from "react";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import React from "react";
 import { handleNotificationForm } from "./actions";
 
 const ViewProfile = () => {
@@ -66,21 +65,8 @@ const ViewProfile = () => {
 
 export default ViewProfile;
 
-interface NotificationSectionProps {
-    title: string;
-    label: string;
-    placeholder?: string;
-    name: string;
-    switchName: string;
-}
-
-const NotificationSection: React.FC<NotificationSectionProps> = ({
-    title,
-    label,
-    placeholder,
-    name,
-    switchName,
-}) => {
+// NotificationSection component (JS version)
+const NotificationSection = ({ title, label, placeholder, name, switchName }) => {
     const switchId = title.replace(/\s+/g, "-").toLowerCase();
 
     return (

@@ -28,26 +28,27 @@ const CreatePasswordComponent = () => {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  const form = useForm<z.infer<typeof createPasswordSchema>>({
+  // ✅ Pure JS: remove TypeScript generics
+  const form = useForm({
     resolver: zodResolver(createPasswordSchema),
     defaultValues: {
       password: "",
       confirmPassword: "",
+      acceptTerms: false,
     },
   });
+
+  const onSubmit = (values) => {
+    startTransition(() => {
+      handleResetPassword(values); // send form values to your API
+      toast.success("Password Reset successful!");
+    });
+  };
 
   return (
     <>
       <Form {...form}>
-        <form
-          action={handleResetPassword}
-          onSubmit={form.handleSubmit((values) => {
-            startTransition(() => {
-              toast.success("Password Reset successful!");
-            });
-          })}
-          className="space-y-5"
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           {/* Password */}
           <FormField
             control={form.control}
@@ -61,7 +62,6 @@ const CreatePasswordComponent = () => {
                       {...field}
                       type={showPassword ? "text" : "password"}
                       placeholder="Password"
-                      name="password"
                       className="ps-13 pe-12 h-14 rounded-xl bg-neutral-100 dark:bg-slate-800 border border-neutral-300 dark:border-slate-700 focus:border-primary dark:focus:border-primary"
                       disabled={isPending}
                     />
@@ -95,7 +95,6 @@ const CreatePasswordComponent = () => {
                     <Input
                       {...field}
                       type={showConfirmPassword ? "text" : "password"}
-                      name="confirmPassword"
                       placeholder="Confirm Password"
                       className="ps-13 pe-12 h-14 rounded-xl bg-neutral-100 dark:bg-slate-800 border border-neutral-300 dark:border-slate-700 focus:border-primary dark:focus:border-primary"
                       disabled={isPending}
@@ -129,7 +128,6 @@ const CreatePasswordComponent = () => {
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      name="acceptTerms"
                       id="acceptTerms"
                       className="border border-neutral-500"
                     />
