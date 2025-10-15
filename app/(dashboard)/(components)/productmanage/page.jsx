@@ -128,27 +128,7 @@ const ProductManagement = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className=" rounded-2xl p-6 shadow-lg border ">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl lg:text-4xl font-bold  mb-2">
-                  Product Management
-                </h1>
-                <p className="">
-                  Manage your products, inventory, and pricing in one place
-                </p>
-              </div>
-
-              <Button
-                onClick={handleAdd}
-                className="flex items-center  transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <FiPlus className="mr-2 text-lg" />
-                Add Product
-              </Button>
-            </div>
           </div>
-
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className=" rounded-2xl p-6 shadow-lg border border-gray-100 ">
@@ -470,7 +450,6 @@ const ProductManagement = () => {
             )}
           </div>
         </div>
-      </div>
       </div>
     </>
   );

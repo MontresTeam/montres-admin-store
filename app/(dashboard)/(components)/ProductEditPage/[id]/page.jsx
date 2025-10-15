@@ -1,13 +1,17 @@
 "use client";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
 import { Button } from "@/components/ui/button";
-import { fetchProduct } from "@/service/productService";
+import { fetchProduct, updateProduct } from "@/service/productService";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const ProductEditPage = () => {
-  const {id}=useParams()
-  const[loading,setLoading]=useState(false)
+  const { id } = useParams();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
     sku: "",
     name: "",
@@ -16,14 +20,13 @@ const ProductEditPage = () => {
     taxStatus: "",
     stockQuantity: "",
     gender: "",
-    categoriesOne: "",
+    categorisOne: "",
     subcategory: "",
     shortDescription: "",
     description: "",
     visibility: "visible",
     tags: "",
     images: [],
-    thumbnail: "",
     metaBrands: "",
     discount: "",
   });
@@ -32,7 +35,7 @@ const ProductEditPage = () => {
     try {
       const { data, error } = await fetchProduct({ id });
       if (!error && data) {
-        console.log(data)
+        console.log(data);
         // ✅ Assuming your API returns { product: {...} }
         const product = data.product || data;
 
@@ -51,7 +54,6 @@ const ProductEditPage = () => {
           visibility: product.visibility || "visible",
           tags: product.tags?.join(", ") || "",
           images: product.images || [],
-          thumbnail: product.thumbnail || "",
           // metaBrands: productbrands.|| product.meta || "",
           discount: product.discount || "",
         });
@@ -78,10 +80,47 @@ const ProductEditPage = () => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(formData);
-    // handle API submit here
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+  setSuccess(false);
+
+  try {
+    // Create FormData instance
+    const payload = new FormData();
+
+    // Append all fields from formData
+    Object.entries(formData).forEach(([key, value]) => {
+      if (key === "images" && value.length > 0) {
+        // Append multiple files
+        Array.from(value).forEach((file) => payload.append("images", file));
+      } else if (key === "tags") {
+        payload.append(key, value); // you can convert comma-separated string if needed
+      } else {
+        payload.append(key, value ?? "");
+      }
+    });
+
+    const { data, error } = await updateProduct(id, payload); // updateProduct should accept FormData
+
+    if (error) {
+      setError("Failed to update product");
+      console.error(error);
+    } else {
+      setSuccess(true);
+      console.log("✅ Product updated:", data);
+      router.push(`/productmanage`);
+    }
+  } catch (err) {
+    setError("Unexpected error occurred");
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
+  const handleCancel = () => {
+    router.push(`/productmanage`);
   };
 
   return (
@@ -314,8 +353,8 @@ const ProductEditPage = () => {
                     </label>
                     <input
                       type="text"
-                      name="categoriesOne"
-                      value={formData.categoriesOne}
+                      name="categorisOne"
+                      value={formData.categorisOne}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       placeholder="Main category"
@@ -384,13 +423,13 @@ const ProductEditPage = () => {
                       Thumbnail Image
                     </label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
-                      <input
+                      {/* <input
                         type="file"
                         name="thumbnail"
                         onChange={handleChange}
                         className="hidden"
                         id="thumbnail"
-                      />
+                      /> */}
                       <label htmlFor="thumbnail" className="cursor-pointer">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -512,7 +551,7 @@ const ProductEditPage = () => {
               <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
                 <Button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                  className="flex-1 bg-gradient-to-r  from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-7 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg
@@ -532,8 +571,9 @@ const ProductEditPage = () => {
                   </div>
                 </Button>
                 <button
+                  onClick={handleCancel}
                   type="button"
-                  className="px-6 py-4 border border-gray-300  font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  className="px-6 py-4 border border-gray-300   font-medium rounded-lg hover:bg-red-100 transition-colors duration-200"
                 >
                   Cancel
                 </button>
