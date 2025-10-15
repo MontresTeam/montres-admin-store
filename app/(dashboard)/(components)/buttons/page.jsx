@@ -6,9 +6,9 @@ import { ArrowDownSquare, ArrowLeftSquare, ArrowRightSquare, ArrowUpSquare } fro
 import  { Metadata } from "next";
 
 const metadata = {
-  title: "Buttons & Interactive Controls | WowDash Admin Dashboard",
+  title: "Buttons & Interactive Controls | Monters Admin Dashboard",
   description:
-    "Discover various button styles, sizes, and interactive controls in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Discover various button styles, sizes, and interactive controls in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 

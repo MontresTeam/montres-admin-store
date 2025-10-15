@@ -3,9 +3,9 @@ import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
 import  { Metadata } from "next";
 
 const metadata = {
-  title: "Pagination Controls & Navigation | WowDash Admin Dashboard",
+  title: "Pagination Controls & Navigation | Monters Admin Dashboard",
   description:
-    "Implement and customize pagination controls for seamless data navigation in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Implement and customize pagination controls for seamless data navigation in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const TypographyPage = () => {

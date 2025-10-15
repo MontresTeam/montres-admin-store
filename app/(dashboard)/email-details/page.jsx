@@ -17,9 +17,9 @@ import { Suspense } from "react";
 import { sendMessageAction } from "./actions";
 
 const metadata = {
-    title: "Email Details & Message View | WowDash Admin Dashboard",
+    title: "Email Details & Message View | Monters Admin Dashboard",
     description:
-        "View detailed email content, sender information, and message actions in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+        "View detailed email content, sender information, and message actions in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const EmailDetailsPage = () => {

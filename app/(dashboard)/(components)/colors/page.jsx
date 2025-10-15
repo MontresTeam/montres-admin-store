@@ -7,9 +7,9 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 
 const metadata = {
-  title: "Colors & Theme Palette | WowDash Admin Dashboard",
+  title: "Colors & Theme Palette | Monters Admin Dashboard",
   description:
-    "Explore the color schemes, theme palettes, and customizable color utilities in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Explore the color schemes, theme palettes, and customizable color utilities in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const ColorsPage = () => {

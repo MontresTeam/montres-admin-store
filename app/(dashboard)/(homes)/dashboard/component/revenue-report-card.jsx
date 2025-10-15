@@ -1,4 +1,4 @@
-import StatsCard from '@/app/(dashboard)/(homes)/ecommerce/component/stats-card';
+import StatsCard from '@/app/(dashboard)/(homes)/dashboard/component/stats-card';
 import GenerateContentChart from '@/components/charts/generate-content-chart';
 import CustomSelect from '@/components/shared/custom-select';
 import { Card, CardContent } from '@/components/ui/card';

@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { FiEdit, FiTrash2, FiPlus, FiMoreVertical, FiSearch, FiFilter } from "react-icons/fi";
 import { useRouter } from "next/navigation"; // ✅ import router
+import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
+import { Button } from "@/components/ui/button";
 
 const ProductManagement = () => {
   const router = useRouter(); // ✅ initialize router
@@ -50,37 +52,39 @@ const ProductManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 lg:p-8">
+    <>
+    <DashboardBreadcrumb title="Product Management" text="Product Management" />
+    <div className="min-h-screen bg-gradient-to-br  p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl lg:text-4xl font-bold  mb-2">
                 Product Management
               </h1>
-              <p className="text-gray-600">
+              <p className="">
                 Manage your products, inventory, and pricing in one place
               </p>
             </div>
             
-            <button
+            <Button
               onClick={handleAdd}
-              className="flex items-center bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="flex items-center  transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <FiPlus className="mr-2 text-lg" />
               Add Product
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className=" rounded-2xl p-6 shadow-lg border ">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Total Products</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{products.length}</p>
+                <p className=" text-sm font-medium">Total Products</p>
+                <p className="text-3xl font-bold  mt-1">{products.length}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                 <FiPlus className="text-blue-600 text-xl" />
@@ -88,11 +92,11 @@ const ProductManagement = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className=" rounded-2xl p-6 shadow-lg border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Low Stock</p>
-                <p className="text-3xl font-bold text-red-600 mt-1">
+                <p className=" text-sm font-medium">Low Stock</p>
+                <p className="text-3xl font-bold  mt-1">
                   {products.filter(p => p.stock < 15).length}
                 </p>
               </div>
@@ -102,11 +106,11 @@ const ProductManagement = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className=" rounded-2xl p-6 shadow-lg border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Total Value</p>
-                <p className="text-3xl font-bold text-green-600 mt-1">
+                <p className=" text-sm font-medium">Total Value</p>
+                <p className="text-3xl font-bold mt-1">
                   ${products.reduce((sum, p) => sum + (p.price * p.stock), 0).toLocaleString()}
                 </p>
               </div>
@@ -118,7 +122,7 @@ const ProductManagement = () => {
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 mb-6">
+        <div className="rounded-2xl p-6 shadow-lg border border-gray-100 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
               <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -127,7 +131,7 @@ const ProductManagement = () => {
                 placeholder="Search products by name or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full pl-12 pr-4 py-3  border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
             <button className="flex items-center justify-center px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
@@ -138,23 +142,23 @@ const ProductManagement = () => {
         </div>
 
         {/* Products Table/Cards */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className=" rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           {/* Desktop Table View */}
           <div className="hidden md:block">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-75 border-b border-gray-200">
+              <thead className="bg-gradient-to-r  border-b ">
                 <tr>
-                  <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700">Product</th>
-                  <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700">Category</th>
-                  <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700">Price</th>
-                  <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700">Stock</th>
-                  <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700">Status</th>
-                  <th className="py-4 px-6 text-left text-sm font-semibold text-gray-700">Actions</th>
+                  <th className="py-4 px-6 text-left text-sm font-semibold ">Product</th>
+                  <th className="py-4 px-6 text-left text-sm font-semibold ">Category</th>
+                  <th className="py-4 px-6 text-left text-sm font-semibold ">Price</th>
+                  <th className="py-4 px-6 text-left text-sm font-semibold ">Stock</th>
+                  <th className="py-4 px-6 text-left text-sm font-semibold ">Status</th>
+                  <th className="py-4 px-6 text-left text-sm font-semibold ">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={product.id} className=" transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-4">
                         <img
@@ -162,7 +166,7 @@ const ProductManagement = () => {
                           alt={product.name}
                           className="w-12 h-12 object-cover rounded-xl border border-gray-200"
                         />
-                        <span className="font-medium text-gray-900">{product.name}</span>
+                        <span className="font-medium ">{product.name}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
@@ -171,7 +175,7 @@ const ProductManagement = () => {
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="font-semibold text-gray-900">${product.price}</span>
+                      <span className="font-semibold ">${product.price}</span>
                     </td>
                     <td className="py-4 px-6">
                       <span className="font-medium">{product.stock}</span>
@@ -192,7 +196,7 @@ const ProductManagement = () => {
                         onClick={() => setDropdownOpen(dropdownOpen === product.id ? null : product.id)}
                         className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                       >
-                        <FiMoreVertical className="text-gray-600" />
+                        <FiMoreVertical className="" />
                       </button>
 
                       {dropdownOpen === product.id && (
@@ -325,6 +329,7 @@ const ProductManagement = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

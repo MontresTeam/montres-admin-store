@@ -8,9 +8,9 @@ import LoadingSkeleton from "@/components/loading-skeleton";
 import ChatBox from "./components/chat-box";
 
 const metadata = {
-    title: "Real-Time Chat & Messaging | WowDash Admin Dashboard",
+    title: "Real-Time Chat & Messaging | Monters Admin Dashboard",
     description:
-        "Engage in seamless real-time conversations and manage messages efficiently in the WowDash Admin Dashboard built with Next.js, Tailwind CSS, and shadcn UI.",
+        "Engage in seamless real-time conversations and manage messages efficiently in the Monters Admin Dashboard built with Next.js, Tailwind CSS, and shadcn UI.",
 };
 
 

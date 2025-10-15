@@ -8,9 +8,9 @@ import { Suspense } from "react";
 import LoadingSkeleton from "@/components/loading-skeleton";
 
 const metadata = {
-    title: "Form Validation & Input Handling | WowDash Admin Dashboard",
+    title: "Form Validation & Input Handling | Monters Admin Dashboard",
     description:
-        "Implement robust form validation and input handling techniques in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+        "Implement robust form validation and input handling techniques in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const FormValidation = () => {

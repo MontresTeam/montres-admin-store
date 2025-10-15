@@ -7,9 +7,9 @@ import DefaultCardComponent from "@/app/(dashboard)/components/default-card-comp
 import { BellRing, Mail } from "lucide-react";
 
 const metadata = {
-  title: "Badges & Status Indicators | WowDash Admin Dashboard",
+  title: "Badges & Status Indicators | Monters Admin Dashboard",
   description:
-    "Explore customizable badges, status indicators, and notification labels in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Explore customizable badges, status indicators, and notification labels in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const TypographyPage = () => {
