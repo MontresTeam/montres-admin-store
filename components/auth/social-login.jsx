@@ -1,89 +1,73 @@
-// ============================================= Server side way start =======================================
-// import { doSocialLogin } from "@/app/actions";
-import { useLoading } from "@/contexts/LoadingContext";
-import GithubIcon from "@/public/assets/images/icons/github-icon.png";
-import GoogleIcon from "@/public/assets/images/icons/google-icon.png";
-import { Loader2 } from "lucide-react";
-import Image from "next/image";
-import React, { useState } from "react";
-import { Button } from "../ui/button";
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Github, Chrome } from 'lucide-react'
+import { signIn } from 'next-auth/react'
+import toast from 'react-hot-toast'
 
 const SocialLogin = () => {
-  const { loading, setLoading } = useLoading();
+  const [isLoading, setIsLoading] = useState({
+    google: false,
+    github: false
+  })
 
-  const [loadingButtonProvider, setLoadingButtonProvider] = useState<
-    null | "google" | "github"
-  >(null);
+  const handleSocialLogin = async (provider) => {
+    try {
+      setIsLoading(prev => ({ ...prev, [provider]: true }))
+      
+      const result = await signIn(provider, {
+        redirect: false,
+        callbackUrl: '/dashboard'
+      })
 
-  const handleFormSubmit = (e) => {
-    setLoading(true);
-
-    const form = e.currentTarget;
-    const clickedButton = (document.activeElement )?.value;
-    setLoadingButtonProvider(
-      clickedButton === "google" || clickedButton === "github"
-        ? clickedButton
-        : null
-    );
-
-    setTimeout(() => {
-      setLoading(false);
-      setLoadingButtonProvider(null);
-    }, 2000);
-  };
+      if (result?.error) {
+        toast.error(`Failed to sign in with ${provider}`)
+      } else {
+        toast.success(`Signing in with ${provider}...`)
+        // The redirect will happen automatically if successful
+      }
+    } catch (error) {
+      toast.error('Something went wrong with social login')
+      console.error('Social login error:', error)
+    } finally {
+      setIsLoading(prev => ({ ...prev, [provider]: false }))
+    }
+  }
 
   return (
-    <form
-      className="mt-8 flex items-center gap-3"
-      // action={doSocialLogin}
-      onSubmit={handleFormSubmit}
-    >
-      {/* Google Button */}
+    <div className="flex gap-4 mt-6">
       <Button
-        className="font-semibold text-neutral-600 hover:text-neutral-600 dark:text-neutral-200 py-6 px-2 w-1/2 border border-neutral-600/50 rounded-xl text-sm flex items-center justify-center gap-3 line-height-1 hover:border-blue-400 hover:bg-primary/10 disabled:opacity-80"
+        type="button"
         variant="outline"
-        type="submit"
-        name="action"
-        value="google"
-        disabled={loadingButtonProvider === "google" || loading}
+        className="flex-1 h-14 rounded-xl border border-neutral-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-neutral-50 dark:hover:bg-slate-700"
+        onClick={() => handleSocialLogin('google')}
+        disabled={isLoading.google}
       >
-        {loadingButtonProvider === "google" ? (
-          <>
-            <Loader2 className="animate-spin h-4.5 w-4.5" />
-            Loading...
-          </>
+        {isLoading.google ? (
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         ) : (
-          <>
-            <Image src={GoogleIcon} alt="google" width={18} height={18} />
-            Google
-          </>
+          <Chrome className="w-5 h-5" />
         )}
+        <span className="ms-2">Google</span>
       </Button>
 
-      {/* GitHub Button */}
       <Button
-        className="font-semibold text-neutral-600 hover:text-neutral-600 dark:text-neutral-200 py-6 px-2 w-1/2 border border-neutral-600/50 rounded-xl text-sm flex items-center justify-center gap-3 line-height-1 hover:border-slate-400 hover:bg-slate-600/10 disabled:opacity-80"
+        type="button"
         variant="outline"
-        type="submit"
-        name="action"
-        value="github"
-        disabled={loadingButtonProvider === "github" || loading}
+        className="flex-1 h-14 rounded-xl border border-neutral-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-neutral-50 dark:hover:bg-slate-700"
+        onClick={() => handleSocialLogin('github')}
+        disabled={isLoading.github}
       >
-        {loadingButtonProvider === "github" ? (
-          <>
-            <Loader2 className="animate-spin h-4.5 w-4.5" />
-            Loading...
-          </>
+        {isLoading.github ? (
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         ) : (
-          <>
-            <Image src={GithubIcon} alt="github" width={18} height={18} />
-            Github
-          </>
+          <Github className="w-5 h-5" />
         )}
+        <span className="ms-2">GitHub</span>
       </Button>
-    </form>
-  );
-};
+    </div>
+  )
+}
 
-export default SocialLogin;
-// ============================================= Server side way end =======================================
+export default SocialLogin
