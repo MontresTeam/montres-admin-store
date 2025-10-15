@@ -18,21 +18,16 @@ const ProductManagement = () => {
   const [mobileView, setMobileView] = useState(false);
 
   const handleAdd = () => {
-    const newProduct = {
-      id: products.length + 1,
-      name: `Product ${String.fromCharCode(65 + products.length)}`,
-      price: Math.floor(Math.random() * 300),
-      stock: Math.floor(Math.random() * 50),
-      image: "https://via.placeholder.com/50",
-      category: ["Electronics", "Clothing", "Home"][Math.floor(Math.random() * 3)]
-    };
-    setProducts([...products, newProduct]);
+      router.push(`/AddProduct`);
   };
 
   // ✅ Redirect to edit page
   const handleEdit = (id) => {
-    router.push(`/ProductEditPage}`);
+    router.push(`/ProductEditPage`);
   };
+
+ 
+
 
   const handleDelete = (id) => {
     const filtered = products.filter((p) => p.id !== id);
