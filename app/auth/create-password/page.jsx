@@ -4,7 +4,6 @@ import React from "react";
 import Image from "next/image";
 import AuthImage from "@/public/assets/images/auth/forgot-pass-img.png";
 import ThemeLogo from "@/components/shared/theme-logo";
-import { StaticImg } from "@/types/static-image";
 import CreatePasswordComponent from "@/components/auth/create-password-component";
 
 
