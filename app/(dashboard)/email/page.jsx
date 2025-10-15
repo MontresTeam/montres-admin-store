@@ -12,9 +12,9 @@ import { Suspense } from "react";
 import LoadingSkeleton from "@/components/loading-skeleton";
 
 const metadata = {
-    title: "Email Management & Communication | WowDash Admin Dashboard",
+    title: "Email Management & Communication | Monters Admin Dashboard",
     description:
-        "Access and manage email communications, inbox features, and message organization in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+        "Access and manage email communications, inbox features, and message organization in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const EmailPage = () => {

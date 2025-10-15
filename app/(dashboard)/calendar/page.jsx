@@ -7,9 +7,9 @@ import BasicFullCalendar from "./components/basic-full-calendar";
 import CalendarSidebar from "./components/calendar-sidebar";
 
 const metadata = {
-    title: "Calendar & Event Scheduling | WowDash Admin Dashboard",
+    title: "Calendar & Event Scheduling | Monters Admin Dashboard",
     description:
-        "Plan, organize, and track events effortlessly with the interactive calendar in the WowDash Admin Dashboard, built using Next.js, Tailwind CSS, and shadcn UI.",
+        "Plan, organize, and track events effortlessly with the interactive calendar in the Monters Admin Dashboard, built using Next.js, Tailwind CSS, and shadcn UI.",
 };
 
 

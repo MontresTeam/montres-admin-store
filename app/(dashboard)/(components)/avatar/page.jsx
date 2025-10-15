@@ -19,9 +19,9 @@ import StatusAvatar from "@/public/assets/images/avatar/status-avatar.png";
 import { Plus } from "lucide-react";
 
 const metadata = {
-  title: "User Avatars & Profile Images | WowDash Admin Dashboard",
+  title: "User Avatars & Profile Images | Monters Admin Dashboard",
   description:
-    "Manage and display user avatars, profile images, and avatar customization options in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Manage and display user avatars, profile images, and avatar customization options in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const TypographyPage = () => {

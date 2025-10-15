@@ -9,9 +9,9 @@ import  { Metadata } from "next";
 import Image from "next/image";
 
 const metadata = {
-  title: "Tabs & Accordion Components | WowDash Admin Dashboard",
+  title: "Tabs & Accordion Components | Monters Admin Dashboard",
   description:
-    "Explore interactive tabs and accordion components for organized content display in the WowDash Admin Dashboard built with Next.js and Tailwind CSS.",
+    "Explore interactive tabs and accordion components for organized content display in the Monters Admin Dashboard built with Next.js and Tailwind CSS.",
 };
 
 const TypographyPage = () => {

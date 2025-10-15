@@ -72,7 +72,7 @@ const ThemeCustomizer = () => {
 
                 <div className="px-6 py-3 border-t border-neutral-200 dark:border-slate-700">
                     <Button asChild className={cn(`h-12 w-full rounded-sm font-semibold text-base`)}>
-                        <Link href="https://themeforest.net/item/wowdash-tailwind-nextjs-admin-dashboard-with-shadcn-ui/58810632?s_rank=2">
+                        <Link href="https://www.montres.ae/">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 19 19"
@@ -96,7 +96,7 @@ const ThemeCustomizer = () => {
                                     </clipPath>
                                 </defs>
                             </svg>
-                            Purchase Now
+                            Go Home
                         </Link>
                     </Button>
                 </div>
