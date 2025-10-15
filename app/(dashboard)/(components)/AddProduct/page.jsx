@@ -1,8 +1,8 @@
-"use client";
-import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
-import { useState } from "react";
+"use client"
+import DashboardBreadcrumb from '@/components/layout/dashboard-breadcrumb';
+import React, { useState } from 'react';
 
-const ProductEditPage = () => {
+const AddProduct = () => {
   const [formData, setFormData] = useState({
     sku: "",
     name: "",
@@ -23,10 +23,24 @@ const ProductEditPage = () => {
     discount: "",
   });
 
+  const [imagePreviews, setImagePreviews] = useState({
+    thumbnail: null,
+    gallery: []
+  });
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
+    
     if (files) {
-      setFormData({ ...formData, [name]: files });
+      if (name === 'thumbnail' && files[0]) {
+        const previewUrl = URL.createObjectURL(files[0]);
+        setImagePreviews(prev => ({ ...prev, thumbnail: previewUrl }));
+        setFormData({ ...formData, [name]: files[0] });
+      } else if (name === 'images' && files.length > 0) {
+        const previewUrls = Array.from(files).map(file => URL.createObjectURL(file));
+        setImagePreviews(prev => ({ ...prev, gallery: previewUrls }));
+        setFormData({ ...formData, [name]: files });
+      }
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -34,23 +48,57 @@ const ProductEditPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(formData);
-    // handle API submit here
+    console.log('Product Data:', formData);
+    // Handle API submission here
+    
+    // Clean up object URLs
+    if (imagePreviews.thumbnail) {
+      URL.revokeObjectURL(imagePreviews.thumbnail);
+    }
+    imagePreviews.gallery.forEach(url => URL.revokeObjectURL(url));
+  };
+
+  const handleCancel = () => {
+    // Clean up object URLs
+    if (imagePreviews.thumbnail) {
+      URL.revokeObjectURL(imagePreviews.thumbnail);
+    }
+    imagePreviews.gallery.forEach(url => URL.revokeObjectURL(url));
+    
+    // Reset form
+    setFormData({
+      sku: "",
+      name: "",
+      salePrice: "",
+      regularPrice: "",
+      taxStatus: "",
+      stockQuantity: "",
+      gender: "",
+      categoriesOne: "",
+      subcategory: "",
+      shortDescription: "",
+      description: "",
+      visibility: "visible",
+      tags: "",
+      images: [],
+      thumbnail: "",
+      metaBrands: "",
+      discount: "",
+    });
+    setImagePreviews({ thumbnail: null, gallery: [] });
   };
 
   return (
-    <>
-    <DashboardBreadcrumb title="Colors" text="Colors" />
-    <div className="min-h-screen  py-8">    
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-8">
-          <DashboardBreadcrumb  text="Update product information and details" />
+          <DashboardBreadcrumb text="Add new product to your store" />
           <div className="mt-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Add New Product</h1>
               <p className="mt-1 text-sm text-gray-600">
-                Update your product details, pricing, and inventory information
+                Add a new product to your store with details, pricing, and inventory information
               </p>
             </div>
           </div>
@@ -117,7 +165,9 @@ const ProductEditPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Regular Price */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Regular Price</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Regular Price <span className="text-red-500">*</span>
+                  </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
                     <input
@@ -127,6 +177,9 @@ const ProductEditPage = () => {
                       onChange={handleChange}
                       className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      required
                     />
                   </div>
                 </div>
@@ -143,6 +196,8 @@ const ProductEditPage = () => {
                       onChange={handleChange}
                       className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       placeholder="0.00"
+                      min="0"
+                      step="0.01"
                     />
                   </div>
                 </div>
@@ -158,6 +213,8 @@ const ProductEditPage = () => {
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       placeholder="0"
+                      min="0"
+                      max="100"
                     />
                     <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
                   </div>
@@ -165,7 +222,9 @@ const ProductEditPage = () => {
 
                 {/* Stock Quantity */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Stock Quantity</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Stock Quantity <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="number"
                     name="stockQuantity"
@@ -173,6 +232,8 @@ const ProductEditPage = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="0"
+                    min="0"
+                    required
                   />
                 </div>
               </div>
@@ -238,7 +299,9 @@ const ProductEditPage = () => {
 
                 {/* Category */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Category <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     name="categoriesOne"
@@ -246,6 +309,7 @@ const ProductEditPage = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="Main category"
+                    required
                   />
                 </div>
 
@@ -305,7 +369,9 @@ const ProductEditPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Thumbnail */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Thumbnail Image</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Thumbnail Image <span className="text-red-500">*</span>
+                  </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
                     <input
                       type="file"
@@ -313,16 +379,35 @@ const ProductEditPage = () => {
                       onChange={handleChange}
                       className="hidden"
                       id="thumbnail"
+                      accept="image/*"
+                      required
                     />
                     <label htmlFor="thumbnail" className="cursor-pointer">
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <span className="text-sm text-gray-600">Click to upload thumbnail</span>
-                        <span className="text-xs text-gray-500">PNG, JPG, WEBP up to 5MB</span>
+                        {imagePreviews.thumbnail ? (
+                          <div className="relative">
+                            <img 
+                              src={imagePreviews.thumbnail} 
+                              alt="Thumbnail preview" 
+                              className="w-20 h-20 object-cover rounded-lg"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                              <svg className="w-6 h-6 text-white opacity-0 hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                            <span className="text-sm text-gray-600">Click to upload thumbnail</span>
+                            <span className="text-xs text-gray-500">PNG, JPG, WEBP up to 5MB</span>
+                          </>
+                        )}
                       </div>
                     </label>
                   </div>
@@ -339,16 +424,38 @@ const ProductEditPage = () => {
                       multiple
                       className="hidden"
                       id="gallery"
+                      accept="image/*"
                     />
                     <label htmlFor="gallery" className="cursor-pointer">
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                          <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                          </svg>
-                        </div>
-                        <span className="text-sm text-gray-600">Click to upload multiple images</span>
-                        <span className="text-xs text-gray-500">Multiple files allowed</span>
+                        {imagePreviews.gallery.length > 0 ? (
+                          <div className="flex flex-wrap gap-2 justify-center">
+                            {imagePreviews.gallery.map((url, index) => (
+                              <div key={index} className="relative">
+                                <img 
+                                  src={url} 
+                                  alt={`Gallery preview ${index + 1}`} 
+                                  className="w-16 h-16 object-cover rounded-lg"
+                                />
+                              </div>
+                            ))}
+                            <div className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                              </svg>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                              </svg>
+                            </div>
+                            <span className="text-sm text-gray-600">Click to upload multiple images</span>
+                            <span className="text-xs text-gray-500">Multiple files allowed</span>
+                          </>
+                        )}
                       </div>
                     </label>
                   </div>
@@ -369,7 +476,9 @@ const ProductEditPage = () => {
               <div className="space-y-6">
                 {/* Short Description */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Short Description</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Short Description <span className="text-red-500">*</span>
+                  </label>
                   <textarea
                     name="shortDescription"
                     value={formData.shortDescription}
@@ -377,12 +486,15 @@ const ProductEditPage = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
                     placeholder="Brief product description..."
                     rows={3}
+                    required
                   />
                 </div>
 
                 {/* Full Description */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Full Description</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Full Description <span className="text-red-500">*</span>
+                  </label>
                   <textarea
                     name="description"
                     value={formData.description}
@@ -390,6 +502,7 @@ const ProductEditPage = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
                     placeholder="Detailed product description..."
                     rows={6}
+                    required
                   />
                 </div>
               </div>
@@ -403,13 +516,14 @@ const ProductEditPage = () => {
               >
                 <div className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  Save Product Changes
+                  Add New Product
                 </div>
               </button>
               <button
                 type="button"
+                onClick={handleCancel}
                 className="px-6 py-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200"
               >
                 Cancel
@@ -419,8 +533,7 @@ const ProductEditPage = () => {
         </div>
       </div>
     </div>
-    </>
   );
 };
 
-export default ProductEditPage;
+export default AddProduct;

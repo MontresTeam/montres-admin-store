@@ -27,7 +27,8 @@ const ForgotPasswordComponent = () => {
   const [isPending, startTransition] = useTransition()
   const formRef = useRef(null)
 
-  const form = useForm<z.infer<typeof forgotPasswordSchema>>({
+  // ✅ JS version: remove TypeScript generics
+  const form = useForm({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       email: '',
@@ -59,7 +60,6 @@ const ForgotPasswordComponent = () => {
     })
   }
 
-
   return (
     <>
       <Form {...form}>
@@ -80,7 +80,6 @@ const ForgotPasswordComponent = () => {
                       {...field}
                       type="email"
                       placeholder="Email"
-                      name="email"
                       className="ps-13 pe-12 h-14 rounded-xl bg-neutral-100 dark:bg-slate-800 border border-neutral-300 dark:border-slate-700 focus:border-primary dark:focus:border-primary focus-visible:border-primary !shadow-none !ring-0"
                       disabled={loading}
                     />

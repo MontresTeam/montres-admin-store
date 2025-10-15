@@ -30,31 +30,29 @@ export const data = {
     },
     {
       title: "User Management",
-      url: "/users-list",
+      url: "/notfound",
       icon: UsersRound,
       isActive: true
     },
     {
-      label: "Application",
+     
     },
     {
       title: "Email",
-      url: "/email",
+      url: "/notfound",
       icon: Mail,
     },
     {
       title: "Chat",
-      url: "/chat",
+      url: "/notfound",
       icon: MessageCircleMore,
     },
     {
       title: "Calendar",
-      url: "/calendar",
+      url: "/notfound",
       icon: CalendarDays,
     },
-    {
-      label: "UI Elements",
-    },
+  
     {
       title: "Components",
       url: "#",
@@ -94,9 +92,7 @@ export const data = {
         },
       ],
     },
-    {
-      label: "Pages",
-    },
+  
     {
       title: "Authentication",
       url: "#",

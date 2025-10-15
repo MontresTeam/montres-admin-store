@@ -89,6 +89,7 @@ const ProductManagement = () => {
       ],
     };
     setProducts([...products, newProduct]);
+      router.push(`/AddProduct`);
   };
   useEffect(() => {
   loadProducts();
@@ -99,7 +100,11 @@ const ProductManagement = () => {
     console.log(id);
     
     router.push(`/ProductEditPage/${id}`);
+
   };
+
+ 
+
 
   const handleDelete = (id) => {
     const filtered = products.filter((p) => p.id !== id);
@@ -121,16 +126,35 @@ const ProductManagement = () => {
 
   return (
     <>
-    {loading&&<LoadingProvider/>}
-      <DashboardBreadcrumb
-        title="Product Management"
-        text="Product Management"
-      />
-      <div className="min-h-screen bg-gradient-to-br  p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header Section */}
-          <div className="mb-8">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+    <DashboardBreadcrumb  text="Product Management" />
+    <div className="min-h-screen bg-gradient-to-br  p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div>
+              <h1 className="text-3xl lg:text-4xl font-bold  mb-2">
+                Product Management
+              </h1>
+              <p className="">
+                Manage your products, inventory, and pricing in one place
+              </p>
+            </div>
+            
+            <Button
+              onClick={handleAdd}
+              className="flex items-center  transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <FiPlus className="mr-2 text-lg" />
+              Add Product
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className=" rounded-2xl p-6 shadow-lg border ">
+            <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl lg:text-4xl font-bold  mb-2">
                   Product Management
@@ -471,6 +495,7 @@ const ProductManagement = () => {
             )}
           </div>
         </div>
+      </div>
       </div>
     </>
   );
