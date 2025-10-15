@@ -53,7 +53,7 @@ const ProductManagement = () => {
 
   return (
     <>
-    <DashboardBreadcrumb title="Product Management" text="Product Management" />
+    <DashboardBreadcrumb  text="Product Management" />
     <div className="min-h-screen bg-gradient-to-br  p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
