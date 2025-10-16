@@ -59,6 +59,7 @@ const ProductEditPage = () => {
           discount: product.discount || "",
         });
 
+        console.log(product.images,'prouct')
         // Set image previews for existing images
         if (product.images && product.images.length > 0) {
           setImagePreviews(product.images);
@@ -499,7 +500,7 @@ const ProductEditPage = () => {
                           <div key={index} className="relative group">
                             <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
                               <img
-                                src={preview}
+                                src={preview.url}
                                 alt={`Preview ${index + 1}`}
                                 className="w-full h-full object-cover"
                               />
