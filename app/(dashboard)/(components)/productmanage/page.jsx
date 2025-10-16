@@ -255,14 +255,14 @@ const ProductManagement = () => {
                           className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                             product.stockQuantity > 15
                               ? "bg-green-100 text-green-800"
-                              : product.stockQuantity > 1
+                              : product.stockQuantity > 
                               ? "bg-yellow-100 text-yellow-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
                           {product.stockQuantity > 15
                             ? "In Stock"
-                            : product.stockQuantity > 1
+                            : product.stockQuantity > 0
                             ? "Low Stock"
                             : "Out of Stock"}
                         </span>
