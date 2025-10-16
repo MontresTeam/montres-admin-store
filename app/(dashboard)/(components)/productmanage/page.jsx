@@ -13,41 +13,43 @@ import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { fetchProduct } from "@/service/productService";
 import { LoadingProvider } from "@/contexts/LoadingContext";
+import Image from "next/image";
 
 const ProductManagement = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [totalProducts,setTotalProducts]=useState(0)
+  const [totalProducts, setTotalProducts] = useState(0);
   const limit = 15;
   const router = useRouter(); // ✅ initialize router
   const [products, setProducts] = useState([]);
 
-
   const loadProducts = async () => {
-  setLoading(true); // show loading state
+    setLoading(true); // show loading state
 
-  // Call fetchProduct with page, limit, and search term
-  const { data, error } = await fetchProduct({ page, limit, search: searchTerm });
-  console.log(data);
-  
-  if (!error && data) {
-    // Assuming API returns: { products: [...], total: 100 }
-    setPage(data.currentPage)
-    setProducts(data.products); // set products for current page
-    setTotalPages(data.totalPages); // calculate total pages
-    setTotalProducts(data.totalProducts)
-  } else {
-    console.error("Error fetching products:", error);
-    setProducts([]); // clear products on error
-    setTotalPages(1);
-  }
+    // Call fetchProduct with page, limit, and search term
+    const { data, error } = await fetchProduct({
+      page,
+      limit,
+      search: searchTerm,
+    });
+    console.log(data);
 
-  setLoading(false);
-};
+    if (!error && data) {
+      // Assuming API returns: { products: [...], total: 100 }
+      setPage(data.currentPage);
+      setProducts(data.products); // set products for current page
+      setTotalPages(data.totalPages); // calculate total pages
+      setTotalProducts(data.totalProducts);
+    } else {
+      console.error("Error fetching products:", error);
+      setProducts([]); // clear products on error
+      setTotalPages(1);
+    }
 
+    setLoading(false);
+  };
 
-  
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileView, setMobileView] = useState(false);
@@ -64,22 +66,18 @@ const ProductManagement = () => {
       ],
     };
     setProducts([...products, newProduct]);
-      router.push(`/AddProduct`);
+    router.push(`/AddProduct`);
   };
   useEffect(() => {
-  loadProducts();
-}, [page, searchTerm]);
+    loadProducts();
+  }, [page, searchTerm]);
 
   // ✅ Redirect to edit page
   const handleEdit = (id) => {
     console.log(id);
-    
+
     router.push(`/ProductEditPage/${id}`);
-
   };
-
- 
-
 
   const handleDelete = (id) => {
     const filtered = products.filter((p) => p.id !== id);
@@ -101,34 +99,33 @@ const ProductManagement = () => {
 
   return (
     <>
-    <DashboardBreadcrumb  text="Product Management" />
-    <div className="min-h-screen bg-gradient-to-br  p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-bold  mb-2">
-                Product Management
-              </h1>
-              <p className="">
-                Manage your products, inventory, and pricing in one place
-              </p>
-            </div>
-            
-            <Button
-              onClick={handleAdd}
-              className="flex items-center  transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              <FiPlus className="mr-2 text-lg" />
-              Add Product
-            </Button>
-          </div>
-        </div>
+      <DashboardBreadcrumb text="Product Management" />
+      <div className="min-h-screen bg-gradient-to-br  p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header Section */}
+          <div className="mb-8">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+              <div>
+                <h1 className="text-3xl lg:text-4xl font-bold  mb-2">
+                  Product Management
+                </h1>
+                <p className="">
+                  Manage your products, inventory, and pricing in one place
+                </p>
+              </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Button
+                onClick={handleAdd}
+                className="flex items-center  transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <FiPlus className="mr-2 text-lg" />
+                Add Product
+              </Button>
+            </div>
           </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"></div>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className=" rounded-2xl p-6 shadow-lg border border-gray-100 ">
@@ -162,14 +159,14 @@ const ProductManagement = () => {
                 <div>
                   <p className=" text-sm font-medium">Total Value</p>
                   <p className="text-3xl font-bold mt-1">
-                    $
+                    AED{" "}
                     {products
                       .reduce((sum, p) => sum + p.price * p.stock, 0)
                       .toLocaleString()}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <span className="text-green-600 text-xl font-bold">$</span>
+                  <span className="text-green-600 text-xl font-bold">AED</span>
                 </div>
               </div>
             </div>
@@ -223,15 +220,18 @@ const ProductManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {products.map((product,i) => (
-                    <tr key={product._id||i} className=" transition-colors">
+                  {products.map((product, i) => (
+                    <tr key={product._id || i} className=" transition-colors">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-4">
-                          <img
-                            src={product.image}
-                            alt={product.name}
+                          <Image
+                            src={product.image || "/placeholder.png"} // ✅ fallback
+                            alt={product.name || "Product image"}
+                            width={50}
+                            height={50}
                             className="w-12 h-12 object-cover rounded-xl border border-gray-200"
                           />
+
                           <span className="font-medium ">{product.name}</span>
                         </div>
                       </td>
@@ -241,10 +241,14 @@ const ProductManagement = () => {
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="font-semibold ">${product.salePrice}</span>
+                        <span className="font-semibold ">
+                          AED {product.salePrice}
+                        </span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="font-medium">{product.stockQuantity}</span>
+                        <span className="font-medium">
+                          {product.stockQuantity}
+                        </span>
                       </td>
                       <td className="py-4 px-6">
                         <span
@@ -304,44 +308,46 @@ const ProductManagement = () => {
                   ))}
                 </tbody>
               </table>
-                <div className="flex justify-end items-center gap-2 mt-4 mb-2 mr-3">
-                  <Button
-                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={page === 1}
-                    className="px-3 py-1 border rounded  disabled:opacity-50"
-                  >
-                    Previous
-                  </Button>
+              <div className="flex justify-end items-center gap-2 mt-4 mb-2 mr-3">
+                <Button
+                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1 border rounded  disabled:opacity-50"
+                >
+                  Previous
+                </Button>
 
-                  <span className="px-3 py-1">
-                    Page {page} of {totalPages}
-                  </span>
+                <span className="px-3 py-1">
+                  Page {page} of {totalPages}
+                </span>
 
-                  <Button
-                    onClick={() =>
-                      setPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={page === totalPages}
-                    className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
-                  >
-                    Next
-                  </Button>
-                </div>
+                <Button
+                  onClick={() =>
+                    setPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={page === totalPages}
+                  className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
 
             {/* Mobile Card View */}
             <div className="md:hidden">
               <div className="p-4 space-y-4">
-                {products.map((product,i) => (
+                {products.map((product, i) => (
                   <div
-                    key={product._id||i}
+                    key={product._id || i}
                     className="bg-gray-50 rounded-xl p-4 border border-gray-200"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={product.image}
-                          alt={product.name}
+                        <Image
+                          src={product.image || "/placeholder.png"} // ✅ fallback
+                            alt={product.name || "Product image"}
+                          width={48}
+                          height={48}
                           className="w-12 h-12 object-cover rounded-lg border border-gray-200"
                         />
                         <div>
@@ -369,7 +375,7 @@ const ProductManagement = () => {
                       <div>
                         <p className="text-gray-600">Price</p>
                         <p className="font-semibold text-gray-900">
-                          ${product.salePrice}
+                          AED {product.salePrice}
                         </p>
                       </div>
                       <div>
