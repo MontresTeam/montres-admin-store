@@ -1,5 +1,6 @@
 import api from "@/api/axiosIntespter";
 
+// ✅ Fetch Products
 export async function fetchProduct({
   id,
   page = 1,
@@ -18,14 +19,13 @@ export async function fetchProduct({
     let endpoint = "products";
     const params = new URLSearchParams();
 
-    // ✅ Add query params dynamically
     if (id) params.append("id", id);
     else {
       params.append("page", page);
       params.append("limit", limit);
     }
 
-    if (category) params.append("category", category);  
+    if (category) params.append("category", category);
     if (brand) params.append("brand", brand);
     if (price) params.append("price", price);
     if (availability) params.append("availability", availability);
@@ -34,6 +34,7 @@ export async function fetchProduct({
     if (featured !== undefined) params.append("featured", featured);
     if (search) params.append("search", search);
     if (sortBy) params.append("sortBy", sortBy);
+
     const response = await api.get(`${endpoint}?${params.toString()}`);
     return { data: response.data, error: null, isLoading: false };
   } catch (error) {
@@ -42,12 +43,40 @@ export async function fetchProduct({
   }
 }
 
+// ✅ Add Product
+export async function addProduct(formData) {
+  try {
+    // formData should be a FormData object (because of image upload)
+    const response = await api.post("/admin/product", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error("❌ addProduct error:", error);
+    return { data: null, error };
+  }
+}
+
+// ✅ Update Product
 export async function updateProduct(id, updatedData) {
   try {
     const response = await api.put(`/admin/product/${id}`, updatedData);
     return { data: response.data, error: null };
   } catch (error) {
     console.error("❌ updateProduct error:", error);
+    return { data: null, error };
+  }
+}
+
+// ✅ Delete Product
+export async function deleteProduct(id) {
+  try {
+    const response = await api.delete(`/admin/product/${id}`);
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error("❌ deleteProduct error:", error);
     return { data: null, error };
   }
 }
