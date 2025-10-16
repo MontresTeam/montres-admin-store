@@ -7,6 +7,26 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
+// Define initial form state to ensure all fields have values
+const initialFormData = {
+  sku: "",
+  name: "",
+  salePrice: "",
+  regularPrice: "",
+  taxStatus: "",
+  stockQuantity: "",
+  gender: "",
+  categorisOne: "",
+  subcategory: "",
+  shortDescription: "",
+  description: "",
+  visibility: "visible",
+  tags: "",
+  images: [],
+  metaBrands: "",
+  discount: "",
+};
+
 const ProductEditPage = () => {
   const { id } = useParams();
   const router = useRouter();
@@ -14,24 +34,7 @@ const ProductEditPage = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [imagePreviews, setImagePreviews] = useState([]);
-  const [formData, setFormData] = useState({
-    sku: "",
-    name: "",
-    salePrice: "",
-    regularPrice: "",
-    taxStatus: "",
-    stockQuantity: "",
-    gender: "",
-    categorisOne: "",
-    subcategory: "",
-    shortDescription: "",
-    description: "",
-    visibility: "visible",
-    tags: "",
-    images: [],
-    metaBrands: "",
-    discount: "",
-  });
+  const [formData, setFormData] = useState(initialFormData);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -41,6 +44,7 @@ const ProductEditPage = () => {
         console.log(data);
         const product = data.product || data;
 
+        // Ensure all fields have values, fallback to empty string if undefined/null
         setFormData({
           sku: product.sku || "",
           name: product.name || "",
@@ -56,10 +60,11 @@ const ProductEditPage = () => {
           visibility: product.visibility || "visible",
           tags: product.tags?.join(", ") || "",
           images: product.images || [],
+          metaBrands: product.metaBrands || "", // Added this missing field
           discount: product.discount || "",
         });
 
-        console.log(product.images,'prouct')
+        console.log(product.images, "product");
         // Set image previews for existing images
         if (product.images && product.images.length > 0) {
           setImagePreviews(product.images);
@@ -79,33 +84,46 @@ const ProductEditPage = () => {
   }, [id]);
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    
+    const { name, value, files, type } = e.target;
+
     if (name === "images" && files) {
       const newImages = Array.from(files);
-      setFormData(prev => ({ 
-        ...prev, 
-        [name]: [...prev.images, ...newImages] 
+      setFormData((prev) => ({
+        ...prev,
+        [name]: [...prev.images, ...newImages],
       }));
-      
+
       // Create preview URLs for new images
-      const newPreviews = newImages.map(file => URL.createObjectURL(file));
-      setImagePreviews(prev => [...prev, ...newPreviews]);
+      const newPreviews = newImages.map((file) => URL.createObjectURL(file));
+      setImagePreviews((prev) => [...prev, ...newPreviews]);
     } else {
-      setFormData({ ...formData, [name]: value });
+      // Handle number inputs - convert empty string to empty string instead of 0
+      if (type === 'number') {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value === '' ? '' : value
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value || '' // Ensure empty string instead of undefined
+        }));
+      }
     }
   };
 
   const removeImage = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
     }));
-    
-    setImagePreviews(prev => {
+
+    setImagePreviews((prev) => {
       const newPreviews = prev.filter((_, i) => i !== index);
       // Revoke the object URL to avoid memory leaks
-      URL.revokeObjectURL(prev[index]);
+      if (prev[index] && typeof prev[index] === 'string') {
+        URL.revokeObjectURL(prev[index]);
+      }
       return newPreviews;
     });
   };
@@ -121,7 +139,12 @@ const ProductEditPage = () => {
 
       Object.entries(formData).forEach(([key, value]) => {
         if (key === "images" && value.length > 0) {
-          Array.from(value).forEach((file) => payload.append("images", file));
+          Array.from(value).forEach((file) => {
+            // Only append new files, not existing image URLs
+            if (file instanceof File) {
+              payload.append("images", file);
+            }
+          });
         } else if (key === "tags") {
           payload.append(key, value);
         } else {
@@ -149,9 +172,24 @@ const ProductEditPage = () => {
 
   const handleCancel = () => {
     // Clean up object URLs
-    imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
+    imagePreviews.forEach((preview) => {
+      if (preview && typeof preview === 'string') {
+        URL.revokeObjectURL(preview);
+      }
+    });
     router.push(`/productmanage`);
   };
+
+  // Clean up object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((preview) => {
+        if (preview && typeof preview === 'string') {
+          URL.revokeObjectURL(preview);
+        }
+      });
+    };
+  }, [imagePreviews]);
 
   return (
     <>
@@ -165,11 +203,24 @@ const ProductEditPage = () => {
               <div>
                 <h1 className="text-2xl font-bold">Edit Product</h1>
                 <p className="mt-1 text-sm">
-                  Update your product details, pricing, and inventory information
+                  Update your product details, pricing, and inventory
+                  information
                 </p>
               </div>
             </div>
           </div>
+
+          {/* Error/Success Messages */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+              Product updated successfully!
+            </div>
+          )}
 
           {/* Form Container */}
           <div className="rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -482,7 +533,8 @@ const ProductEditPage = () => {
                             Click to upload multiple images
                           </span>
                           <span className="text-xs text-gray-500">
-                            Multiple files allowed (PNG, JPG, WEBP up to 5MB each)
+                            Multiple files allowed (PNG, JPG, WEBP up to 5MB
+                            each)
                           </span>
                         </div>
                       </label>
@@ -499,9 +551,11 @@ const ProductEditPage = () => {
                         {imagePreviews.map((preview, index) => (
                           <div key={index} className="relative group">
                             <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
-                              <img
-                                src={preview.url}
+                              <Image
+                                src={preview.url || preview} // Handle both object and string URLs
                                 alt={`Preview ${index + 1}`}
+                                width={200}
+                                height={200}
                                 className="w-full h-full object-cover"
                               />
                             </div>
@@ -584,29 +638,35 @@ const ProductEditPage = () => {
               <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
                 <Button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-7 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                  disabled={loading}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-7 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    Save Product Changes
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
+                    {loading ? "Updating..." : "Save Product Changes"}
                   </div>
                 </Button>
                 <button
                   onClick={handleCancel}
                   type="button"
-                  className="px-6 py-4 border border-gray-300 font-medium rounded-lg hover:bg-red-100 transition-colors duration-200"
+                  disabled={loading}
+                  className="px-6 py-4 border border-gray-300 font-medium rounded-lg hover:bg-red-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>

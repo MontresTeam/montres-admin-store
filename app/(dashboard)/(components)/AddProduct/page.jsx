@@ -1,6 +1,10 @@
-"use client"
-import DashboardBreadcrumb from '@/components/layout/dashboard-breadcrumb';
-import React, { useState } from 'react';
+"use client";
+import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
+import React, { useState } from "react";
+import { addProduct } from "@/service/productService";
+import Image from "next/image"; // ✅ Add this line
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
@@ -18,53 +22,121 @@ const AddProduct = () => {
     visibility: "visible",
     tags: "",
     images: [],
-    thumbnail: "",
     metaBrands: "",
     discount: "",
   });
 
-  const [imagePreviews, setImagePreviews] = useState({
-    thumbnail: null,
-    gallery: []
-  });
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    
-    if (files) {
-      if (name === 'thumbnail' && files[0]) {
-        const previewUrl = URL.createObjectURL(files[0]);
-        setImagePreviews(prev => ({ ...prev, thumbnail: previewUrl }));
-        setFormData({ ...formData, [name]: files[0] });
-      } else if (name === 'images' && files.length > 0) {
-        const previewUrls = Array.from(files).map(file => URL.createObjectURL(file));
-        setImagePreviews(prev => ({ ...prev, gallery: previewUrls }));
-        setFormData({ ...formData, [name]: files });
-      }
+
+    if (files && name === "images" && files.length > 0) {
+      const newImages = Array.from(files);
+      const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
+
+      setImagePreviews((prev) => [...prev, ...newPreviewUrls]);
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...newImages],
+      }));
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleSubmit = (e) => {
+  const removeImage = (index) => {
+    // Revoke the object URL to prevent memory leaks
+    URL.revokeObjectURL(imagePreviews[index]);
+
+    // Remove from previews
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setImagePreviews(newPreviews);
+
+    // Remove from form data
+    const newImages = formData.images.filter((_, i) => i !== index);
+    setFormData((prev) => ({ ...prev, images: newImages }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Product Data:', formData);
-    // Handle API submission here
-    
-    // Clean up object URLs
-    if (imagePreviews.thumbnail) {
-      URL.revokeObjectURL(imagePreviews.thumbnail);
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      // Prepare form data for API submission
+      const productData = new FormData();
+
+      // Append all form fields
+      Object.keys(formData).forEach((key) => {
+        if (key === "images" && formData.images.length > 0) {
+          // Append multiple images
+          Array.from(formData.images).forEach((file) => {
+            productData.append("images", file);
+          });
+        } else if (
+          formData[key] !== "" &&
+          formData[key] !== null &&
+          formData[key] !== undefined
+        ) {
+          // Append other fields
+          productData.append(key, formData[key]);
+        }
+      });
+
+      // Convert numeric fields to numbers
+      if (formData.salePrice)
+        productData.set("salePrice", parseFloat(formData.salePrice));
+      if (formData.regularPrice)
+        productData.set("regularPrice", parseFloat(formData.regularPrice));
+      if (formData.stockQuantity)
+        productData.set("stockQuantity", parseInt(formData.stockQuantity));
+      if (formData.discount)
+        productData.set("discount", parseFloat(formData.discount));
+
+      // Call the API
+      const response = await addProduct(productData);
+
+      // Handle success
+      Toastify({
+        text: "Product added successfully!",
+        duration: 3000,
+        close: true,
+        gravity: "top",
+        position: "right",
+        style: {
+          background: "linear-gradient(to right, #00b09b, #96c93d)",
+        },
+      }).showToast();
+
+      console.log("Product created:", response);
+
+      // Reset form after successful submission
+      setTimeout(() => {
+        handleCancel();
+      }, 2000);
+    } catch (err) {
+      console.error("Error adding product:", err);
+      setError(
+        err.response?.data?.message ||
+          "Failed to add product. Please try again."
+      );
+    } finally {
+      setLoading(false);
+
+      // Clean up object URLs
+      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
     }
-    imagePreviews.gallery.forEach(url => URL.revokeObjectURL(url));
   };
 
   const handleCancel = () => {
     // Clean up object URLs
-    if (imagePreviews.thumbnail) {
-      URL.revokeObjectURL(imagePreviews.thumbnail);
-    }
-    imagePreviews.gallery.forEach(url => URL.revokeObjectURL(url));
-    
+    imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+
     // Reset form
     setFormData({
       sku: "",
@@ -81,11 +153,12 @@ const AddProduct = () => {
       visibility: "visible",
       tags: "",
       images: [],
-      thumbnail: "",
       metaBrands: "",
       discount: "",
     });
-    setImagePreviews({ thumbnail: null, gallery: [] });
+    setImagePreviews([]);
+    setError("");
+    setSuccess("");
   };
 
   return (
@@ -96,13 +169,61 @@ const AddProduct = () => {
           <DashboardBreadcrumb text="Add new product to your store" />
           <div className="mt-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Add New Product</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Add New Product
+              </h1>
               <p className="mt-1 text-sm text-gray-600">
-                Add a new product to your store with details, pricing, and inventory information
+                Add a new product to your store with details, pricing, and
+                inventory information
               </p>
             </div>
           </div>
         </div>
+
+        {/* Success/Error Messages */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2 text-red-700">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span className="font-medium">Error:</span>
+              <span>{error}</span>
+            </div>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-2 text-green-700">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span className="font-medium">Success:</span>
+              <span>{success}</span>
+            </div>
+          </div>
+        )}
 
         {/* Form Container */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -114,7 +235,9 @@ const AddProduct = () => {
                   <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                   Basic Information
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">Product identity and core details</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Product identity and core details
+                </p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -159,7 +282,9 @@ const AddProduct = () => {
                   <div className="w-2 h-2 bg-green-600 rounded-full"></div>
                   Pricing & Inventory
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">Price details and stock management</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Price details and stock management
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -169,7 +294,9 @@ const AddProduct = () => {
                     Regular Price <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                      $
+                    </span>
                     <input
                       type="number"
                       name="regularPrice"
@@ -186,9 +313,13 @@ const AddProduct = () => {
 
                 {/* Sale Price */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Sale Price</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Sale Price
+                  </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                      $
+                    </span>
                     <input
                       type="number"
                       name="salePrice"
@@ -204,7 +335,9 @@ const AddProduct = () => {
 
                 {/* Discount */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Discount</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Discount
+                  </label>
                   <div className="relative">
                     <input
                       type="number"
@@ -216,7 +349,9 @@ const AddProduct = () => {
                       min="0"
                       max="100"
                     />
-                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                      %
+                    </span>
                   </div>
                 </div>
 
@@ -241,7 +376,9 @@ const AddProduct = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Tax Status */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Tax Status</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Tax Status
+                  </label>
                   <select
                     name="taxStatus"
                     value={formData.taxStatus}
@@ -256,7 +393,9 @@ const AddProduct = () => {
 
                 {/* Visibility */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Visibility</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Visibility
+                  </label>
                   <select
                     name="visibility"
                     value={formData.visibility}
@@ -277,13 +416,17 @@ const AddProduct = () => {
                   <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
                   Category & Classification
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">Product categorization and targeting</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Product categorization and targeting
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Gender */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Gender</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Gender
+                  </label>
                   <select
                     name="gender"
                     value={formData.gender}
@@ -291,8 +434,8 @@ const AddProduct = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
                     <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
+                    <option value="men">Male</option>
+                    <option value="women">Female</option>
                     <option value="unisex">Unisex</option>
                   </select>
                 </div>
@@ -315,7 +458,9 @@ const AddProduct = () => {
 
                 {/* Subcategory */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Subcategory</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Subcategory
+                  </label>
                   <input
                     type="text"
                     name="subcategory"
@@ -330,7 +475,9 @@ const AddProduct = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Brands */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Brand</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Brand
+                  </label>
                   <input
                     type="text"
                     name="metaBrands"
@@ -343,7 +490,9 @@ const AddProduct = () => {
 
                 {/* Tags */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Tags</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Tags
+                  </label>
                   <input
                     type="text"
                     name="tags"
@@ -363,60 +512,65 @@ const AddProduct = () => {
                   <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                   Media
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">Product images and thumbnails</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Product gallery images
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Thumbnail */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Thumbnail Image <span className="text-red-500">*</span>
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
-                    <input
-                      type="file"
-                      name="thumbnail"
-                      onChange={handleChange}
-                      className="hidden"
-                      id="thumbnail"
-                      accept="image/*"
-                      required
-                    />
-                    <label htmlFor="thumbnail" className="cursor-pointer">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        {imagePreviews.thumbnail ? (
-                          <div className="relative">
-                            <img 
-                              src={imagePreviews.thumbnail} 
-                              alt="Thumbnail preview" 
-                              className="w-20 h-20 object-cover rounded-lg"
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
-                              <svg className="w-6 h-6 text-white opacity-0 hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                            <span className="text-sm text-gray-600">Click to upload thumbnail</span>
-                            <span className="text-xs text-gray-500">PNG, JPG, WEBP up to 5MB</span>
-                          </>
-                        )}
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
+              <div className="space-y-4">
                 {/* Gallery Images */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Gallery Images</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Gallery Images <span className="text-red-500">*</span>
+                  </label>
+
+                  {/* Image Previews */}
+                  {imagePreviews.length > 0 && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium">
+                        Image Previews ({imagePreviews.length} images)
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {imagePreviews.map((preview, index) => (
+                          <div key={index} className="relative group">
+                            <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
+                              <Image
+                                src={preview.url || preview} // Handle both object and string URLs
+                                alt={`Preview ${index + 1}`}
+                                width={200}
+                                height={200}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              Click × to remove
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors duration-200">
                     <input
                       type="file"
                       name="images"
@@ -425,36 +579,40 @@ const AddProduct = () => {
                       className="hidden"
                       id="gallery"
                       accept="image/*"
+                      required={imagePreviews.length === 0}
                     />
                     <label htmlFor="gallery" className="cursor-pointer">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        {imagePreviews.gallery.length > 0 ? (
-                          <div className="flex flex-wrap gap-2 justify-center">
-                            {imagePreviews.gallery.map((url, index) => (
-                              <div key={index} className="relative">
-                                <img 
-                                  src={url} 
-                                  alt={`Gallery preview ${index + 1}`} 
-                                  className="w-16 h-16 object-cover rounded-lg"
-                                />
-                              </div>
-                            ))}
-                            <div className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                              </svg>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                              </svg>
-                            </div>
-                            <span className="text-sm text-gray-600">Click to upload multiple images</span>
-                            <span className="text-xs text-gray-500">Multiple files allowed</span>
-                          </>
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                          <svg
+                            className="w-8 h-8 text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            />
+                          </svg>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">
+                            Click to upload images
+                          </span>
+                          <p className="text-xs text-gray-500 mt-1">
+                            PNG, JPG, WEBP up to 5MB each
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Multiple files allowed
+                          </p>
+                        </div>
+                        {imagePreviews.length > 0 && (
+                          <p className="text-xs text-green-600 font-medium">
+                            {imagePreviews.length} image(s) selected
+                          </p>
                         )}
                       </div>
                     </label>
@@ -470,7 +628,9 @@ const AddProduct = () => {
                   <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
                   Description
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">Product descriptions and details</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Product descriptions and details
+                </p>
               </div>
 
               <div className="space-y-6">
@@ -512,19 +672,63 @@ const AddProduct = () => {
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
               <button
                 type="submit"
-                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                disabled={loading}
+                className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Add New Product
+                  {loading ? (
+                    <>
+                      <svg
+                        className="animate-spin h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Adding Product...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                        />
+                      </svg>
+                      Add New Product
+                    </>
+                  )}
                 </div>
               </button>
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-6 py-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                disabled={loading}
+                className={`px-6 py-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 Cancel
               </button>
