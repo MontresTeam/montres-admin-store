@@ -62,6 +62,8 @@ const ProductManagement = () => {
     }, 0);
   };
 
+
+  
   // Handle delete product
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this product?")) {

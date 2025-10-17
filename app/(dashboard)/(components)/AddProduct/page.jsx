@@ -2,7 +2,7 @@
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
 import React, { useState } from "react";
 import { addProduct } from "@/service/productService";
-import Image from "next/image"; // ✅ Add this line
+import Image from "next/image";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
 
@@ -17,16 +17,28 @@ const AddProduct = () => {
     gender: "",
     categoriesOne: "",
     subcategory: "",
-    shortDescription: "",
     description: "",
     visibility: "visible",
     tags: "",
-    images: [],
-    metaBrands: "",
+    images: {
+      main: null,
+      covers: []
+    },
+    brands: "",
     discount: "",
+    CaseDiameter: "",
+    Movement: "",
+    Dial: "",
+    WristSize: "",
+    Accessories: "",
+    Condition: "",
+    ProductionYear: ""
   });
 
-  const [imagePreviews, setImagePreviews] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState({
+    main: null,
+    covers: []
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -34,31 +46,67 @@ const AddProduct = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    if (files && name === "images" && files.length > 0) {
-      const newImages = Array.from(files);
-      const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
+    if (files && files.length > 0) {
+      if (name === "mainImage") {
+        const file = files[0];
+        const previewUrl = URL.createObjectURL(file);
+        
+        setImagePreviews(prev => ({ ...prev, main: previewUrl }));
+        setFormData(prev => ({
+          ...prev,
+          images: { ...prev.images, main: file }
+        }));
+      } else if (name === "coverImages") {
+        const newImages = Array.from(files);
+        const newPreviewUrls = newImages.map(file => URL.createObjectURL(file));
 
-      setImagePreviews((prev) => [...prev, ...newPreviewUrls]);
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...newImages],
-      }));
+        setImagePreviews(prev => ({
+          ...prev,
+          covers: [...prev.covers, ...newPreviewUrls]
+        }));
+        setFormData(prev => ({
+          ...prev,
+          images: {
+            ...prev.images,
+            covers: [...prev.images.covers, ...newImages]
+          }
+        }));
+      }
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      // Handle camelCase field names to match backend
+      const fieldName = name === "caseDiameter" ? "CaseDiameter" : 
+                       name === "movement" ? "Movement" :
+                       name === "dial" ? "Dial" :
+                       name === "wristSize" ? "WristSize" :
+                       name === "accessories" ? "Accessories" :
+                       name === "condition" ? "Condition" :
+                       name === "productionYear" ? "ProductionYear" : name;
+      
+      setFormData(prev => ({ ...prev, [fieldName]: value }));
     }
   };
 
-  const removeImage = (index) => {
-    // Revoke the object URL to prevent memory leaks
-    URL.revokeObjectURL(imagePreviews[index]);
+  const removeMainImage = () => {
+    if (imagePreviews.main) {
+      URL.revokeObjectURL(imagePreviews.main);
+    }
+    setImagePreviews(prev => ({ ...prev, main: null }));
+    setFormData(prev => ({
+      ...prev,
+      images: { ...prev.images, main: null }
+    }));
+  };
 
-    // Remove from previews
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    setImagePreviews(newPreviews);
-
-    // Remove from form data
-    const newImages = formData.images.filter((_, i) => i !== index);
-    setFormData((prev) => ({ ...prev, images: newImages }));
+  const removeCoverImage = (index) => {
+    URL.revokeObjectURL(imagePreviews.covers[index]);
+    const newPreviews = imagePreviews.covers.filter((_, i) => i !== index);
+    const newImages = formData.images.covers.filter((_, i) => i !== index);
+    
+    setImagePreviews(prev => ({ ...prev, covers: newPreviews }));
+    setFormData(prev => ({
+      ...prev,
+      images: { ...prev.images, covers: newImages }
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -68,27 +116,30 @@ const AddProduct = () => {
     setSuccess("");
 
     try {
-      // Prepare form data for API submission
       const productData = new FormData();
 
-      // Append all form fields
+      // Append basic fields
       Object.keys(formData).forEach((key) => {
-        if (key === "images" && formData.images.length > 0) {
-          // Append multiple images
-          Array.from(formData.images).forEach((file) => {
-            productData.append("images", file);
-          });
+        if (key === "images") {
+          // Handle images separately
+          if (formData.images.main) {
+            productData.append("images[main]", formData.images.main);
+          }
+          if (formData.images.covers.length > 0) {
+            formData.images.covers.forEach((file, index) => {
+              productData.append(`images[covers][${index}]`, file);
+            });
+          }
         } else if (
           formData[key] !== "" &&
           formData[key] !== null &&
           formData[key] !== undefined
         ) {
-          // Append other fields
           productData.append(key, formData[key]);
         }
       });
 
-      // Convert numeric fields to numbers
+      // Convert numeric fields
       if (formData.salePrice)
         productData.set("salePrice", parseFloat(formData.salePrice));
       if (formData.regularPrice)
@@ -97,11 +148,13 @@ const AddProduct = () => {
         productData.set("stockQuantity", parseInt(formData.stockQuantity));
       if (formData.discount)
         productData.set("discount", parseFloat(formData.discount));
+      if (formData.CaseDiameter)
+        productData.set("CaseDiameter", parseFloat(formData.CaseDiameter));
+      if (formData.ProductionYear)
+        productData.set("ProductionYear", parseInt(formData.ProductionYear));
 
-      // Call the API
       const response = await addProduct(productData);
 
-      // Handle success
       Toastify({
         text: "Product added successfully!",
         duration: 3000,
@@ -115,7 +168,6 @@ const AddProduct = () => {
 
       console.log("Product created:", response);
 
-      // Reset form after successful submission
       setTimeout(() => {
         handleCancel();
       }, 2000);
@@ -127,17 +179,17 @@ const AddProduct = () => {
       );
     } finally {
       setLoading(false);
-
       // Clean up object URLs
-      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+      if (imagePreviews.main) URL.revokeObjectURL(imagePreviews.main);
+      imagePreviews.covers.forEach(url => URL.revokeObjectURL(url));
     }
   };
 
   const handleCancel = () => {
-    // Clean up object URLs
-    imagePreviews.forEach((url) => URL.revokeObjectURL(url));
-
-    // Reset form
+    // Clean up all object URLs
+    if (imagePreviews.main) URL.revokeObjectURL(imagePreviews.main);
+    imagePreviews.covers.forEach(url => URL.revokeObjectURL(url));
+    
     setFormData({
       sku: "",
       name: "",
@@ -148,15 +200,27 @@ const AddProduct = () => {
       gender: "",
       categoriesOne: "",
       subcategory: "",
-      shortDescription: "",
       description: "",
       visibility: "visible",
       tags: "",
-      images: [],
-      metaBrands: "",
+      images: {
+        main: null,
+        covers: []
+      },
+      brands: "",
       discount: "",
+      CaseDiameter: "",
+      Movement: "",
+      Dial: "",
+      WristSize: "",
+      Accessories: "",
+      Condition: "",
+      ProductionYear: ""
     });
-    setImagePreviews([]);
+    setImagePreviews({
+      main: null,
+      covers: []
+    });
     setError("");
     setSuccess("");
   };
@@ -409,6 +473,156 @@ const AddProduct = () => {
               </div>
             </div>
 
+            {/* Product Specifications Section */}
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-amber-600 rounded-full"></div>
+                  Product Specifications
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Detailed product specifications and features
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Case Diameter */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Case Diameter (mm)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      name="caseDiameter"
+                      value={formData.CaseDiameter}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                      placeholder="e.g., 42"
+                      min="0"
+                      step="0.1"
+                    />
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                      mm
+                    </span>
+                  </div>
+                </div>
+
+                {/* Movement */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Movement Type
+                  </label>
+                  <select
+                    name="movement"
+                    value={formData.Movement}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Movement</option>
+                    <option value="automatic">Automatic</option>
+                    <option value="quartz">Quartz</option>
+                    <option value="manual">Manual</option>
+                    <option value="solar">Solar</option>
+                    <option value="kinetic">Kinetic</option>
+                  </select>
+                </div>
+
+                {/* Dial */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Dial Type
+                  </label>
+                  <input
+                    type="text"
+                    name="dial"
+                    value={formData.Dial}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="e.g., Black, Blue, Silver"
+                  />
+                </div>
+
+                {/* Wrist Size */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Wrist Size (inches)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      name="wristSize"
+                      value={formData.WristSize}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                      placeholder="e.g., 7.5"
+                      min="0"
+                      step="0.1"
+                    />
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                      inches
+                    </span>
+                  </div>
+                </div>
+
+                {/* Condition */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Condition
+                  </label>
+                  <select
+                    name="condition"
+                    value={formData.Condition}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Condition</option>
+                    <option value="new">New</option>
+                    <option value="like-new">Like New</option>
+                    <option value="excellent">Excellent</option>
+                    <option value="very-good">Very Good</option>
+                    <option value="good">Good</option>
+                    <option value="fair">Fair</option>
+                  </select>
+                </div>
+
+                {/* Production Year */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Production Year
+                  </label>
+                  <input
+                    type="number"
+                    name="productionYear"
+                    value={formData.ProductionYear}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="e.g., 2023"
+                    min="1900"
+                    max={new Date().getFullYear()}
+                  />
+                </div>
+              </div>
+
+              {/* Accessories */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Accessories Included
+                </label>
+                <textarea
+                  name="accessories"
+                  value={formData.Accessories}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
+                  placeholder="e.g., Original box, warranty card, extra links, manual..."
+                  rows={3}
+                />
+                <p className="text-xs text-gray-500">
+                  List all accessories included with the product
+                </p>
+              </div>
+            </div>
+
             {/* Category & Classification Section */}
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
@@ -480,8 +694,8 @@ const AddProduct = () => {
                   </label>
                   <input
                     type="text"
-                    name="metaBrands"
-                    value={formData.metaBrands}
+                    name="brands"
+                    value={formData.brands}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="Brand name"
@@ -513,30 +727,122 @@ const AddProduct = () => {
                   Media
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Product gallery images
+                  Product main image and cover images
                 </p>
               </div>
 
-              <div className="space-y-4">
-                {/* Gallery Images */}
-                <div className="space-y-2">
+              <div className="space-y-8">
+                {/* Main Image */}
+                <div className="space-y-4">
                   <label className="block text-sm font-medium text-gray-700">
-                    Gallery Images <span className="text-red-500">*</span>
+                    Main Image <span className="text-red-500">*</span>
+                  </label>
+                  
+                  {imagePreviews.main ? (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-green-600">
+                        Main Image Preview
+                      </label>
+                      <div className="flex flex-col items-start gap-4">
+                        <div className="relative group">
+                          <div className="w-64 h-64 rounded-lg border-2 border-blue-500 overflow-hidden bg-gray-100">
+                            <Image
+                              src={imagePreviews.main}
+                              alt="Main product image"
+                              width={256}
+                              height={256}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={removeMainImage}
+                            className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                          <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                            Main Image
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
+                      <input
+                        type="file"
+                        name="mainImage"
+                        onChange={handleChange}
+                        className="hidden"
+                        id="mainImage"
+                        accept="image/*"
+                        required
+                      />
+                      <label htmlFor="mainImage" className="cursor-pointer">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg
+                              className="w-6 h-6 text-blue-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">
+                              Click to upload main image
+                            </span>
+                            <p className="text-xs text-gray-500 mt-1">
+                              This will be the primary product image
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              PNG, JPG, WEBP up to 5MB
+                            </p>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cover Images */}
+                <div className="space-y-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cover Images
                   </label>
 
-                  {/* Image Previews */}
-                  {imagePreviews.length > 0 && (
+                  {/* Cover Image Previews */}
+                  {imagePreviews.covers.length > 0 && (
                     <div className="space-y-3">
                       <label className="block text-sm font-medium">
-                        Image Previews ({imagePreviews.length} images)
+                        Cover Images ({imagePreviews.covers.length} images)
                       </label>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {imagePreviews.map((preview, index) => (
+                        {imagePreviews.covers.map((preview, index) => (
                           <div key={index} className="relative group">
                             <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
                               <Image
-                                src={preview.url || preview} // Handle both object and string URLs
-                                alt={`Preview ${index + 1}`}
+                                src={preview}
+                                alt={`Cover image ${index + 1}`}
                                 width={200}
                                 height={200}
                                 className="w-full h-full object-cover"
@@ -544,7 +850,7 @@ const AddProduct = () => {
                             </div>
                             <button
                               type="button"
-                              onClick={() => removeImage(index)}
+                              onClick={() => removeCoverImage(index)}
                               className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
                             >
                               <svg
@@ -562,7 +868,7 @@ const AddProduct = () => {
                               </svg>
                             </button>
                             <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                              Click × to remove
+                              Cover Image
                             </div>
                           </div>
                         ))}
@@ -570,22 +876,21 @@ const AddProduct = () => {
                     </div>
                   )}
 
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors duration-200">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-400 transition-colors duration-200">
                     <input
                       type="file"
-                      name="images"
+                      name="coverImages"
                       onChange={handleChange}
                       multiple
                       className="hidden"
-                      id="gallery"
+                      id="coverImages"
                       accept="image/*"
-                      required={imagePreviews.length === 0}
                     />
-                    <label htmlFor="gallery" className="cursor-pointer">
+                    <label htmlFor="coverImages" className="cursor-pointer">
                       <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                           <svg
-                            className="w-8 h-8 text-blue-600"
+                            className="w-6 h-6 text-green-600"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -600,18 +905,21 @@ const AddProduct = () => {
                         </div>
                         <div>
                           <span className="text-sm font-medium text-gray-700">
-                            Click to upload images
+                            Click to upload cover images
                           </span>
                           <p className="text-xs text-gray-500 mt-1">
+                            Additional product images for gallery
+                          </p>
+                          <p className="text-xs text-gray-500">
                             PNG, JPG, WEBP up to 5MB each
                           </p>
                           <p className="text-xs text-gray-500">
                             Multiple files allowed
                           </p>
                         </div>
-                        {imagePreviews.length > 0 && (
+                        {imagePreviews.covers.length > 0 && (
                           <p className="text-xs text-green-600 font-medium">
-                            {imagePreviews.length} image(s) selected
+                            {imagePreviews.covers.length} cover image(s) selected
                           </p>
                         )}
                       </div>
@@ -634,22 +942,6 @@ const AddProduct = () => {
               </div>
 
               <div className="space-y-6">
-                {/* Short Description */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Short Description <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    name="shortDescription"
-                    value={formData.shortDescription}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
-                    placeholder="Brief product description..."
-                    rows={3}
-                    required
-                  />
-                </div>
-
                 {/* Full Description */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
