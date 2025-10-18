@@ -15,30 +15,24 @@ const AddProduct = () => {
     taxStatus: "",
     stockQuantity: "",
     gender: "",
-    categoriesOne: "",
+    categorisOne: "",
     subcategory: "",
     description: "",
     visibility: "visible",
     tags: "",
-    images: {
-      main: null,
-      covers: []
-    },
     brands: "",
     discount: "",
-    CaseDiameter: "",
-    Movement: "",
-    Dial: "",
-    WristSize: "",
-    Accessories: "",
-    Condition: "",
-    ProductionYear: ""
+    caseDiameter: "",
+    movement: "",
+    dial: "",
+    wristSize: "",
+    accessories: "",
+    condition: "",
+    productionYear: "",
   });
 
-  const [imagePreviews, setImagePreviews] = useState({
-    main: null,
-    covers: []
-  });
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -46,67 +40,28 @@ const AddProduct = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    if (files && files.length > 0) {
-      if (name === "mainImage") {
-        const file = files[0];
-        const previewUrl = URL.createObjectURL(file);
-        
-        setImagePreviews(prev => ({ ...prev, main: previewUrl }));
-        setFormData(prev => ({
-          ...prev,
-          images: { ...prev.images, main: file }
-        }));
-      } else if (name === "coverImages") {
-        const newImages = Array.from(files);
-        const newPreviewUrls = newImages.map(file => URL.createObjectURL(file));
+    if (name === "images" && files && files.length > 0) {
+      const newImages = Array.from(files);
+      const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
 
-        setImagePreviews(prev => ({
-          ...prev,
-          covers: [...prev.covers, ...newPreviewUrls]
-        }));
-        setFormData(prev => ({
-          ...prev,
-          images: {
-            ...prev.images,
-            covers: [...prev.images.covers, ...newImages]
-          }
-        }));
-      }
+      setImages((prev) => [...prev, ...newImages]);
+      setImagePreviews((prev) => [...prev, ...newPreviewUrls]);
     } else {
-      // Handle camelCase field names to match backend
-      const fieldName = name === "caseDiameter" ? "CaseDiameter" : 
-                       name === "movement" ? "Movement" :
-                       name === "dial" ? "Dial" :
-                       name === "wristSize" ? "WristSize" :
-                       name === "accessories" ? "Accessories" :
-                       name === "condition" ? "Condition" :
-                       name === "productionYear" ? "ProductionYear" : name;
-      
-      setFormData(prev => ({ ...prev, [fieldName]: value }));
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
-  const removeMainImage = () => {
-    if (imagePreviews.main) {
-      URL.revokeObjectURL(imagePreviews.main);
-    }
-    setImagePreviews(prev => ({ ...prev, main: null }));
-    setFormData(prev => ({
-      ...prev,
-      images: { ...prev.images, main: null }
-    }));
-  };
+  const removeImage = (index) => {
+    URL.revokeObjectURL(imagePreviews[index]);
 
-  const removeCoverImage = (index) => {
-    URL.revokeObjectURL(imagePreviews.covers[index]);
-    const newPreviews = imagePreviews.covers.filter((_, i) => i !== index);
-    const newImages = formData.images.covers.filter((_, i) => i !== index);
-    
-    setImagePreviews(prev => ({ ...prev, covers: newPreviews }));
-    setFormData(prev => ({
-      ...prev,
-      images: { ...prev.images, covers: newImages }
-    }));
+    const newImages = images.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+
+    setImages(newImages);
+    setImagePreviews(newPreviews);
   };
 
   const handleSubmit = async (e) => {
@@ -115,43 +70,101 @@ const AddProduct = () => {
     setError("");
     setSuccess("");
 
+    // Validate required fields
+    if (!formData.name.trim()) {
+      setError("Product name is required");
+      setLoading(false);
+      return;
+    }
+
     try {
       const productData = new FormData();
 
-      // Append basic fields
+      // Debug: Log form data before sending
+      console.log("Form Data:", formData);
+      console.log("Images count:", images.length);
+
+      // Append all basic fields
       Object.keys(formData).forEach((key) => {
-        if (key === "images") {
-          // Handle images separately
-          if (formData.images.main) {
-            productData.append("images[main]", formData.images.main);
-          }
-          if (formData.images.covers.length > 0) {
-            formData.images.covers.forEach((file, index) => {
-              productData.append(`images[covers][${index}]`, file);
-            });
-          }
-        } else if (
+        if (
           formData[key] !== "" &&
           formData[key] !== null &&
           formData[key] !== undefined
         ) {
-          productData.append(key, formData[key]);
+          // Handle array fields
+          if (key === "tags" || key === "brands" || key === "subcategory") {
+            const arrayValue = formData[key]
+              .split(",")
+              .map((item) => item.trim())
+              .filter((item) => item);
+            if (arrayValue.length > 0) {
+              // For array fields, append each value separately
+              arrayValue.forEach((item) => productData.append(key, item));
+            }
+          } else {
+            productData.append(key, formData[key]);
+          }
         }
       });
 
-      // Convert numeric fields
-      if (formData.salePrice)
-        productData.set("salePrice", parseFloat(formData.salePrice));
-      if (formData.regularPrice)
-        productData.set("regularPrice", parseFloat(formData.regularPrice));
-      if (formData.stockQuantity)
-        productData.set("stockQuantity", parseInt(formData.stockQuantity));
-      if (formData.discount)
-        productData.set("discount", parseFloat(formData.discount));
-      if (formData.CaseDiameter)
-        productData.set("CaseDiameter", parseFloat(formData.CaseDiameter));
-      if (formData.ProductionYear)
-        productData.set("ProductionYear", parseInt(formData.ProductionYear));
+      // **CRITICAL FIX: Append numeric fields with proper values**
+      if (formData.salePrice) {
+        productData.set("salePrice", parseFloat(formData.salePrice) || 0);
+      }
+      if (formData.regularPrice) {
+        productData.set("regularPrice", parseFloat(formData.regularPrice) || 0);
+      }
+      if (formData.stockQuantity) {
+        productData.set("stockQuantity", parseInt(formData.stockQuantity) || 0);
+      }
+      if (formData.caseDiameter) {
+        productData.set("caseDiameter", parseFloat(formData.caseDiameter) || 0);
+      }
+      if (formData.wristSize) {
+        productData.set("wristSize", parseFloat(formData.wristSize) || 0);
+      }
+      if (formData.productionYear) {
+        productData.set("productionYear", parseInt(formData.productionYear) || 0);
+      }
+
+      // **CRITICAL FIX: Handle image uploads properly**
+      if (images.length > 0) {
+        // First image as main
+        productData.append("main", images[0]);
+        
+        // Remaining images as covers
+        if (images.length > 1) {
+          images.slice(1).forEach((file) => {
+            productData.append("covers", file);
+          });
+        }
+      } else {
+        console.warn("No images selected");
+      }
+
+      // Set default values for required backend fields
+      productData.append("inStock", "true");
+      productData.append("published", "true");
+      productData.append("featured", "false");
+      productData.append("type", "simple");
+
+      // **CRITICAL FIX: Debug FormData contents properly**
+      console.log("=== FormData Contents ===");
+      for (let [key, value] of productData.entries()) {
+        console.log(key + ":", value);
+      }
+      console.log("=== End FormData Contents ===");
+
+      // **CRITICAL FIX: Check if FormData has any entries**
+      let hasEntries = false;
+      for (let entry of productData.entries()) {
+        hasEntries = true;
+        break;
+      }
+
+      if (!hasEntries) {
+        throw new Error("FormData is empty - no data to send");
+      }
 
       const response = await addProduct(productData);
 
@@ -161,35 +174,36 @@ const AddProduct = () => {
         close: true,
         gravity: "top",
         position: "right",
-        style: {
-          background: "linear-gradient(to right, #00b09b, #96c93d)",
-        },
+        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" },
       }).showToast();
 
       console.log("Product created:", response);
-
-      setTimeout(() => {
-        handleCancel();
-      }, 2000);
+      handleCancel();
     } catch (err) {
       console.error("Error adding product:", err);
-      setError(
+      const errorMessage =
         err.response?.data?.message ||
-          "Failed to add product. Please try again."
-      );
+        err.message ||
+        "Failed to add product. Please try again.";
+      setError(errorMessage);
+
+      Toastify({
+        text: errorMessage,
+        duration: 3000,
+        close: true,
+        gravity: "top",
+        position: "right",
+        style: { background: "linear-gradient(to right, #ff5f6d, #ffc371)" },
+      }).showToast();
     } finally {
       setLoading(false);
-      // Clean up object URLs
-      if (imagePreviews.main) URL.revokeObjectURL(imagePreviews.main);
-      imagePreviews.covers.forEach(url => URL.revokeObjectURL(url));
     }
   };
 
   const handleCancel = () => {
     // Clean up all object URLs
-    if (imagePreviews.main) URL.revokeObjectURL(imagePreviews.main);
-    imagePreviews.covers.forEach(url => URL.revokeObjectURL(url));
-    
+    imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+
     setFormData({
       sku: "",
       name: "",
@@ -198,29 +212,23 @@ const AddProduct = () => {
       taxStatus: "",
       stockQuantity: "",
       gender: "",
-      categoriesOne: "",
+      categorisOne: "",
       subcategory: "",
       description: "",
       visibility: "visible",
       tags: "",
-      images: {
-        main: null,
-        covers: []
-      },
       brands: "",
       discount: "",
-      CaseDiameter: "",
-      Movement: "",
-      Dial: "",
-      WristSize: "",
-      Accessories: "",
-      Condition: "",
-      ProductionYear: ""
+      caseDiameter: "",
+      movement: "",
+      dial: "",
+      wristSize: "",
+      accessories: "",
+      condition: "",
+      productionYear: "",
     });
-    setImagePreviews({
-      main: null,
-      covers: []
-    });
+    setImages([]);
+    setImagePreviews([]);
     setError("");
     setSuccess("");
   };
@@ -244,7 +252,7 @@ const AddProduct = () => {
           </div>
         </div>
 
-        {/* Success/Error Messages */}
+        {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-center gap-2 text-red-700">
@@ -263,28 +271,6 @@ const AddProduct = () => {
               </svg>
               <span className="font-medium">Error:</span>
               <span>{error}</span>
-            </div>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center gap-2 text-green-700">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span className="font-medium">Success:</span>
-              <span>{success}</span>
             </div>
           </div>
         )}
@@ -308,7 +294,7 @@ const AddProduct = () => {
                 {/* SKU */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    SKU <span className="text-red-500">*</span>
+                    SKU
                   </label>
                   <input
                     type="text"
@@ -317,7 +303,6 @@ const AddProduct = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="SKU-001"
-                    required
                   />
                 </div>
 
@@ -397,32 +382,10 @@ const AddProduct = () => {
                   </div>
                 </div>
 
-                {/* Discount */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Discount
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="discount"
-                      value={formData.discount}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                      placeholder="0"
-                      min="0"
-                      max="100"
-                    />
-                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      %
-                    </span>
-                  </div>
-                </div>
-
                 {/* Stock Quantity */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Stock Quantity <span className="text-red-500">*</span>
+                    Stock Quantity
                   </label>
                   <input
                     type="number"
@@ -432,12 +395,9 @@ const AddProduct = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="0"
                     min="0"
-                    required
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Tax Status */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -452,22 +412,6 @@ const AddProduct = () => {
                     <option value="">Select Tax Status</option>
                     <option value="taxable">Taxable</option>
                     <option value="none">None</option>
-                  </select>
-                </div>
-
-                {/* Visibility */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Visibility
-                  </label>
-                  <select
-                    name="visibility"
-                    value={formData.visibility}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    <option value="visible">Visible</option>
-                    <option value="hidden">Hidden</option>
                   </select>
                 </div>
               </div>
@@ -495,7 +439,7 @@ const AddProduct = () => {
                     <input
                       type="number"
                       name="caseDiameter"
-                      value={formData.CaseDiameter}
+                      value={formData.caseDiameter}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       placeholder="e.g., 42"
@@ -515,7 +459,7 @@ const AddProduct = () => {
                   </label>
                   <select
                     name="movement"
-                    value={formData.Movement}
+                    value={formData.movement}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
@@ -536,7 +480,7 @@ const AddProduct = () => {
                   <input
                     type="text"
                     name="dial"
-                    value={formData.Dial}
+                    value={formData.dial}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="e.g., Black, Blue, Silver"
@@ -552,7 +496,7 @@ const AddProduct = () => {
                     <input
                       type="number"
                       name="wristSize"
-                      value={formData.WristSize}
+                      value={formData.wristSize}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       placeholder="e.g., 7.5"
@@ -572,7 +516,7 @@ const AddProduct = () => {
                   </label>
                   <select
                     name="condition"
-                    value={formData.Condition}
+                    value={formData.condition}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
@@ -594,7 +538,7 @@ const AddProduct = () => {
                   <input
                     type="number"
                     name="productionYear"
-                    value={formData.ProductionYear}
+                    value={formData.productionYear}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="e.g., 2023"
@@ -611,7 +555,7 @@ const AddProduct = () => {
                 </label>
                 <textarea
                   name="accessories"
-                  value={formData.Accessories}
+                  value={formData.accessories}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
                   placeholder="e.g., Original box, warranty card, extra links, manual..."
@@ -657,16 +601,15 @@ const AddProduct = () => {
                 {/* Category */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Category <span className="text-red-500">*</span>
+                    Category
                   </label>
                   <input
                     type="text"
-                    name="categoriesOne"
-                    value={formData.categoriesOne}
+                    name="categorisOne"
+                    value={formData.categorisOne}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="Main category"
-                    required
                   />
                 </div>
 
@@ -698,7 +641,7 @@ const AddProduct = () => {
                     value={formData.brands}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Brand name"
+                    placeholder="Brand name or comma separated brands"
                   />
                 </div>
 
@@ -727,40 +670,36 @@ const AddProduct = () => {
                   Media
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Product main image and cover images
+                  Product images (first image will be considered as main image)
                 </p>
               </div>
 
-              <div className="space-y-8">
-                {/* Main Image */}
-                <div className="space-y-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Main Image <span className="text-red-500">*</span>
-                  </label>
-                  
-                  {imagePreviews.main ? (
-                    <div className="space-y-3">
-                      <label className="block text-sm font-medium text-green-600">
-                        Main Image Preview
-                      </label>
-                      <div className="flex flex-col items-start gap-4">
-                        <div className="relative group">
-                          <div className="w-64 h-64 rounded-lg border-2 border-blue-500 overflow-hidden bg-gray-100">
+              <div className="space-y-6">
+                {/* Image Previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Selected Images ({imagePreviews.length})
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
                             <Image
-                              src={imagePreviews.main}
-                              alt="Main product image"
-                              width={256}
-                              height={256}
+                              src={preview}
+                              alt={`Product image ${index + 1}`}
+                              width={200}
+                              height={200}
                               className="w-full h-full object-cover"
                             />
                           </div>
                           <button
                             type="button"
-                            onClick={removeMainImage}
-                            className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
                           >
                             <svg
-                              className="w-4 h-4"
+                              className="w-3 h-3"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -773,158 +712,67 @@ const AddProduct = () => {
                               />
                             </svg>
                           </button>
-                          <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                            Main Image
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
-                      <input
-                        type="file"
-                        name="mainImage"
-                        onChange={handleChange}
-                        className="hidden"
-                        id="mainImage"
-                        accept="image/*"
-                        required
-                      />
-                      <label htmlFor="mainImage" className="cursor-pointer">
-                        <div className="flex flex-col items-center justify-center gap-3">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <svg
-                              className="w-6 h-6 text-blue-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">
-                              Click to upload main image
-                            </span>
-                            <p className="text-xs text-gray-500 mt-1">
-                              This will be the primary product image
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              PNG, JPG, WEBP up to 5MB
-                            </p>
-                          </div>
-                        </div>
-                      </label>
-                    </div>
-                  )}
-                </div>
-
-                {/* Cover Images */}
-                <div className="space-y-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Cover Images
-                  </label>
-
-                  {/* Cover Image Previews */}
-                  {imagePreviews.covers.length > 0 && (
-                    <div className="space-y-3">
-                      <label className="block text-sm font-medium">
-                        Cover Images ({imagePreviews.covers.length} images)
-                      </label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {imagePreviews.covers.map((preview, index) => (
-                          <div key={index} className="relative group">
-                            <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
-                              <Image
-                                src={preview}
-                                alt={`Cover image ${index + 1}`}
-                                width={200}
-                                height={200}
-                                className="w-full h-full object-cover"
-                              />
+                          {index === 0 && (
+                            <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                              Main
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => removeCoverImage(index)}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-                            >
-                              <svg
-                                className="w-3 h-3"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
-                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                              Cover Image
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  )}
-
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-400 transition-colors duration-200">
-                    <input
-                      type="file"
-                      name="coverImages"
-                      onChange={handleChange}
-                      multiple
-                      className="hidden"
-                      id="coverImages"
-                      accept="image/*"
-                    />
-                    <label htmlFor="coverImages" className="cursor-pointer">
-                      <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                          <svg
-                            className="w-6 h-6 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                            />
-                          </svg>
-                        </div>
-                        <div>
-                          <span className="text-sm font-medium text-gray-700">
-                            Click to upload cover images
-                          </span>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Additional product images for gallery
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            PNG, JPG, WEBP up to 5MB each
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Multiple files allowed
-                          </p>
-                        </div>
-                        {imagePreviews.covers.length > 0 && (
-                          <p className="text-xs text-green-600 font-medium">
-                            {imagePreviews.covers.length} cover image(s) selected
-                          </p>
-                        )}
-                      </div>
-                    </label>
                   </div>
+                )}
+
+                {/* File Upload */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors duration-200">
+                  <input
+                    type="file"
+                    name="images"
+                    onChange={handleChange}
+                    multiple
+                    className="hidden"
+                    id="images"
+                    accept="image/*"
+                  />
+                  <label htmlFor="images" className="cursor-pointer">
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-8 h-8 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <span className="text-lg font-medium text-gray-700">
+                          Click to upload images
+                        </span>
+                        <p className="text-sm text-gray-500 mt-2">
+                          Upload product images. First image will be used as
+                          main image.
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          PNG, JPG, WEBP up to 5MB each
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Multiple files allowed
+                        </p>
+                      </div>
+                      {imagePreviews.length > 0 && (
+                        <p className="text-sm text-green-600 font-medium">
+                          {imagePreviews.length} image(s) selected
+                        </p>
+                      )}
+                    </div>
+                  </label>
                 </div>
               </div>
             </div>
