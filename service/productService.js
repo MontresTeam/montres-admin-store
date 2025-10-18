@@ -44,6 +44,7 @@ export async function fetchProduct({
 }
 
 // ✅ Add Product
+// ✅ Add Product
 export async function addProduct(formData) {
   try {
     // formData should be a FormData object (because of image upload)
