@@ -549,7 +549,7 @@ const ProductManagement = () => {
                           <div>
                             <span className="font-medium text-gray-900 block">{product.name}</span>
                             <span className="text-sm text-gray-500">
-                              SKU: {product.sku || "N/A"}
+                              SKU: {product.sku}
                             </span>
                           </div>
                         </div>
