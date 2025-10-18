@@ -490,7 +490,7 @@ const AddProduct = () => {
                 {/* Wrist Size */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Wrist Size (inches)
+                    Wrist Size (cm)
                   </label>
                   <div className="relative">
                     <input
@@ -504,7 +504,7 @@ const AddProduct = () => {
                       step="0.1"
                     />
                     <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                      inches
+                      cm
                     </span>
                   </div>
                 </div>
