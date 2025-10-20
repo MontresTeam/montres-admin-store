@@ -61,12 +61,25 @@ export async function addProduct(formData) {
 }
 
 // ✅ Update Product
+// ✅ Update Product (supports both JSON & FormData)
 export async function updateProduct(id, updatedData) {
   try {
-    const response = await api.put(`/admin/product/${id}`, updatedData);
+    let headers = {};
+
+    // If data is FormData (has image or files)
+    if (updatedData instanceof FormData) {
+      headers["Content-Type"] = "multipart/form-data";
+    } else {
+      headers["Content-Type"] = "application/json";
+    }
+
+    const response = await api.put(`/admin/product/${id}`, updatedData, {
+      headers,
+    });
+
     return { data: response.data, error: null };
   } catch (error) {
-    console.error("❌ updateProduct error:", error);
+    console.error("❌ updateProduct error:", error.response?.data || error);
     return { data: null, error };
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
-import { Button } from "@/components/ui/button";
+import newSymbole from '../../../../../public/assets/newSymbole.png'
 import { fetchProduct, updateProduct } from "@/service/productService";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -32,6 +32,9 @@ const initialFormData = {
   accessories: "",
   condition: "",
   productionYear: "",
+  model: "",
+  collection: "",
+  type: "",
 };
 
 const ProductEditPage = () => {
@@ -89,6 +92,9 @@ const ProductEditPage = () => {
           accessories: product.Accessories || "",
           condition: product.Condition || "",
           productionYear: product.ProductionYear || "",
+          model: product.model || "",
+          collection: product.collection || "",
+          type: product.type || "",
         });
 
         // Set image previews for existing images
@@ -165,12 +171,11 @@ const ProductEditPage = () => {
       console.log("Images count:", images.length);
 
       // Append all basic fields
-Object.keys(formData).forEach((key) => {
-  if (typeof formData[key] === "string" && formData[key].includes(",")) {
-    formData[key] = formData[key].split(",").map(item => item.trim());
-  }
-});
-
+      Object.keys(formData).forEach((key) => {
+        if (typeof formData[key] === "string" && formData[key].includes(",")) {
+          formData[key] = formData[key].split(",").map(item => item.trim());
+        }
+      });
 
       // **CRITICAL FIX: Append numeric fields with proper values**
       if (formData.salePrice) {
@@ -419,6 +424,54 @@ Object.keys(formData).forEach((key) => {
                   />
                 </div>
               </div>
+
+              {/* New Fields: Model, Collection, Type */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Model */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Model
+                  </label>
+                  <input
+                    type="text"
+                    name="model"
+                    value={formData.model}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Product model"
+                  />
+                </div>
+
+                {/* Collection */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Collection
+                  </label>
+                  <input
+                    type="text"
+                    name="collection"
+                    value={formData.collection}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Product collection"
+                  />
+                </div>
+
+                {/* Type */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Type
+                  </label>
+                  <input
+                    type="text"
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Product type"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Pricing & Inventory Section */}
@@ -440,15 +493,21 @@ Object.keys(formData).forEach((key) => {
                     Regular Price <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      $
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                      <Image 
+                        src={newSymbole} 
+                        alt="Currency" 
+                        width={16} 
+                        height={16}
+                        className="w-4 h-4"
+                      />
                     </span>
                     <input
                       type="number"
                       name="regularPrice"
                       value={formData.regularPrice}
                       onChange={handleChange}
-                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       placeholder="0.00"
                       min="0"
                       step="0.01"
@@ -463,15 +522,21 @@ Object.keys(formData).forEach((key) => {
                     Sale Price
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      $
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                      <Image 
+                        src={newSymbole} 
+                        alt="Currency" 
+                        width={16} 
+                        height={16}
+                        className="w-4 h-4"
+                      />
                     </span>
                     <input
                       type="number"
                       name="salePrice"
                       value={formData.salePrice}
                       onChange={handleChange}
-                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       placeholder="0.00"
                       min="0"
                       step="0.01"
@@ -689,9 +754,8 @@ Object.keys(formData).forEach((key) => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
                     <option value="">Select Gender</option>
-                    <option value="men">Male</option>
+                    <option value="men">Male/Unisex</option>
                     <option value="women">Female</option>
-                    <option value="unisex">Unisex</option>
                   </select>
                 </div>
 

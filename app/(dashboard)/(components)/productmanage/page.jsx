@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { fetchProduct, deleteProduct, updateProduct } from "@/service/productService";
-import { LoadingProvider } from "@/contexts/LoadingContext";
+import newCurrency from '../../../../public/assets/newSymbole.png'
 import Image from "next/image";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
