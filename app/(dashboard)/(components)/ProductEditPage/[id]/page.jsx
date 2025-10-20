@@ -165,27 +165,12 @@ const ProductEditPage = () => {
       console.log("Images count:", images.length);
 
       // Append all basic fields
-      Object.keys(formData).forEach((key) => {
-        if (
-          formData[key] !== "" &&
-          formData[key] !== null &&
-          formData[key] !== undefined
-        ) {
-          // Handle array fields
-          if (key === "tags" || key === "brands" || key === "subcategory") {
-            const arrayValue = formData[key]
-              .split(",")
-              .map((item) => item.trim())
-              .filter((item) => item);
-            if (arrayValue.length > 0) {
-              // For array fields, append each value separately
-              arrayValue.forEach((item) => productData.append(key, item));
-            }
-          } else {
-            productData.append(key, formData[key]);
-          }
-        }
-      });
+Object.keys(formData).forEach((key) => {
+  if (typeof formData[key] === "string" && formData[key].includes(",")) {
+    formData[key] = formData[key].split(",").map(item => item.trim());
+  }
+});
+
 
       // **CRITICAL FIX: Append numeric fields with proper values**
       if (formData.salePrice) {
@@ -271,7 +256,7 @@ const ProductEditPage = () => {
       }, 2000);
 
     } catch (err) {
-      console.error("Error updating product:", err);
+      console.log("Error updating product:", err);
       const errorMessage =
         err.response?.data?.message ||
         err.message ||
