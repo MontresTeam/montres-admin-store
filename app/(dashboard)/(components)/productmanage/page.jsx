@@ -59,7 +59,7 @@ const ProductManagement = () => {
     setLoading(false);
   };
 
-  // Helper function to safely convert to string and lowercase
+
   const safeToLowerCase = (value) => {
     return String(value || '').toLowerCase();
   };
