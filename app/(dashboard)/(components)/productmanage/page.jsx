@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
 import { Button } from "@/components/ui/button";
 import { fetchProduct, deleteProduct, updateProduct } from "@/service/productService";
-import newCurrency from '../../../../public/assets/newSymbole.png'
+import newCurrency from '../../../../public/assets/newSymbole.png';
 import Image from "next/image";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
@@ -57,6 +57,33 @@ const ProductManagement = () => {
     }
 
     setLoading(false);
+  };
+
+  // Helper function to safely convert to string and lowercase
+  const safeToLowerCase = (value) => {
+    return String(value || '').toLowerCase();
+  };
+
+  // Helper function to get category name
+  const getCategoryName = (product) => {
+    return product.categories || product.category || product.subcategory || "Uncategorized";
+  };
+
+  // Helper function to check if product matches search term
+  const productMatchesSearch = (product, searchTerm) => {
+    if (!searchTerm) return true;
+    
+    const term = safeToLowerCase(searchTerm);
+    
+    return (
+      safeToLowerCase(product.name).includes(term) ||
+      safeToLowerCase(getCategoryName(product)).includes(term) ||
+      (product.brands && Array.isArray(product.brands) && 
+       product.brands.some(brand => safeToLowerCase(brand).includes(term))) ||
+      (product.tags && Array.isArray(product.tags) && 
+       product.tags.some(tag => safeToLowerCase(tag).includes(term))) ||
+      safeToLowerCase(product.sku).includes(term)
+    );
   };
 
   // Calculate total value function
@@ -325,10 +352,8 @@ const ProductManagement = () => {
   };
 
   // Filter products based on search term
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter(product => 
+    productMatchesSearch(product, searchTerm)
   );
 
   // Auto switch to mobile view on smaller screens
@@ -422,11 +447,17 @@ const ProductManagement = () => {
                 <div>
                   <p className="text-sm font-medium">Total Value</p>
                   <p className="text-3xl font-bold mt-1">
-                      {calculateTotalValue().toLocaleString()}
+                    {calculateTotalValue().toLocaleString()}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <span className="text-purple-600 text-xl font-bold">AED</span>
+                  <Image 
+                    src={newCurrency} 
+                    alt="Currency Symbol" 
+                    width={24} 
+                    height={24}
+                    className="text-purple-600 text-xl font-bold"
+                  />
                 </div>
               </div>
             </div>
@@ -549,24 +580,38 @@ const ProductManagement = () => {
                           <div>
                             <span className="font-medium text-gray-900 block">{product.name}</span>
                             <span className="text-sm text-gray-500">
-                              SKU:{product.sku|| "sku"}
+                              SKU: {product.sku || "N/A"}
                             </span>
                           </div>
                         </div>
                       </td>
                       <td className="py-4 px-6">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                          {product.category || "Uncategorized"}
+                          {getCategoryName(product)}
                         </span>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex flex-col">
-                          <span className="font-semibold text-gray-900">
-                            AED {product.salePrice || product.price || 0}
+                          <span className="font-semibold text-gray-900 flex items-center">
+                            <Image 
+                              src={newCurrency} 
+                              alt="Currency" 
+                              width={16} 
+                              height={16}
+                              className="mr-1"
+                            />
+                            {product.salePrice || product.price || 0}
                           </span>
                           {product.salePrice && product.price && product.salePrice < product.price && (
-                            <span className="text-sm text-gray-500 line-through">
-                              AED {product.price}
+                            <span className="text-sm text-gray-500 line-through flex items-center">
+                              <Image 
+                                src={newCurrency} 
+                                alt="Currency" 
+                                width={12} 
+                                height={12}
+                                className="mr-1"
+                              />
+                              {product.price}
                             </span>
                           )}
                         </div>
@@ -672,7 +717,7 @@ const ProductManagement = () => {
                                   setDropdownOpen(null);
                                 }}
                                 className="flex items-center w-full px-4 py-3 text-left text-gray-600 hover:bg-gray-50 transition-colors"
-                              >
+                                >
                                 <FiCalendar className="mr-3" />
                                 Unpublish
                               </button>
@@ -752,7 +797,7 @@ const ProductManagement = () => {
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {product.category}
+                              {getCategoryName(product)}
                             </span>
                             {getScheduleBadge(product)}
                           </div>
@@ -773,8 +818,15 @@ const ProductManagement = () => {
                     <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                       <div>
                         <p className="text-gray-600">Price</p>
-                        <p className="font-semibold text-gray-900">
-                          AED {product.salePrice || product.price || 0}
+                        <p className="font-semibold text-gray-900 flex items-center">
+                          <Image 
+                            src={newCurrency} 
+                            alt="Currency" 
+                            width={14} 
+                            height={14}
+                            className="mr-1"
+                          />
+                          {product.salePrice || product.price || 0}
                         </p>
                       </div>
                       <div>

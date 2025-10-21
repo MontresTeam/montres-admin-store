@@ -1,6 +1,6 @@
 "use client";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
-import newSymbole from '../../../../../public/assets/newSymbole.png'
+import newSymbole from "../../../../../public/assets/newSymbole.png";
 import { fetchProduct, updateProduct } from "@/service/productService";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,33 +9,78 @@ import Image from "next/image";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
 
-// Define initial form state to match AddProduct component
+// Define initial form state to match backend schema
 const initialFormData = {
+  // Basic Info
   sku: "",
+  serialNumber: "",
   name: "",
-  salePrice: "",
   regularPrice: "",
-  taxStatus: "",
+  salePrice: "",
+  discount: "",
+  taxStatus: "taxable",
   stockQuantity: "",
-  gender: "",
-  categorisOne: "",
-  subcategory: "",
+  RefenceNumber: "",
   description: "",
-  visibility: "visible",
+
+  // Category & Classification
+  gender: "unisex",
+  categories: "",
+  subcategory: "",
+  collection: "None",
+
+  // Tags & Brands
   tags: "",
   brands: "",
-  discount: "",
-  caseDiameter: "",
-  movement: "",
-  dial: "",
-  wristSize: "",
-  accessories: "",
-  condition: "",
-  productionYear: "",
-  model: "",
-  collection: "",
-  type: "",
+
+  // Watch Specifications
+  CaseDiameter: "",
+  Movement: "",
+  Dial: "",
+  WristSize: "",
+  Condition: "",
+  Accessories: "",
+  ProductionYear: "",
 };
+
+// Category options - matches schema enum
+const categories = ["Luxury", "Classic watch", "Sports watch", "Vintage watch"];
+
+// Subcategory options - matches schema enum
+const subcategories = [
+  "Quartz",
+  "Automatic",
+  "Chronograph",
+  "Dress watch",
+  "Limited edition",
+  "Pilot watch",
+  "Diver's watch",
+  "Swiss made",
+  "Moonphase",
+];
+
+// Collection options - matches schema enum
+const collections = [
+  "Classic Collection",
+  "Limited Collection",
+  "Heritage Collection",
+  "Prestige Collection",
+  "Signature Collection",
+  "None",
+];
+
+// Movement options - matches schema enum
+const movements = ["automatic", "quartz", "manual", "solar", "kinetic"];
+
+// Condition options - matches schema enum
+const conditions = [
+  "new",
+  "like-new",
+  "excellent",
+  "very-good",
+  "good",
+  "fair",
+];
 
 const ProductEditPage = () => {
   const { id } = useParams();
@@ -43,21 +88,24 @@ const ProductEditPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [images, setImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
+  const [mainImage, setMainImage] = useState(null);
+  const [mainImagePreview, setMainImagePreview] = useState("");
+  const [coverImages, setCoverImages] = useState([]);
+  const [coverImagePreviews, setCoverImagePreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [formData, setFormData] = useState(initialFormData);
 
   // Helper function to get URL from image object or string
   const getImageUrl = (image) => {
-    if (typeof image === 'string') return image;
+    if (typeof image === "string") return image;
     if (image && image.url) return image.url;
     if (image && image.src) return image.src;
-    return '';
+    return "";
   };
 
   // Helper function to check if URL is a blob URL
   const isBlobUrl = (url) => {
-    return typeof url === 'string' && url.startsWith('blob:');
+    return typeof url === "string" && url.startsWith("blob:");
   };
 
   // Load product data
@@ -69,39 +117,61 @@ const ProductEditPage = () => {
         console.log("Product data:", data);
         const product = data.product || data;
 
-        // Map the product data to form fields
+        // Map the product data to form fields - CORRECTED FIELD MAPPINGS
         setFormData({
+          // Basic Info
           sku: product.sku || "",
+          serialNumber: product.serialNumber || "",
           name: product.name || "",
-          salePrice: product.salePrice || "",
           regularPrice: product.regularPrice || "",
-          taxStatus: product.taxStatus || "",
-          stockQuantity: product.stockQuantity || "",
-          gender: product.gender || "",
-          categorisOne: product.categorisOne || "",
-          subcategory: product.subcategory || "",
-          description: product.description || "",
-          visibility: product.visibility || "visible",
-          tags: product.tags || "",
-          brands: product.brands || product.metaBrands || "",
+          salePrice: product.salePrice || "",
           discount: product.discount || "",
-          caseDiameter: product.CaseDiameter || "",
-          movement: product.Movement || "",
-          dial: product.Dial || "",
-          wristSize: product.WristSize || "",
-          accessories: product.Accessories || "",
-          condition: product.Condition || "",
-          productionYear: product.ProductionYear || "",
-          model: product.model || "",
-          collection: product.collection || "",
-          type: product.type || "",
+          taxStatus: product.taxStatus || "taxable",
+          stockQuantity: product.stockQuantity || "",
+          RefenceNumber: product.RefenceNumber || "",
+          description: product.description || "",
+
+          // Category & Classification
+          gender: product.gender || "unisex",
+          categories: product.categories || "",
+          subcategory: product.subcategory || "",
+          collection: product.collection || "None",
+
+          // Tags & Brands
+          tags: Array.isArray(product.tags)
+            ? product.tags.join(", ")
+            : product.tags || "",
+          brands: Array.isArray(product.brands)
+            ? product.brands.join(", ")
+            : product.brands || "",
+
+          // Watch Specifications - CORRECTED FIELD NAMES
+          CaseDiameter: product.CaseDiameter || "",
+          Movement: product.Movement || "",
+          Dial: product.Dial || "",
+          WristSize: product.WristSize || "",
+          Condition: product.Condition || "",
+          Accessories: product.Accessories || "",
+          ProductionYear: product.ProductionYear || "",
         });
 
-        // Set image previews for existing images
+        // Handle existing images - separate main image and cover images
         if (product.images && product.images.length > 0) {
-          const previewUrls = product.images.map(img => getImageUrl(img));
-          setImagePreviews(previewUrls);
-          setImages(product.images); // Store existing images
+          const productImages = product.images;
+          setExistingImages(productImages);
+
+          // Set main image (first image as main)
+          if (productImages.length > 0) {
+            setMainImagePreview(getImageUrl(productImages[0]));
+          }
+
+          // Set cover images (rest of the images)
+          if (productImages.length > 1) {
+            const coverPreviews = productImages
+              .slice(1)
+              .map((img) => getImageUrl(img));
+            setCoverImagePreviews(coverPreviews);
+          }
         }
       } else {
         console.error("❌ Error fetching product:", error);
@@ -122,12 +192,16 @@ const ProductEditPage = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    if (name === "images" && files && files.length > 0) {
+    if (name === "mainImage" && files && files.length > 0) {
+      const file = files[0];
+      setMainImage(file);
+      setMainImagePreview(URL.createObjectURL(file));
+    } else if (name === "coverImages" && files && files.length > 0) {
       const newImages = Array.from(files);
       const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
 
-      setImages((prev) => [...prev, ...newImages]);
-      setImagePreviews((prev) => [...prev, ...newPreviewUrls]);
+      setCoverImages((prev) => [...prev, ...newImages]);
+      setCoverImagePreviews((prev) => [...prev, ...newPreviewUrls]);
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -136,18 +210,25 @@ const ProductEditPage = () => {
     }
   };
 
-  const removeImage = (index) => {
-    // Only revoke URL if it's a blob URL (newly uploaded image)
-    const previewUrl = imagePreviews[index];
+  const removeMainImage = () => {
+    if (mainImagePreview && isBlobUrl(mainImagePreview)) {
+      URL.revokeObjectURL(mainImagePreview);
+    }
+    setMainImage(null);
+    setMainImagePreview("");
+  };
+
+  const removeCoverImage = (index) => {
+    const previewUrl = coverImagePreviews[index];
     if (previewUrl && isBlobUrl(previewUrl)) {
       URL.revokeObjectURL(previewUrl);
     }
 
-    const newImages = images.filter((_, i) => i !== index);
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    const newImages = coverImages.filter((_, i) => i !== index);
+    const newPreviews = coverImagePreviews.filter((_, i) => i !== index);
 
-    setImages(newImages);
-    setImagePreviews(newPreviews);
+    setCoverImages(newImages);
+    setCoverImagePreviews(newPreviews);
   };
 
   const handleSubmit = async (e) => {
@@ -163,81 +244,100 @@ const ProductEditPage = () => {
       return;
     }
 
+    if (!formData.categories) {
+      setError("Category is required");
+      setLoading(false);
+      return;
+    }
+
     try {
       const productData = new FormData();
 
-      // Debug: Log form data before sending
-      console.log("Form Data:", formData);
-      console.log("Images count:", images.length);
-
       // Append all basic fields
       Object.keys(formData).forEach((key) => {
-        if (typeof formData[key] === "string" && formData[key].includes(",")) {
-          formData[key] = formData[key].split(",").map(item => item.trim());
+        const value = formData[key];
+
+        if (value !== "" && value !== null && value !== undefined) {
+          // Handle array fields (tags and brands)
+          if (key === "tags" || key === "brands") {
+            const arrayValue = value
+              .split(",")
+              .map((item) => item.trim())
+              .filter((item) => item);
+            if (arrayValue.length > 0) {
+              productData.append(key, JSON.stringify(arrayValue));
+            }
+          }
+          // Handle numeric fields
+          else if (
+            [
+              "regularPrice",
+              "salePrice",
+              "discount",
+              "stockQuantity",
+              "CaseDiameter",
+              "WristSize",
+            ].includes(key)
+          ) {
+            const numValue = parseFloat(value) || 0;
+            productData.append(key, numValue.toString());
+          }
+          // Handle all other fields
+          else {
+            productData.append(key, value);
+          }
         }
       });
 
-      // **CRITICAL FIX: Append numeric fields with proper values**
-      if (formData.salePrice) {
-        productData.set("salePrice", parseFloat(formData.salePrice) || 0);
-      }
-      if (formData.regularPrice) {
-        productData.set("regularPrice", parseFloat(formData.regularPrice) || 0);
-      }
-      if (formData.stockQuantity) {
-        productData.set("stockQuantity", parseInt(formData.stockQuantity) || 0);
-      }
-      if (formData.caseDiameter) {
-        productData.set("caseDiameter", parseFloat(formData.caseDiameter) || 0);
-      }
-      if (formData.wristSize) {
-        productData.set("wristSize", parseFloat(formData.wristSize) || 0);
-      }
-      if (formData.productionYear) {
-        productData.set("productionYear", parseInt(formData.productionYear) || 0);
+      // Handle image uploads - FIXED FIELD NAMES
+      if (mainImage) {
+        // New main image
+        productData.append("main", mainImage);
+      } else if (mainImagePreview && !isBlobUrl(mainImagePreview)) {
+        // Existing main image
+        productData.append("existingMainImage", mainImagePreview);
       }
 
-      // **CRITICAL FIX: Handle image uploads properly**
-      // Separate existing images from new files
-      const existingImages = images.filter(img => !(img instanceof File));
-      const newImageFiles = images.filter(img => img instanceof File);
-
-      if (newImageFiles.length > 0) {
-        // First new image as main
-        productData.append("main", newImageFiles[0]);
-        
-        // Remaining new images as covers
-        if (newImageFiles.length > 1) {
-          newImageFiles.slice(1).forEach((file) => {
-            productData.append("covers", file);
-          });
-        }
-      }
-
-      // Append existing images if any
-      if (existingImages.length > 0) {
-        existingImages.forEach((img) => {
-          const imageUrl = getImageUrl(img);
-          if (imageUrl) {
-            productData.append("existingImages", imageUrl);
-          }
+      // New cover images
+      if (coverImages.length > 0) {
+        coverImages.forEach((file) => {
+          productData.append("covers", file);
         });
       }
 
-      // Set default values for required backend fields
-      productData.append("inStock", "true");
+      // Existing cover images
+      if (existingImages.length > 1) {
+        const existingCovers = existingImages
+          .slice(1)
+          .map((img) => getImageUrl(img))
+          .filter((url) => url && !isBlobUrl(url));
+
+        existingCovers.forEach((url) => {
+          productData.append("existingCovers", url);
+        });
+      }
+
+      // Add flags for image preservation
+      if (!mainImage && coverImages.length === 0) {
+        productData.append("preserveExistingImages", "true");
+      }
+
+      // Set default values
       productData.append("published", "true");
       productData.append("featured", "false");
-      productData.append("type", "simple");
+      productData.append("inStock", "true");
 
-      // **CRITICAL FIX: Debug FormData contents properly**
+      // Debug logging
       console.log("=== FormData Contents ===");
       for (let [key, value] of productData.entries()) {
-        console.log(key + ":", value);
+        console.log(
+          key + ":",
+          value instanceof File ? `File: ${value.name}` : value
+        );
       }
-      console.log("=== End FormData Contents ===");
 
       const { data, error } = await updateProduct(id, productData);
+      console.log("=== Backend Response ===", { data, error });
 
       if (error) {
         throw new Error(error.message || "Failed to update product");
@@ -252,20 +352,15 @@ const ProductEditPage = () => {
         style: { background: "linear-gradient(to right, #00b09b, #96c93d)" },
       }).showToast();
 
-      console.log("Product updated:", data);
       setSuccess("Product updated successfully!");
-      
-      // Redirect after success
+
       setTimeout(() => {
         router.push("/productmanage");
       }, 2000);
-
     } catch (err) {
       console.log("Error updating product:", err);
       const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to update product. Please try again.";
+        err.message || "Failed to update product. Please try again.";
       setError(errorMessage);
 
       Toastify({
@@ -283,7 +378,10 @@ const ProductEditPage = () => {
 
   const handleCancel = () => {
     // Clean up all blob URLs
-    imagePreviews.forEach((url) => {
+    if (mainImagePreview && isBlobUrl(mainImagePreview)) {
+      URL.revokeObjectURL(mainImagePreview);
+    }
+    coverImagePreviews.forEach((url) => {
       if (url && isBlobUrl(url)) {
         URL.revokeObjectURL(url);
       }
@@ -294,13 +392,16 @@ const ProductEditPage = () => {
   // Clean up object URLs on component unmount
   useEffect(() => {
     return () => {
-      imagePreviews.forEach((url) => {
+      if (mainImagePreview && isBlobUrl(mainImagePreview)) {
+        URL.revokeObjectURL(mainImagePreview);
+      }
+      coverImagePreviews.forEach((url) => {
         if (url && isBlobUrl(url)) {
           URL.revokeObjectURL(url);
         }
       });
     };
-  }, [imagePreviews]);
+  }, [mainImagePreview, coverImagePreviews]);
 
   if (loading && !formData.name) {
     return (
@@ -321,9 +422,7 @@ const ProductEditPage = () => {
           <DashboardBreadcrumb text="Update product information and details" />
           <div className="mt-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Edit Product
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
               <p className="mt-1 text-sm text-gray-600">
                 Update your product details, pricing, and inventory information
               </p>
@@ -393,6 +492,22 @@ const ProductEditPage = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Product Name - Required */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Product Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Enter product name"
+                    required
+                  />
+                </div>
+
                 {/* SKU */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -408,67 +523,33 @@ const ProductEditPage = () => {
                   />
                 </div>
 
-                {/* Name */}
+                {/* Serial Number */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Product Name <span className="text-red-500">*</span>
+                    Serial Number
                   </label>
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="serialNumber"
+                    value={formData.serialNumber}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Enter product name"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* New Fields: Model, Collection, Type */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Model */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Model
-                  </label>
-                  <input
-                    type="text"
-                    name="model"
-                    value={formData.model}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Product model"
+                    placeholder="Serial number"
                   />
                 </div>
 
-                {/* Collection */}
+                {/* Reference Number */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Collection
+                    Reference Number
                   </label>
                   <input
                     type="text"
-                    name="collection"
-                    value={formData.collection}
+                    name="RefenceNumber"
+                    value={formData.RefenceNumber}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Product collection"
-                  />
-                </div>
-
-                {/* Type */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Type
-                  </label>
-                  <input
-                    type="text"
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Product type"
+                    placeholder="Reference number"
                   />
                 </div>
               </div>
@@ -494,10 +575,10 @@ const ProductEditPage = () => {
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                      <Image 
-                        src={newSymbole} 
-                        alt="Currency" 
-                        width={16} 
+                      <Image
+                        src={newSymbole}
+                        alt="Currency"
+                        width={16}
                         height={16}
                         className="w-4 h-4"
                       />
@@ -523,10 +604,10 @@ const ProductEditPage = () => {
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                      <Image 
-                        src={newSymbole} 
-                        alt="Currency" 
-                        width={16} 
+                      <Image
+                        src={newSymbole}
+                        alt="Currency"
+                        width={16}
                         height={16}
                         className="w-4 h-4"
                       />
@@ -542,6 +623,23 @@ const ProductEditPage = () => {
                       step="0.01"
                     />
                   </div>
+                </div>
+
+                {/* Discount */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="discount"
+                    value={formData.discount}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="0"
+                    min="0"
+                    max="100"
+                  />
                 </div>
 
                 {/* Stock Quantity */}
@@ -571,8 +669,8 @@ const ProductEditPage = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
-                    <option value="">Select Tax Status</option>
                     <option value="taxable">Taxable</option>
+                    <option value="shipping">Shipping</option>
                     <option value="none">None</option>
                   </select>
                 </div>
@@ -592,6 +690,25 @@ const ProductEditPage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Collection */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Collection
+                  </label>
+                  <select
+                    name="collection"
+                    value={formData.collection}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    {collections.map((collection) => (
+                      <option key={collection} value={collection}>
+                        {collection}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Case Diameter */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -600,8 +717,8 @@ const ProductEditPage = () => {
                   <div className="relative">
                     <input
                       type="number"
-                      name="caseDiameter"
-                      value={formData.caseDiameter}
+                      name="CaseDiameter"
+                      value={formData.CaseDiameter}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       placeholder="e.g., 42"
@@ -620,17 +737,17 @@ const ProductEditPage = () => {
                     Movement Type
                   </label>
                   <select
-                    name="movement"
-                    value={formData.movement}
+                    name="Movement"
+                    value={formData.Movement}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
                     <option value="">Select Movement</option>
-                    <option value="automatic">Automatic</option>
-                    <option value="quartz">Quartz</option>
-                    <option value="manual">Manual</option>
-                    <option value="solar">Solar</option>
-                    <option value="kinetic">Kinetic</option>
+                    {movements.map((movement) => (
+                      <option key={movement} value={movement}>
+                        {movement.charAt(0).toUpperCase() + movement.slice(1)}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -641,8 +758,8 @@ const ProductEditPage = () => {
                   </label>
                   <input
                     type="text"
-                    name="dial"
-                    value={formData.dial}
+                    name="Dial"
+                    value={formData.Dial}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="e.g., Black, Blue, Silver"
@@ -657,8 +774,8 @@ const ProductEditPage = () => {
                   <div className="relative">
                     <input
                       type="number"
-                      name="wristSize"
-                      value={formData.wristSize}
+                      name="WristSize"
+                      value={formData.WristSize}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       placeholder="e.g., 7.5"
@@ -677,18 +794,23 @@ const ProductEditPage = () => {
                     Condition
                   </label>
                   <select
-                    name="condition"
-                    value={formData.condition}
+                    name="Condition"
+                    value={formData.Condition}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
                     <option value="">Select Condition</option>
-                    <option value="new">New</option>
-                    <option value="like-new">Like New</option>
-                    <option value="excellent">Excellent</option>
-                    <option value="very-good">Very Good</option>
-                    <option value="good">Good</option>
-                    <option value="fair">Fair</option>
+                    {conditions.map((condition) => (
+                      <option key={condition} value={condition}>
+                        {condition
+                          .split("-")
+                          .map(
+                            (word) =>
+                              word.charAt(0).toUpperCase() + word.slice(1)
+                          )
+                          .join(" ")}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -698,34 +820,29 @@ const ProductEditPage = () => {
                     Production Year
                   </label>
                   <input
-                    type="number"
-                    name="productionYear"
-                    value={formData.productionYear}
+                    name="ProductionYear"
+                    value={formData.ProductionYear}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="e.g., 2023"
                     min="1900"
-                    max={new Date().getFullYear()}
                   />
                 </div>
-              </div>
 
-              {/* Accessories */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Accessories Included
-                </label>
-                <textarea
-                  name="accessories"
-                  value={formData.accessories}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
-                  placeholder="e.g., Original box, warranty card, extra links, manual..."
-                  rows={3}
-                />
-                <p className="text-xs text-gray-500">
-                  List all accessories included with the product
-                </p>
+                {/* Accessories */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Accessories Included
+                  </label>
+                  <input
+                    type="text"
+                    name="Accessories"
+                    value={formData.Accessories}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="e.g., Original box, warranty card"
+                  />
+                </div>
               </div>
             </div>
 
@@ -753,25 +870,30 @@ const ProductEditPage = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
-                    <option value="">Select Gender</option>
-                    <option value="men">Male/Unisex</option>
-                    <option value="women">Female</option>
+                    <option value="men/unisex">Male/Unisex</option>
+                    <option value="women">Women</option>
                   </select>
                 </div>
 
-                {/* Category */}
+                {/* Category - Required */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Category
+                    Category <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    name="categorisOne"
-                    value={formData.categorisOne}
+                  <select
+                    name="categories"
+                    value={formData.categories}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Main category"
-                  />
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Subcategory */}
@@ -779,14 +901,19 @@ const ProductEditPage = () => {
                   <label className="block text-sm font-medium text-gray-700">
                     Subcategory
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="subcategory"
                     value={formData.subcategory}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Subcategory"
-                  />
+                  >
+                    <option value="">Select Subcategory</option>
+                    {subcategories.map((subcategory) => (
+                      <option key={subcategory} value={subcategory}>
+                        {subcategory}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -831,75 +958,34 @@ const ProductEditPage = () => {
                   Media
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Product images (first image will be considered as main image)
+                  Product images - main image is required
                 </p>
               </div>
 
               <div className="space-y-6">
-                {/* Image Previews */}
-                {imagePreviews.length > 0 && (
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Selected Images ({imagePreviews.length})
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {imagePreviews.map((preview, index) => (
-                        <div key={index} className="relative group">
-                          <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
-                            <Image
-                              src={preview}
-                              alt={`Product image ${index + 1}`}
-                              width={200}
-                              height={200}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-                          >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                          {index === 0 && (
-                            <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                              Main
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* File Upload */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors duration-200">
-                  <input
-                    type="file"
-                    name="images"
-                    onChange={handleChange}
-                    multiple
-                    className="hidden"
-                    id="images"
-                    accept="image/*"
-                  />
-                  <label htmlFor="images" className="cursor-pointer">
-                    <div className="flex flex-col items-center justify-center gap-4">
-                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                {/* Main Image Upload */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Main Image <span className="text-red-500">*</span>
+                  </label>
+                  {mainImagePreview ? (
+                    <div className="relative inline-block">
+                      <div className="w-48 h-48 rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
+                        <Image
+                          src={mainImagePreview}
+                          alt="Main product image"
+                          width={200}
+                          height={200}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeMainImage}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200"
+                      >
                         <svg
-                          className="w-8 h-8 text-blue-600"
+                          className="w-3 h-3"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -908,32 +994,147 @@ const ProductEditPage = () => {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            d="M6 18L18 6M6 6l12 12"
                           />
                         </svg>
-                      </div>
-                      <div>
-                        <span className="text-lg font-medium text-gray-700">
-                          Click to upload images
-                        </span>
-                        <p className="text-sm text-gray-500 mt-2">
-                          Upload product images. First image will be used as
-                          main image.
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          PNG, JPG, WEBP up to 5MB each
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Multiple files allowed
-                        </p>
-                      </div>
-                      {imagePreviews.length > 0 && (
-                        <p className="text-sm text-green-600 font-medium">
-                          {imagePreviews.length} image(s) selected
-                        </p>
-                      )}
+                      </button>
                     </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200 max-w-md">
+                      <input
+                        type="file"
+                        name="mainImage"
+                        onChange={handleChange}
+                        className="hidden"
+                        id="mainImage"
+                        accept="image/*"
+                      />
+                      <label htmlFor="mainImage" className="cursor-pointer">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg
+                              className="w-6 h-6 text-blue-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium text-gray-700">
+                            Upload Main Image
+                          </span>
+                          <p className="text-xs text-gray-500">
+                            This will be the primary product image
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cover Images Upload */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Additional Images (up to 5)
                   </label>
+
+                  {/* Cover Image Previews */}
+                  {coverImagePreviews.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {coverImagePreviews.map((preview, index) => (
+                          <div key={index} className="relative group">
+                            <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
+                              <Image
+                                src={preview}
+                                alt={`Cover image ${index + 1}`}
+                                width={200}
+                                height={200}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeCoverImage(index)}
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cover Images File Upload */}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
+                    <input
+                      type="file"
+                      name="coverImages"
+                      onChange={handleChange}
+                      multiple
+                      className="hidden"
+                      id="coverImages"
+                      accept="image/*"
+                    />
+                    <label htmlFor="coverImages" className="cursor-pointer">
+                      <div className="flex flex-col items-center justify-center gap-4">
+                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                          <svg
+                            className="w-8 h-8 text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                        </div>
+                        <div>
+                          <span className="text-lg font-medium text-gray-700">
+                            Click to upload additional images
+                          </span>
+                          <p className="text-sm text-gray-500 mt-2">
+                            Upload product gallery images
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            PNG, JPG, WEBP up to 5MB each
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Multiple files allowed (max 5)
+                          </p>
+                        </div>
+                        {coverImagePreviews.length > 0 && (
+                          <p className="text-sm text-green-600 font-medium">
+                            {coverImagePreviews.length} additional image(s)
+                            selected
+                          </p>
+                        )}
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -954,7 +1155,7 @@ const ProductEditPage = () => {
                 {/* Full Description */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Full Description <span className="text-red-500">*</span>
+                    Full Description
                   </label>
                   <textarea
                     name="description"
@@ -963,7 +1164,6 @@ const ProductEditPage = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
                     placeholder="Detailed product description..."
                     rows={6}
-                    required
                   />
                 </div>
               </div>
