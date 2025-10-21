@@ -730,9 +730,8 @@ const AddProduct = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
-                    <option value="unisex">Unisex</option>
-                    <option value="men">Male</option>
-                    <option value="women">Female</option>
+                    <option value="men/unisex">Male/Unisex</option>
+                    <option value="women">Women</option>
                   </select>
                 </div>
 
