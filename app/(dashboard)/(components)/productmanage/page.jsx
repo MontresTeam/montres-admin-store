@@ -66,8 +66,9 @@ const ProductManagement = () => {
 
   // Helper function to get category name
   const getCategoryName = (product) => {
-    return product.categories || product.category || product.subcategory || "Uncategorized";
+    return product.watchType || product.watchType ||  "Uncategorized";
   };
+
 
   // Helper function to check if product matches search term
   const productMatchesSearch = (product, searchTerm) => {
