@@ -59,15 +59,16 @@ const ProductManagement = () => {
     setLoading(false);
   };
 
-  // Helper function to safely convert to string and lowercase
+
   const safeToLowerCase = (value) => {
     return String(value || '').toLowerCase();
   };
 
   // Helper function to get category name
   const getCategoryName = (product) => {
-    return product.categories || product.category || product.subcategory || "Uncategorized";
+    return product.watchType || product.watchType ||  "Uncategorized";
   };
+
 
   // Helper function to check if product matches search term
   const productMatchesSearch = (product, searchTerm) => {
@@ -580,7 +581,7 @@ const ProductManagement = () => {
                           <div>
                             <span className="font-medium text-gray-900 block">{product.name}</span>
                             <span className="text-sm text-gray-500">
-                              SKU: {product.sku || "N/A"}
+                              SKU: {product.sku}
                             </span>
                           </div>
                         </div>
