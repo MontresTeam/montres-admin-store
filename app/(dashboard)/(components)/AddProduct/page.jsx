@@ -137,7 +137,7 @@ const AddProduct = () => {
   ];
  
   const DIALNUMERALS = [
-  "Arabic Numerals" ,"Roman Numerals","No Numerals","Lines","Gemstone"
+  "Arabic Numerals" ,"Roman Numerals","No Numerals","Lines","Gemstone" ,"Dot/round marker"
 ]
 
   const conditions = [

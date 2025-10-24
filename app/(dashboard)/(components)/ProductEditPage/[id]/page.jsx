@@ -201,6 +201,7 @@ const ProductEditPage = () => {
     "No Numerals",
     "Lines",
     "Gemstone",
+    "Dot/round marker"
   ];
 
   const taxStatusOptions = [
