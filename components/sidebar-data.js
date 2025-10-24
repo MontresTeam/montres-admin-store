@@ -1,13 +1,9 @@
 import {
-  Boxes,
-  CalendarDays,
-  ChartPie,
+  ClipboardList,
   Component,
   House,
   Mail,
-  MessageCircleMore,
-  Server,
-  Settings,
+  Truck,
   ShieldCheck,
   ShoppingBasket,
   MessageSquare,
@@ -42,14 +38,14 @@ export const data = {
       icon: Mail,
     },
     {
-      title: "Chat",
-      url: "/notfound",
-      icon: MessageCircleMore,
+      title: "Delivery Managment",
+      url: "/DeliveryManagement",
+      icon: Truck,
     },
     {
-      title: "Calendar",
-      url: "/notfound",
-      icon: CalendarDays,
+      title: "Order Managment",
+      url: "/orderManagment",
+      icon: ClipboardList,
     },
 
     {

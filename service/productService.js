@@ -44,7 +44,7 @@ export async function fetchProduct({
 }
 
 // ✅ Add Product
-// ✅ Add Product
+
 export async function addProduct(formData) {
   try {
     // formData should be a FormData object (because of image upload)
@@ -78,6 +78,29 @@ export async function deleteProduct(id) {
     return { data: response.data, error: null };
   } catch (error) {
     console.error("❌ deleteProduct error:", error);
+    return { data: null, error };
+  }
+}
+
+
+// ✅ Get all customer orders
+export async function getOrders() {
+  try {
+    const response = await api.get(`/admin/order/`);
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error("❌ getOrders error:", error);
+    return { data: null, error };
+  }
+}
+
+// ✅ Get a single order by ID
+export async function getOrderById(orderId) {
+  try {
+    const response = await api.get(`/admin/order/${orderId}`);
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error("❌ getOrderById error:", error);
     return { data: null, error };
   }
 }

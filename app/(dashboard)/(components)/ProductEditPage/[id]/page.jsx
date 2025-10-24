@@ -28,7 +28,7 @@ const ProductEditPage = () => {
     model: "",
     referenceNumber: "",
     serialNumber: "",
-    sku:"",
+    sku: "",
     additionalTitle: "",
     watchType: "",
     scopeOfDelivery: "",
@@ -86,6 +86,11 @@ const ProductEditPage = () => {
     seoTitle: "",
     seoDescription: "",
     seoKeywords: "",
+
+    // Core Product Info
+    published: true,
+    featured: false,
+    inStock: true,
   });
 
   // Options data (same as AddProduct)
@@ -242,7 +247,7 @@ const ProductEditPage = () => {
           brand: product.brand || "",
           model: product.model || "",
           referenceNumber: product.referenceNumber || "",
-          sku:product.sku || "",
+          sku: product.sku || "",
           serialNumber: product.serialNumber || "",
           additionalTitle: product.additionalTitle || "",
           watchType: product.watchType || "",
@@ -301,6 +306,11 @@ const ProductEditPage = () => {
           seoTitle: product.seoTitle || "",
           seoDescription: product.seoDescription || "",
           seoKeywords: product.seoKeywords || "",
+
+          // Core Product Info
+          published: product.published !== undefined ? product.published : true,
+          featured: product.featured || false,
+          inStock: product.inStock !== undefined ? product.inStock : true,
         });
 
         // Handle existing images
@@ -308,16 +318,16 @@ const ProductEditPage = () => {
           const productImages = product.images;
           setExistingImages(productImages);
 
-          // Set main image (first image as main)
-          if (productImages.length > 0) {
-            setMainImagePreview(getImageUrl(productImages[0]));
+          // Find main image (type: "main") or use first image as main
+          const mainImg = productImages.find(img => img.type === "main") || productImages[0];
+          if (mainImg) {
+            setMainImagePreview(getImageUrl(mainImg));
           }
 
-          // Set cover images (rest of the images)
-          if (productImages.length > 1) {
-            const coverPreviews = productImages
-              .slice(1)
-              .map((img) => getImageUrl(img));
+          // Find cover images (type: "cover") or use remaining images as covers
+          const coverImgs = productImages.filter(img => img !== mainImg);
+          if (coverImgs.length > 0) {
+            const coverPreviews = coverImgs.map((img) => getImageUrl(img));
             setCoverImagePreviews(coverPreviews);
           }
         }
@@ -451,16 +461,9 @@ const ProductEditPage = () => {
         }
       });
 
-      // Set default values for required backend fields
-      productData.append("published", "true");
-      productData.append("featured", "false");
-      productData.append("inStock", "true");
-
-      // Handle image uploads
+      // Handle image uploads - CORRECTED LOGIC
       if (mainImage) {
         productData.append("main", mainImage);
-      } else if (mainImagePreview && !isBlobUrl(mainImagePreview)) {
-        productData.append("existingMainImage", mainImagePreview);
       }
 
       // New cover images
@@ -470,23 +473,12 @@ const ProductEditPage = () => {
         });
       }
 
-      // Existing cover images
-      if (existingImages.length > 1) {
-        const existingCovers = existingImages
-          .slice(1)
-          .map((img) => getImageUrl(img))
-          .filter((url) => url && !isBlobUrl(url));
-
-        existingCovers.forEach((url) => {
-          productData.append("existingCovers", url);
-        });
-      }
-
-      // Add flags for image preservation
+      // If no new images are being uploaded, preserve existing images
       if (!mainImage && coverImages.length === 0) {
         productData.append("preserveExistingImages", "true");
       }
 
+      console.log("Submitting form data...");
       const { data, error } = await updateProduct(id, productData);
       console.log("=== Backend Response ===", { data, error });
 
@@ -690,7 +682,7 @@ const ProductEditPage = () => {
                   />
                 </div>
 
-                  {/* sku */}
+                {/* SKU */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     SKU
@@ -701,7 +693,7 @@ const ProductEditPage = () => {
                     value={formData.sku}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="uniqe code"
+                    placeholder="Unique code"
                   />
                 </div>
 
