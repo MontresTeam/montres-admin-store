@@ -37,7 +37,7 @@ const AddProduct = () => {
     caseColor: "",
     crystal: "",
     bezelMaterial: "",
-    dialNumerical: "",
+    dialNumerals: "",
     caliber: "",
     powerReserve: "",
     jewels: "",
@@ -124,7 +124,7 @@ const AddProduct = () => {
   ];
 
   const strapMaterials = [
-    "Leather", "Metal Bracelet", "Rubber", "Nylon", "Fabric", "Silicone",
+    "Leather", "Metal Bracelet",  "Gold/Steel", "Gold","Steel","Rubber", "Nylon", "Fabric", "Silicone",
     "Alligator", "Crocodile", "Suede", "Canvas"
   ];
 
@@ -135,6 +135,10 @@ const AddProduct = () => {
   const bezelMaterials = [
     "Stainless Steel", "Ceramic", "Aluminum", "Gold", "Titanium", "Carbon Fiber"
   ];
+ 
+  const DIALNUMERALS = [
+  "Arabic Numerals" ,"Roman Numerals","No Numerals","Lines","Gemstone"
+]
 
   const conditions = [
     "New",
@@ -379,7 +383,7 @@ const AddProduct = () => {
       caseColor: "",
       crystal: "",
       bezelMaterial: "",
-      dialNumerical: "",
+      dialNumerals: "",
       caliber: "",
       powerReserve: "",
       jewels: "",
@@ -634,7 +638,7 @@ const AddProduct = () => {
                     Year of Production
                   </label>
                   <input
-                    type="number"
+                     type="text"
                     name="productionYear"
                     value={formData.productionYear}
                     onChange={handleChange}
@@ -905,19 +909,25 @@ const AddProduct = () => {
                     </select>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Dial Numerical
-                    </label>
-                    <input
-                      type="text"
-                      name="dialNumerical"
-                      value={formData.dialNumerical}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., Roman, Arabic, Index"
-                    />
-                  </div>
+                 <div className="space-y-2">
+  <label className="block text-sm font-medium text-gray-700">
+    Dial Numerals
+  </label>
+  <select
+    name="dialNumerals"
+    value={formData.dialNumerals}
+    onChange={handleChange}
+    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+  >
+    <option value="">Select Dial Numerals</option>
+    {DIALNUMERALS.map((numeral) => (
+      <option key={numeral} value={numeral}>
+        {numeral}
+      </option>
+    ))}
+  </select>
+</div>
+
                 </div>
 
                 {/* Movement Details */}

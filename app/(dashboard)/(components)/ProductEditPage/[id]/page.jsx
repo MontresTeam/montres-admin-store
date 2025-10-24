@@ -99,99 +99,182 @@ const ProductEditPage = () => {
     "Watch with original box",
     "Watch with original papers",
     "Watch with original box and original papers",
-    "Montres safe box"
+    "Montres safe box",
   ];
 
   const watchTypes = [
     "Luxury watch",
-    "Classic watch", 
+    "Classic watch",
     "Sports watch",
     "Vintage watch",
     "Dress watch",
     "Diver's watch",
     "Pilot watch",
     "Racing watch",
-    "Smartwatch"
+    "Smartwatch",
   ];
 
   const genders = ["Men/Unisex", "Women"];
-  
+
   const movements = [
     "Automatic",
     "Quartz",
     "Manual",
     "Solar",
     "Kinetic",
-    "Mechanical"
+    "Mechanical",
   ];
 
   const colors = [
-    "Black", "White", "Silver", "Gold", "Rose Gold", "Blue", "Green", "Red",
-    "Brown", "Gray", "Yellow", "Orange", "Purple", "Pink", "Champagne"
+    "Black",
+    "White",
+    "Silver",
+    "Gold",
+    "Rose Gold",
+    "Blue",
+    "Green",
+    "Red",
+    "Brown",
+    "Gray",
+    "Yellow",
+    "Orange",
+    "Purple",
+    "Pink",
+    "Champagne",
   ];
 
   const materials = [
-    "Stainless Steel", "Gold/Steel", "Gold","Steel","Rose Gold", "Platinum", "Titanium", "Ceramic",
-    "Carbon Fiber", "Brass", "Bronze", "Aluminum"
+    "Stainless Steel",
+    "Gold/Steel",
+    "Gold",
+    "Steel",
+    "Rose Gold",
+    "Platinum",
+    "Titanium",
+    "Ceramic",
+    "Carbon Fiber",
+    "Brass",
+    "Bronze",
+    "Aluminum",
   ];
-
 
   const strapMaterials = [
-    "Leather", "Metal Bracelet", "Rubber", "Nylon", "Fabric", "Silicone",
-    "Alligator", "Crocodile", "Suede", "Canvas"
+    "Leather",
+    "Metal Bracelet",
+    "Gold/Steel",
+    "Gold",
+    "Steel",
+    "Rubber",
+    "Nylon",
+    "Fabric",
+    "Silicone",
+    "Alligator",
+    "Crocodile",
+    "Suede",
+    "Canvas",
   ];
 
-  const crystals = [
-    "Sapphire", "Mineral", "Acrylic", "Hardlex", "Plexiglass"
-  ];
+  const crystals = ["Sapphire", "Mineral", "Acrylic", "Hardlex", "Plexiglass"];
 
   const bezelMaterials = [
-    "Stainless Steel", "Ceramic", "Aluminum", "Gold", "Titanium", "Carbon Fiber"
+    "Stainless Steel",
+    "Ceramic",
+    "Aluminum",
+    "Gold",
+    "Titanium",
+    "Carbon Fiber",
   ];
 
   const conditions = [
     "New",
     "Like New",
     "Excellent",
-    "Very Good", 
+    "Very Good",
     "Good",
     "Fair",
-    "Poor"
+    "Poor",
+  ];
+
+  const DIALNUMERALS = [
+    "Arabic Numerals",
+    "Roman Numerals",
+    "No Numerals",
+    "Lines",
+    "Gemstone",
   ];
 
   const taxStatusOptions = [
     { value: "taxable", label: "Taxable" },
     { value: "shipping", label: "Shipping" },
-    { value: "none", label: "None" }
+    { value: "none", label: "None" },
   ];
 
   // Functions from the images
   const functionCategories = {
     "Functions Set 1": [
-      "Search", "Our suggestion", "Date Suggestion", "Moon phase", "Minute repeater",
-      "Chronograph", "Double chronograph", "Flyback", "Panorama date", "Chiming clock",
-      "Repeater", "Tourbillon", "Weekday", "Month", "Year", "Annual calendar",
-      "4-year calendar", "Perpetual calendar"
+      "Search",
+      "Our suggestion",
+      "Date Suggestion",
+      "Moon phase",
+      "Minute repeater",
+      "Chronograph",
+      "Double chronograph",
+      "Flyback",
+      "Panorama date",
+      "Chiming clock",
+      "Repeater",
+      "Tourbillon",
+      "Weekday",
+      "Month",
+      "Year",
+      "Annual calendar",
+      "4-year calendar",
+      "Perpetual calendar",
     ],
     "Functions Set 2": [
-      "Continuous hands", "Tempered blue hands", "Genevian Seal", "Chronometer",
-      "Power Reserve Display", "Rotating Bezel", "Limited Edition", "Crown Left",
-      "Screw-Down Crown", "Helium Valve", "Quick Set", "Screw-Down Push-Buttons",
-      "Only Original Parts", "Luminous indices", "PVD/DLC coating", "World time watch",
-      "Master Chronometer", "Smartwatch"
+      "Continuous hands",
+      "Tempered blue hands",
+      "Genevian Seal",
+      "Chronometer",
+      "Power Reserve Display",
+      "Rotating Bezel",
+      "Limited Edition",
+      "Crown Left",
+      "Screw-Down Crown",
+      "Helium Valve",
+      "Quick Set",
+      "Screw-Down Push-Buttons",
+      "Only Original Parts",
+      "Luminous indices",
+      "PVD/DLC coating",
+      "World time watch",
+      "Master Chronometer",
+      "Smartwatch",
     ],
-    "Functions Set 3": [
-      "Solar watch", "One-hand watches", "Vintage"
-    ],
+    "Functions Set 3": ["Solar watch", "One-hand watches", "Vintage"],
     "Functions Set 4": [
-      "Alarm", "GMT", "Equation of time", "Jumping hour", "Tachymeter"
-    ]
+      "Alarm",
+      "GMT",
+      "Equation of time",
+      "Jumping hour",
+      "Tachymeter",
+    ],
   };
 
   const replacementParts = [
-    "Dial", "Crown", "Clasp", "Leather strap", "Bezel", "Hands", "Pusher",
-    "Crystal", "Coating", "Diamond finishing", "Metal bracelet", "Case back",
-    "Movement replacement parts"
+    "Dial",
+    "Crown",
+    "Clasp",
+    "Leather strap",
+    "Bezel",
+    "Hands",
+    "Pusher",
+    "Crystal",
+    "Coating",
+    "Diamond finishing",
+    "Metal bracelet",
+    "Case back",
+    "Movement replacement parts",
   ];
 
   // Helper function to get URL from image object or string
@@ -212,23 +295,23 @@ const ProductEditPage = () => {
     if (formData.regularPrice && formData.salePrice) {
       const regular = parseFloat(formData.regularPrice);
       const sale = parseFloat(formData.salePrice);
-      
+
       if (regular > 0 && sale < regular) {
         const discountPercentage = ((regular - sale) / regular) * 100;
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          discount: discountPercentage.toFixed(2)
+          discount: discountPercentage.toFixed(2),
         }));
       } else {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          discount: "0"
+          discount: "0",
         }));
       }
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        discount: "0"
+        discount: "0",
       }));
     }
   }, [formData.regularPrice, formData.salePrice]);
@@ -272,7 +355,7 @@ const ProductEditPage = () => {
           caseColor: product.caseColor || "",
           crystal: product.crystal || "",
           bezelMaterial: product.bezelMaterial || "",
-          dialNumerical: product.dialNumerical || "",
+          dialNumerals: product.dialNumerals || "",
           caliber: product.caliber || "",
           powerReserve: product.powerReserve || "",
           jewels: product.jewels || "",
@@ -282,7 +365,9 @@ const ProductEditPage = () => {
 
           // Condition
           condition: product.condition || "",
-          replacementParts: Array.isArray(product.replacementParts) ? product.replacementParts : [],
+          replacementParts: Array.isArray(product.replacementParts)
+            ? product.replacementParts
+            : [],
 
           // Pricing & Inventory
           regularPrice: product.regularPrice || "",
@@ -301,7 +386,9 @@ const ProductEditPage = () => {
           visibility: product.visibility || "visible",
 
           // Tags
-          tags: Array.isArray(product.tags) ? product.tags.join(", ") : product.tags || "",
+          tags: Array.isArray(product.tags)
+            ? product.tags.join(", ")
+            : product.tags || "",
 
           // SEO Fields
           seoTitle: product.seoTitle || "",
@@ -320,13 +407,15 @@ const ProductEditPage = () => {
           setExistingImages(productImages);
 
           // Find main image (type: "main") or use first image as main
-          const mainImg = productImages.find(img => img.type === "main") || productImages[0];
+          const mainImg =
+            productImages.find((img) => img.type === "main") ||
+            productImages[0];
           if (mainImg) {
             setMainImagePreview(getImageUrl(mainImg));
           }
 
           // Find cover images (type: "cover") or use remaining images as covers
-          const coverImgs = productImages.filter(img => img !== mainImg);
+          const coverImgs = productImages.filter((img) => img !== mainImg);
           if (coverImgs.length > 0) {
             const coverPreviews = coverImgs.map((img) => getImageUrl(img));
             setCoverImagePreviews(coverPreviews);
@@ -353,39 +442,36 @@ const ProductEditPage = () => {
 
     if (type === "checkbox") {
       if (name === "approximateYear" || name === "unknownYear") {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          [name]: checked
+          [name]: checked,
         }));
       } else if (name === "functions") {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          functions: checked 
+          functions: checked
             ? [...prev.functions, value]
-            : prev.functions.filter(item => item !== value)
+            : prev.functions.filter((item) => item !== value),
         }));
       } else if (name === "replacementParts") {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          replacementParts: checked 
+          replacementParts: checked
             ? [...prev.replacementParts, value]
-            : prev.replacementParts.filter(item => item !== value)
+            : prev.replacementParts.filter((item) => item !== value),
         }));
       }
-    } 
-    else if (name === "mainImage" && files && files.length > 0) {
+    } else if (name === "mainImage" && files && files.length > 0) {
       const file = files[0];
       setMainImage(file);
       setMainImagePreview(URL.createObjectURL(file));
-    } 
-    else if (name === "coverImages" && files && files.length > 0) {
+    } else if (name === "coverImages" && files && files.length > 0) {
       const newImages = Array.from(files);
       const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
 
       setCoverImages((prev) => [...prev, ...newImages]);
       setCoverImagePreviews((prev) => [...prev, ...newPreviewUrls]);
-    } 
-    else {
+    } else {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -433,14 +519,23 @@ const ProductEditPage = () => {
       // Append all basic fields
       Object.keys(formData).forEach((key) => {
         const value = formData[key];
-        
+
         if (value !== "" && value !== null && value !== undefined) {
           // Handle array fields
           if (Array.isArray(value)) {
-            value.forEach(item => productData.append(key, item));
+            value.forEach((item) => productData.append(key, item));
           }
           // Handle numeric fields
-          else if (["regularPrice", "salePrice", "discount", "stockQuantity", "powerReserve", "jewels"].includes(key)) {
+          else if (
+            [
+              "regularPrice",
+              "salePrice",
+              "discount",
+              "stockQuantity",
+              "powerReserve",
+              "jewels",
+            ].includes(key)
+          ) {
             const numValue = parseFloat(value) || 0;
             productData.append(key, numValue.toString());
           }
@@ -450,9 +545,12 @@ const ProductEditPage = () => {
           }
           // Handle tags (comma separated)
           else if (key === "tags") {
-            const tagsArray = value.split(",").map(tag => tag.trim()).filter(tag => tag);
+            const tagsArray = value
+              .split(",")
+              .map((tag) => tag.trim())
+              .filter((tag) => tag);
             if (tagsArray.length > 0) {
-              tagsArray.forEach(tag => productData.append(key, tag));
+              tagsArray.forEach((tag) => productData.append(key, tag));
             }
           }
           // Handle all other fields
@@ -804,7 +902,7 @@ const ProductEditPage = () => {
                     Year of Production
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     name="productionYear"
                     value={formData.productionYear}
                     onChange={handleChange}
@@ -960,8 +1058,10 @@ const ProductEditPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Strap Information */}
                 <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
-                  <h3 className="text-sm font-semibold text-gray-900">Strap Information</h3>
-                  
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Strap Information
+                  </h3>
+
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Strap Color
@@ -1000,8 +1100,10 @@ const ProductEditPage = () => {
 
                 {/* Case Information */}
                 <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
-                  <h3 className="text-sm font-semibold text-gray-900">Case Information</h3>
-                  
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Case Information
+                  </h3>
+
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Case Size (mm)
@@ -1077,23 +1179,30 @@ const ProductEditPage = () => {
 
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Dial Numerical
+                      Dial Numerals
                     </label>
-                    <input
-                      type="text"
-                      name="dialNumerical"
-                      value={formData.dialNumerical}
+                    <select
+                      name="dialNumerals"
+                      value={formData.dialNumerals}
                       onChange={handleChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., Roman, Arabic, Index"
-                    />
+                    >
+                      <option value="">Select Dial Numerals</option>
+                      {DIALNUMERALS.map((numeral) => (
+                        <option key={numeral} value={numeral}>
+                          {numeral}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
                 {/* Movement Details */}
                 <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
-                  <h3 className="text-sm font-semibold text-gray-900">Movement Details</h3>
-                  
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Movement Details
+                  </h3>
+
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Caliber
@@ -1154,26 +1263,35 @@ const ProductEditPage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(functionCategories).map(([category, functions]) => (
-                  <div key={category} className="space-y-3">
-                    <h3 className="text-sm font-semibold text-gray-900">{category}</h3>
-                    <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-lg">
-                      {functions.map((func) => (
-                        <div key={func} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            name="functions"
-                            value={func}
-                            checked={formData.functions.includes(func)}
-                            onChange={handleChange}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <label className="text-sm text-gray-700">{func}</label>
-                        </div>
-                      ))}
+                {Object.entries(functionCategories).map(
+                  ([category, functions]) => (
+                    <div key={category} className="space-y-3">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        {category}
+                      </h3>
+                      <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-lg">
+                        {functions.map((func) => (
+                          <div
+                            key={func}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              type="checkbox"
+                              name="functions"
+                              value={func}
+                              checked={formData.functions.includes(func)}
+                              onChange={handleChange}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <label className="text-sm text-gray-700">
+                              {func}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             </div>
 
@@ -1216,8 +1334,9 @@ const ProductEditPage = () => {
                     Replacement Parts & Customization
                   </label>
                   <p className="text-xs text-gray-500 mb-3">
-                    Please indicate which watch components have been replaced or customized.
-                    Replacement parts cannot bear any original manufacturer trademarks or logos.
+                    Please indicate which watch components have been replaced or
+                    customized. Replacement parts cannot bear any original
+                    manufacturer trademarks or logos.
                   </p>
                   <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg">
                     {replacementParts.map((part) => (
@@ -1541,7 +1660,8 @@ const ProductEditPage = () => {
                         </div>
                         {coverImagePreviews.length > 0 && (
                           <p className="text-sm text-green-600 font-medium">
-                            {coverImagePreviews.length} additional image(s) selected
+                            {coverImagePreviews.length} additional image(s)
+                            selected
                           </p>
                         )}
                       </div>
@@ -1579,7 +1699,8 @@ const ProductEditPage = () => {
                     maxLength="60"
                   />
                   <p className="text-xs text-gray-500">
-                    Recommended: 50-60 characters. Current: {formData.seoTitle.length}
+                    Recommended: 50-60 characters. Current:{" "}
+                    {formData.seoTitle.length}
                   </p>
                 </div>
 
@@ -1598,7 +1719,8 @@ const ProductEditPage = () => {
                     maxLength="160"
                   />
                   <p className="text-xs text-gray-500">
-                    Recommended: 150-160 characters. Current: {formData.seoDescription.length}
+                    Recommended: 150-160 characters. Current:{" "}
+                    {formData.seoDescription.length}
                   </p>
                 </div>
 
