@@ -115,7 +115,7 @@ const AddProduct = () => {
 
   const colors = [
     "Black", "White", "Silver", "Gold", "Rose Gold", "Blue", "Green", "Red",
-    "Brown", "Gray", "Yellow", "Orange", "Purple", "Pink", "Champagne"
+    "Brown", "Gray", "Yellow", "Orange", "Purple", "Pink", "Champagne","Gold/Silver",
   ];
 
   const materials = [

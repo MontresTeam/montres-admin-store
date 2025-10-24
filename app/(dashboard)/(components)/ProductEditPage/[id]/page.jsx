@@ -129,6 +129,7 @@ const ProductEditPage = () => {
     "Black",
     "White",
     "Silver",
+    "Gold/Silver",
     "Gold",
     "Rose Gold",
     "Blue",
