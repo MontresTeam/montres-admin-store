@@ -131,9 +131,10 @@ const ProductEditPage = () => {
   ];
 
   const materials = [
-    "Stainless Steel", "Gold", "Rose Gold", "Platinum", "Titanium", "Ceramic",
+    "Stainless Steel", "Gold/Steel", "Gold","Steel","Rose Gold", "Platinum", "Titanium", "Ceramic",
     "Carbon Fiber", "Brass", "Bronze", "Aluminum"
   ];
+
 
   const strapMaterials = [
     "Leather", "Metal Bracelet", "Rubber", "Nylon", "Fabric", "Silicone",
