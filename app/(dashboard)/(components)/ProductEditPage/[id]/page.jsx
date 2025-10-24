@@ -982,7 +982,7 @@ const ProductEditPage = () => {
 
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Strap Size (mm)
+                      Wrist Size (cm)
                     </label>
                     <input
                       type="number"
