@@ -133,7 +133,7 @@ const AddProduct = () => {
   ];
 
   const bezelMaterials = [
-    "Stainless Steel", "Ceramic", "Aluminum", "Gold", "Titanium", "Carbon Fiber"
+    "Stainless Steel", "Ceramic", "Aluminum", "Gold", "Titanium", "Carbon Fiber","Gold Plated"
   ];
  
   const DIALNUMERALS = [

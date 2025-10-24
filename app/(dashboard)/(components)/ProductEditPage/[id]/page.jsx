@@ -184,6 +184,7 @@ const ProductEditPage = () => {
     "Gold",
     "Titanium",
     "Carbon Fiber",
+    "Gold Plated"
   ];
 
   const conditions = [
