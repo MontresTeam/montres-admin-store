@@ -13,7 +13,7 @@ const OrderManagement = () => {
   const [error, setError] = useState(null);
 
   // API base URL
-  const API_BASE_URL = 'https://api.montres.ae/api/admin/order';
+  const API_BASE_URL = 'http://localhost:9000/api/admin/order';
 
   // Fetch all orders
   const fetchOrders = async () => {

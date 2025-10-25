@@ -8,7 +8,6 @@ import {
   ShoppingBasket,
   MessageSquare,
   UsersRound,
-
 } from "lucide-react";
 
 export const data = {
@@ -27,7 +26,7 @@ export const data = {
     },
     {
       title: "User Management",
-      url: "/notfound",
+      url: "/users-list",
       icon: UsersRound,
       isActive: true,
     },
@@ -58,30 +57,6 @@ export const data = {
           title: "Colors",
           url: "/colors",
           circleColor: "bg-yellow-500",
-        },
-      ],
-    },
-
-    {
-      title: "Users",
-      url: "#",
-      icon: UsersRound,
-      isActive: true,
-      items: [
-        {
-          title: "Users List",
-          url: "/users-list",
-          circleColor: "bg-primary",
-        },
-        {
-          title: "Users Grid",
-          url: "/users-grid",
-          circleColor: "bg-yellow-500",
-        },
-        {
-          title: "View Profile",
-          url: "/view-profile",
-          circleColor: "bg-red-600",
         },
       ],
     },
