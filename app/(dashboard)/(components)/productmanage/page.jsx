@@ -66,7 +66,7 @@ const ProductManagement = () => {
 
   // Helper function to get category name
   const getCategoryName = (product) => {
-    return product.watchType || product.watchType ||  "Uncategorized";
+    return product.category || product.category ||  "Uncategorized";
   };
 
 

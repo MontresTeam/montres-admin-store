@@ -33,6 +33,8 @@ const ProductEditPage = () => {
     watchType: "",
     scopeOfDelivery: "",
     includedAccessories: "",
+    category: "", // Change from categories to category
+
 
     // Item Features
     productionYear: "",
@@ -71,8 +73,7 @@ const ProductEditPage = () => {
     stockQuantity: "",
 
     // Category & Classification
-    categories: "",
-    subcategory: "",
+   
     collection: "None",
 
     // Description & Meta
@@ -212,6 +213,16 @@ const ProductEditPage = () => {
     { value: "none", label: "None" },
   ];
 
+    const category = [
+    "Watche",
+    "Jewellery",
+    "Gold",
+    "Accessories",
+    "Home Accessories",
+    "Personal Accessories",
+    "Pens",
+  ];
+
   // Functions from the images
   const functionCategories = {
     "Functions Set 1": [
@@ -340,6 +351,7 @@ const ProductEditPage = () => {
           watchType: product.watchType || "",
           scopeOfDelivery: product.scopeOfDelivery || "",
           includedAccessories: product.includedAccessories || "",
+          category: product.category || "", // Change from categories to category
 
           // Item Features
           productionYear: product.productionYear || "",
@@ -503,65 +515,69 @@ const ProductEditPage = () => {
     setCoverImagePreviews(newPreviews);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  setSuccess("");
 
-    // Validate required fields
-    if (!formData.brand.trim() || !formData.model.trim()) {
-      setError("Brand and Model are required");
-      setLoading(false);
-      return;
-    }
+  // Validate required fields
+  if (!formData.brand.trim() || !formData.model.trim()) {
+    setError("Brand and Model are required");
+    setLoading(false);
+    return;
+  }
 
-    try {
-      const productData = new FormData();
+  try {
+    const productData = new FormData();
 
-      // Append all basic fields
-      Object.keys(formData).forEach((key) => {
-        const value = formData[key];
+    // Append all basic fields
+    Object.keys(formData).forEach((key) => {
+      const value = formData[key];
 
-        if (value !== "" && value !== null && value !== undefined) {
-          // Handle array fields
-          if (Array.isArray(value)) {
-            value.forEach((item) => productData.append(key, item));
-          }
-          // Handle numeric fields
-          else if (
-            [
-              "regularPrice",
-              "salePrice",
-              "discount",
-              "stockQuantity",
-              "powerReserve",
-              "jewels",
-            ].includes(key)
-          ) {
-            const numValue = parseFloat(value) || 0;
-            productData.append(key, numValue.toString());
-          }
-          // Handle boolean fields
-          else if (typeof value === "boolean") {
-            productData.append(key, value.toString());
-          }
-          // Handle tags (comma separated)
-          else if (key === "tags") {
-            const tagsArray = value
-              .split(",")
-              .map((tag) => tag.trim())
-              .filter((tag) => tag);
-            if (tagsArray.length > 0) {
-              tagsArray.forEach((tag) => productData.append(key, tag));
-            }
-          }
-          // Handle all other fields
-          else {
-            productData.append(key, value);
+      if (value !== "" && value !== null && value !== undefined) {
+        // Handle array fields
+        if (Array.isArray(value)) {
+          value.forEach((item) => productData.append(key, item));
+        }
+        // Handle numeric fields
+        else if (
+          [
+            "regularPrice",
+            "salePrice",
+            "discount",
+            "stockQuantity",
+            "powerReserve",
+            "jewels",
+          ].includes(key)
+        ) {
+          const numValue = parseFloat(value) || 0;
+          productData.append(key, numValue.toString());
+        }
+        // Handle boolean fields
+        else if (typeof value === "boolean") {
+          productData.append(key, value.toString());
+        }
+        // Handle tags (comma separated)
+        else if (key === "tags") {
+          const tagsArray = value
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag);
+          if (tagsArray.length > 0) {
+            tagsArray.forEach((tag) => productData.append(key, tag));
           }
         }
-      });
+        // Handle category field specifically
+        else if (key === "category") {
+          productData.append(key, value);
+        }
+        // Handle all other fields
+        else {
+          productData.append(key, value);
+        }
+      }
+    });;
 
       // Handle image uploads - CORRECTED LOGIC
       if (mainImage) {
@@ -882,6 +898,25 @@ const ProductEditPage = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="e.g., Warranty card, manual, etc."
                   />
+                </div>
+                  {/* category */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                   category
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select category</option>
+                    {category.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
