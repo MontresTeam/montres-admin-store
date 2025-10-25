@@ -214,7 +214,7 @@ const ProductEditPage = () => {
   ];
 
     const category = [
-    "Watche",
+    "Watch",
     "Jewellery",
     "Gold",
     "Accessories",

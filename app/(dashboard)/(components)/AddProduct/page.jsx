@@ -103,7 +103,7 @@ const AddProduct = () => {
   ];
 
   const category = [
-    "Watche",
+    "Watch",
     "Jewellery",
     "Gold",
     "Accessories",
