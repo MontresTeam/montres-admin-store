@@ -25,7 +25,7 @@ export default function UserTable() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const response = await axios.get("http://localhost:9000/api/customers/");
+        const response = await axios.get("https://api.montres.ae/api/customers/");
         setCustomers(response.data.customers);
       } catch (err) {
         setError(err.message);
@@ -48,7 +48,7 @@ export default function UserTable() {
 
     setDeletingId(id);
     try {
-      await axios.delete(`http://localhost:9000/api/customers/${id}`);
+      await axios.delete(`https://api.montres.ae/api/customers/${id}`);
       
       // Remove the customer from the local state
       setCustomers(customers.filter(customer => customer._id !== id));

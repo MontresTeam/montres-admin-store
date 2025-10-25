@@ -81,7 +81,7 @@ const AddNewUser = () => {
     setLoading(true);
 
     try {
-      await axios.post("http://localhost:9000/api/customers/", {
+      await axios.post("https://api.montres.ae/api/customers/", {
         ...formData,
         serialNumber: parseInt(formData.serialNumber) // Ensure it's sent as number
       });

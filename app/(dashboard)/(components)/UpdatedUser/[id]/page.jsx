@@ -43,7 +43,7 @@ const UpdatedUser = () => {
     const fetchUser = async () => {
       try {
         setFetchLoading(true);
-        const response = await axios.get(`http://localhost:9000/api/customers/${params.id}`);
+        const response = await axios.get(`https://api.montres.ae/api/customers/${params.id}`);
         
         if (response.data && response.data.customer) {
           const userData = response.data.customer;
@@ -140,7 +140,7 @@ const UpdatedUser = () => {
     setLoading(true);
 
     try {
-      await axios.put(`http://localhost:9000/api/customers/${params.id}`, {
+      await axios.put(`https://api.montres.ae/api/customers/${params.id}`, {
         ...formData,
         serialNumber: parseInt(formData.serialNumber) // Ensure it's sent as number
       });
