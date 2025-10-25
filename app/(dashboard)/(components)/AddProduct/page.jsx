@@ -180,9 +180,10 @@ const AddProduct = () => {
     "Ceramic",
     "Aluminum",
     "Gold",
+    "18k yellowGold",
     "Titanium",
-    "Carbon Fiber",
     "Gold Plated",
+    "Rubber"
   ];
 
   const DIALNUMERALS = [

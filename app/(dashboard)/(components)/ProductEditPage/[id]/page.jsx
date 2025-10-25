@@ -183,9 +183,10 @@ const ProductEditPage = () => {
     "Ceramic",
     "Aluminum",
     "Gold",
+    "18k yellowGold",
     "Titanium",
-    "Carbon Fiber",
-    "Gold Plated"
+    "Gold Plated",
+    "Rubber"
   ];
 
   const conditions = [
