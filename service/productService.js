@@ -48,7 +48,7 @@ export async function fetchProduct({
 export async function addProduct(formData) {
   try {
     // formData should be a FormData object (because of image upload)
-    const response = await api.post("/admin/product", formData, {
+    const response = await api.post("/admin/product/add", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

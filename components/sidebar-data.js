@@ -1,6 +1,6 @@
 import {
   ClipboardList,
-  Component,
+  Star,
   House,
   Mail,
   Truck,
@@ -48,18 +48,11 @@ export const data = {
     },
 
     {
-      title: "Components",
-      url: "#",
-      icon: Component,
-      isActive: true,
-      items: [
-        {
-          title: "Colors",
-          url: "/colors",
-          circleColor: "bg-yellow-500",
-        },
-      ],
-    },
+    title: "Brand New",  // Add as main menu item
+    url: "/BrandNew",
+    icon: Star, // You can use Star, Tag, or any appropriate icon
+    isActive: true,
+  },
 
     {
       title: "Authentication",

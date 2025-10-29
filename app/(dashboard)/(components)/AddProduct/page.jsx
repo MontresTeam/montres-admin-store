@@ -192,7 +192,7 @@ const AddProduct = () => {
     "No Numerals",
     "Lines",
     "Gemstone",
-    "Dot/round marker",
+    "Dot/round marker"
   ];
 
   const conditions = [
