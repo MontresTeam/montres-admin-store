@@ -1262,6 +1262,7 @@ const AddProduct = () => {
                       <Image
                         src={newCurrency}
                         alt="Currency"
+                        unoptimized   // <--- bypasses Vercel
                         width={16}
                         height={16}
                         className="w-4 h-4"
@@ -1342,6 +1343,7 @@ const AddProduct = () => {
                         <Image
                           src={mainImagePreview}
                           alt="Main product image"
+                          unoptimized   // <--- bypasses Vercel
                           width={200}
                           height={200}
                           className="w-full h-full object-cover"
@@ -1434,6 +1436,7 @@ const AddProduct = () => {
                               <Image
                                 src={preview}
                                 alt={`Cover image ${index + 1}`}
+                                unoptimized   // <--- bypasses Vercel
                                 width={200}
                                 height={200}
                                 className="w-full h-full object-cover"
