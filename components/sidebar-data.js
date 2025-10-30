@@ -4,11 +4,12 @@ import {
   House,
   Mail,
   Truck,
-  ShieldCheck,
   ShoppingBasket,
   MessageSquare,
   UsersRound,
 } from "lucide-react";
+
+import { FiDollarSign } from "react-icons/fi"; // Feather Icons
 
 export const data = {
   navMain: [
@@ -48,34 +49,17 @@ export const data = {
     },
 
     {
-    title: "Brand New",  // Add as main menu item
-    url: "/BrandNew",
-    icon: Star, // You can use Star, Tag, or any appropriate icon
-    isActive: true,
-  },
+      title: "Brand New", // Add as main menu item
+      url: "/BrandNew",
+      icon: Star, // You can use Star, Tag, or any appropriate icon
+      isActive: true,
+    },
 
     {
-      title: "Authentication",
-      url: "#",
-      icon: ShieldCheck,
-      isActive: true,
-      items: [
-        {
-          title: "Sign In",
-          url: "/auth/login",
-          circleColor: "bg-primary",
-        },
-        {
-          title: "Sign Up",
-          url: "/auth/register",
-          circleColor: "bg-yellow-500",
-        },
-        {
-          title: "Forgot Password",
-          url: "/auth/forgot-password",
-          circleColor: "bg-cyan-500",
-        },
-      ],
+      title: "Financial Overview",
+      url: "/financial-overview", // or "#" if you don't have a page yet
+      icon: FiDollarSign, // example icon from react-icons/heroicons or your icon set
+      isActive: false, // set true if you want it active by default
     },
 
     {
