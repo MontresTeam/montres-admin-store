@@ -574,6 +574,7 @@ const ProductManagement = () => {
                           <Image
                             src={product.image || "/placeholder.png"}
                             alt={product.name || "Product image"}
+                            unoptimized   // <--- bypasses Vercel
                             width={50}
                             height={50}
                             className="w-12 h-12 object-cover rounded-xl border border-gray-200"
