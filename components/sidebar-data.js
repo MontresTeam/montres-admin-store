@@ -11,8 +11,9 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBasket,
-  StickyNote,
+  MessageSquare,
   UsersRound,
+
 } from "lucide-react";
 
 export const data = {
@@ -21,13 +22,13 @@ export const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: House,
-      isActive: true
+      isActive: true,
     },
     {
       title: "Product Management",
       url: "/productmanage",
-      icon:ShoppingBasket ,
-      isActive: true
+      icon: ShoppingBasket,
+      isActive: true,
     },
     {
       title: "User Management",
@@ -40,9 +41,6 @@ export const data = {
       url: "/homecustomization",
       icon: ImageUpscale,
       isActive: true
-    },
-    {
-     
     },
     {
       title: "Email",
@@ -59,7 +57,7 @@ export const data = {
       url: "/notfound",
       icon: CalendarDays,
     },
-  
+
     {
       title: "Components",
       url: "#",
@@ -71,11 +69,9 @@ export const data = {
           url: "/colors",
           circleColor: "bg-yellow-500",
         },
-        
       ],
     },
-  
-   
+
     {
       title: "Users",
       url: "#",
@@ -99,7 +95,7 @@ export const data = {
         },
       ],
     },
-  
+
     {
       title: "Authentication",
       url: "#",
@@ -123,28 +119,47 @@ export const data = {
         },
       ],
     },
+
     {
-      title: "Setting",
+      title: "Inquiries",
       url: "#",
-      icon: Settings,
-      isActive: true,
+      icon: MessageSquare, // or Mail, or Inbox icon from lucide-react
       items: [
         {
-          title: "Company",
-          url: "/company",
-          circleColor: "bg-primary",
+          title: "Contact Messages",
+          url: "/contact-messages",
+          circleColor: "bg-blue-500",
         },
         {
-          title: "Notification",
-          url: "/settings-notification",
-          circleColor: "bg-yellow-500",
-        },
-        {
-          title: "Notification Alert",
-          url: "/notification-alert",
-          circleColor: "bg-yellow-500",
+          title: "Support Tickets", // optional, if you later add more
+          url: "/support-tickets",
+          circleColor: "bg-green-500",
         },
       ],
     },
+
+    // {
+    //   title: "Setting",
+    //   url: "#",
+    //   icon: Settings,
+    //   isActive: true,
+    //   items: [
+    //     {
+    //       title: "Company",
+    //       url: "/company",
+    //       circleColor: "bg-primary",
+    //     },
+    //     {
+    //       title: "Notification",
+    //       url: "/settings-notification",
+    //       circleColor: "bg-yellow-500",
+    //     },
+    //     {
+    //       title: "Notification Alert",
+    //       url: "/notification-alert",
+    //       circleColor: "bg-yellow-500",
+    //     },
+    //   ],
+    // },
   ],
 };
