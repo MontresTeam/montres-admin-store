@@ -93,3 +93,27 @@ export async function fetchProductAll({ search = "" } = {}) {
     return { data: null, error, isLoading: false };
   }
 }
+
+// Brand New Section - Example Usage
+
+//update this function in brandNew.jsx to use the API
+export const updateBrandNew = async ({ products }) => {
+  try {
+    const res = await api.put('/home/brandnew', { products });
+    return res.data;
+  } catch (error) {
+    console.error("Error updating BrandNew products:", error);
+    throw error;
+  }
+};
+
+// get brand new products
+export const getBrandNew = async () => {
+  try {
+    const res = await api.get('/home/brandnew');
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching BrandNew products:", error);
+    throw error;
+  }
+};
