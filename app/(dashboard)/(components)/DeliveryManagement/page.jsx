@@ -39,7 +39,7 @@ const DeliveryManagement = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:9000/api/admin/order');
+      const response = await axios.get('https://api.montres.ae/api/admin/order');
       setOrders(response.data.orders || []);
       setError(null);
     } catch (err) {
