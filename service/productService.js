@@ -70,7 +70,72 @@ export async function updateProduct(id, updatedData) {
     return { data: null, error };
   }
 }
+// Home Product Grid - Example Usage
+export async function getHomeProductGrid() {
+  try {
+    let endpoint = `home`;
+    // ✅ Add search if provided
+    const response = await api.get(endpoint);
 
+    return { data: response.data, error: null, isLoading: false };
+  } catch (error) {
+    return { data: null, error, isLoading: false };
+  }
+}
+
+export const updateHomeProductGrid = async (categoryId, { title, products }) => {
+  try {
+    const res = await api.put(`/home/updatehomeproduct/${categoryId}`, {
+      title,
+      products,
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error updating home product grid:", error);
+    throw error;
+  }
+};
+
+export async function fetchProductAll({ search = "" } = {}) {
+  try {
+    let endpoint = `productAll`;
+
+    // ✅ Add search if provided
+    if (search) {
+      endpoint += `?search=${encodeURIComponent(search)}`;
+    }
+
+    const response = await api.get(endpoint);
+
+    return { data: response.data, error: null, isLoading: false };
+  } catch (error) {
+    return { data: null, error, isLoading: false };
+  }
+}
+
+// Brand New Section - Example Usage
+
+//update this function in brandNew.jsx to use the API
+export const updateBrandNew = async ({ products }) => {
+  try {
+    const res = await api.put('/home/brandnew', { products });
+    return res.data;
+  } catch (error) {
+    console.error("Error updating BrandNew products:", error);
+    throw error;
+  }
+};
+
+// get brand new products
+export const getBrandNew = async () => {
+  try {
+    const res = await api.get('/home/brandnew');
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching BrandNew products:", error);
+    throw error;
+  }
+};
 // ✅ Delete Product
 export async function deleteProduct(id) {
   try {
@@ -81,6 +146,7 @@ export async function deleteProduct(id) {
     return { data: null, error };
   }
 }
+
 
 
 // ✅ Get all customer orders

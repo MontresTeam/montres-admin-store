@@ -2,6 +2,7 @@ import {
   ClipboardList,
   Star,
   House,
+  ImageUpscale,
   Mail,
   Truck,
   ShoppingBasket,
@@ -29,9 +30,14 @@ export const data = {
       title: "User Management",
       url: "/users-list",
       icon: UsersRound,
-      isActive: true,
+      isActive: true
     },
-    {},
+    {
+      title: "Home Customization",
+      url: "/homecustomization",
+      icon: ImageUpscale,
+      isActive: true
+    },
     {
       title: "Email",
       url: "/notfound",
