@@ -4,6 +4,7 @@ import {
   ChartPie,
   Component,
   House,
+  ImageUpscale,
   Mail,
   MessageCircleMore,
   Server,
@@ -33,9 +34,14 @@ export const data = {
       title: "User Management",
       url: "/notfound",
       icon: UsersRound,
-      isActive: true,
+      isActive: true
     },
-    {},
+    {
+      title: "Home Customization",
+      url: "/homecustomization",
+      icon: ImageUpscale,
+      isActive: true
+    },
     {
       title: "Email",
       url: "/notfound",
