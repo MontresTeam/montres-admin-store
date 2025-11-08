@@ -149,6 +149,7 @@ export async function deleteProduct(id) {
 
 
 
+
 // ✅ Get all customer orders
 export async function getOrders() {
   try {
@@ -170,3 +171,26 @@ export async function getOrderById(orderId) {
     return { data: null, error };
   }
 }
+
+// trusted section -
+
+export const getTrustedProducts = async () => {
+  try {
+    const res = await api.get('/home/trusted');
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching Trusted products:", error);
+    throw error;
+  }
+};
+
+export const updateTrustedProducts = async ({ newArrivals, montresTrusted, replace = false }) => {
+  try {
+    const res = await api.put('/home/updatetrusted', { newArrivals, montresTrusted, replace });
+    return res.data;
+  } catch (error) {
+    console.error("Error updating Trusted products:", error);
+    throw error;
+  }
+};
+

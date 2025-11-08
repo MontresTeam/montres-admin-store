@@ -17,7 +17,6 @@ const HomeGrid = () => {
   const [selectedModalProduct, setSelectedModalProduct] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-
   // ✅ Fetch all products for grid
   useEffect(() => {
     const fetchHomeProducts = async () => {
@@ -44,42 +43,42 @@ const HomeGrid = () => {
 
   // ✅ Save updated product for one slot
   const handleSave = async () => {
-  if (!selectedModalProduct || !editingCategory || editingIndex === null) return;
+    if (!selectedModalProduct || !editingCategory || editingIndex === null)
+      return;
 
-  try {
-    // Step 1️⃣: Build a fresh array of product IDs
-    const updatedProducts = [...editingCategory.products];
+    try {
+      // Step 1️⃣: Build a fresh array of product IDs
+      const updatedProducts = [...editingCategory.products];
 
-    // Replace the product in the slot being edited
-    updatedProducts[editingIndex] = selectedModalProduct;
+      // Replace the product in the slot being edited
+      updatedProducts[editingIndex] = selectedModalProduct;
 
-    // Extract only product IDs for backend
-    const productIds = updatedProducts.map((p) => p?._id || p);
-    console.log("🛠️ Updating product slot:",productIds,editingCategory);
-    // Step 2️⃣: Update backend
-    const res = await updateHomeProductGrid(editingCategory._id, {
-      title: editingCategory.title,
-      products: productIds,
-    });
+      // Extract only product IDs for backend
+      const productIds = updatedProducts.map((p) => p?._id || p);
+      console.log("🛠️ Updating product slot:", productIds, editingCategory);
+      // Step 2️⃣: Update backend
+      const res = await updateHomeProductGrid(editingCategory._id, {
+        title: editingCategory.title,
+        products: productIds,
+      });
 
-    // Step 3️⃣: Update local state
-    setHomeProducts((prev) =>
-      prev.map((cat) =>
-        cat._id === editingCategory._id
-          ? { ...cat, products: updatedProducts }
-          : cat
-      )
-    );
+      // Step 3️⃣: Update local state
+      setHomeProducts((prev) =>
+        prev.map((cat) =>
+          cat._id === editingCategory._id
+            ? { ...cat, products: updatedProducts }
+            : cat
+        )
+      );
 
-    console.log("🔄 Local state updated successfully");
-  } catch (error) {
-    console.error("❌ Failed to update product slot:", error);
-  } finally {
-    setModalOpen(false);
-    setSelectedModalProduct(null);
-  }
-};
-
+      console.log("🔄 Local state updated successfully");
+    } catch (error) {
+      console.error("❌ Failed to update product slot:", error);
+    } finally {
+      setModalOpen(false);
+      setSelectedModalProduct(null);
+    }
+  };
 
   if (loading)
     return (
@@ -124,25 +123,24 @@ const HomeGrid = () => {
                       {product ? (
                         <>
                           <div className="w-full aspect-square rounded-lg overflow-hidden border border-gray-200 relative">
-                            <Link href={`/ProductDetailPage/${product._id}`}>
-                              <Image
-                                src={
-                                  product.images?.[0]?.url ||
-                                  "https://via.placeholder.com/300x300?text=No+Image"
-                                }
-                                alt={product.name || "Product"}
-                                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-                                width={300}
-                                height={300}
-                                loading="lazy"
-                              />
-                            </Link>
+                            <Image
+                              src={
+                                product.images?.[0]?.url ||
+                                "https://via.placeholder.com/300x300?text=No+Image"
+                              }
+                              alt={product.name || "Product"}
+                              className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                              width={300}
+                              height={300}
+                              loading="lazy"
+                            />
                           </div>
                           <p className="mt-2 text-sm font-semibold text-gray-800">
                             {product.salePrice
-                              ?`$${product.salePrice}`
+                              ? `AED ${product.salePrice}`
                               : "Price not available"}
                           </p>
+
                           <p className="text-xs text-gray-500 line-clamp-2">
                             {product.name || product.sku}
                           </p>
