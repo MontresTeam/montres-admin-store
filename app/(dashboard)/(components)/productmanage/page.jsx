@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   FiEdit,
   FiTrash2,
@@ -9,6 +9,9 @@ import {
   FiFilter,
   FiClock,
   FiCalendar,
+  FiEye,
+  FiArrowUp,
+  FiArrowDown,
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
@@ -31,10 +34,19 @@ const ProductManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileView, setMobileView] = useState(false);
   
+  // Timeline sorting states
+  const [sortConfig, setSortConfig] = useState({
+    key: 'createdAt', // 'createdAt', 'updatedAt', 'publishDate'
+    direction: 'desc' // 'asc', 'desc'
+  });
+  
   // Schedule publishing states
   const [scheduleModal, setScheduleModal] = useState(null);
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("12:00");
+
+  // Date details modal state
+  const [dateDetailsModal, setDateDetailsModal] = useState(null);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -59,7 +71,6 @@ const ProductManagement = () => {
     setLoading(false);
   };
 
-
   const safeToLowerCase = (value) => {
     return String(value || '').toLowerCase();
   };
@@ -68,7 +79,6 @@ const ProductManagement = () => {
   const getCategoryName = (product) => {
     return product.category || product.category ||  "Uncategorized";
   };
-
 
   // Helper function to check if product matches search term
   const productMatchesSearch = (product, searchTerm) => {
@@ -87,6 +97,103 @@ const ProductManagement = () => {
     );
   };
 
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Format date for sorting (ISO string)
+  const getSortableDate = (dateString) => {
+    if (!dateString) return new Date(0); // Very old date for null values
+    return new Date(dateString);
+  };
+
+  // Calculate time since creation/update
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return "N/A";
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+    if (diffInHours < 1) {
+      return "Just now";
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)} h ago`;
+    } else if (diffInDays < 7) {
+      return `${Math.floor(diffInDays)} days ago`;
+    } else {
+      return formatDate(dateString);
+    }
+  };
+
+  // Handle sort request
+  const handleSort = (key) => {
+    setSortConfig(prevConfig => ({
+      key,
+      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  // Get sort icon
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <FiArrowUp className="opacity-30" />;
+    }
+    return sortConfig.direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />;
+  };
+
+  // Sort products based on timeline criteria
+  const sortedProducts = useMemo(() => {
+    const filtered = products.filter(product => 
+      productMatchesSearch(product, searchTerm)
+    );
+
+    return [...filtered].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortConfig.key) {
+        case 'createdAt':
+          aValue = getSortableDate(a.createdAt);
+          bValue = getSortableDate(b.createdAt);
+          break;
+        case 'updatedAt':
+          aValue = getSortableDate(a.updatedAt);
+          bValue = getSortableDate(b.updatedAt);
+          break;
+        case 'publishDate':
+          aValue = getSortableDate(a.publishSchedule?.publishDate);
+          bValue = getSortableDate(b.publishSchedule?.publishDate);
+          break;
+        case 'name':
+          aValue = a.name?.toLowerCase() || '';
+          bValue = b.name?.toLowerCase() || '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [products, searchTerm, sortConfig]);
+
   // Calculate total value function
   const calculateTotalValue = () => {
     return products.reduce((sum, product) => {
@@ -98,10 +205,6 @@ const ProductManagement = () => {
 
   // Handle delete product
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this product?")) {
-      return;
-    }
-
     try {
       const { error } = await deleteProduct(id);
       
@@ -151,6 +254,11 @@ const ProductManagement = () => {
     router.push(`/ProductEditPage/${id}`);
   };
 
+  // View date details
+  const handleViewDateDetails = (product) => {
+    setDateDetailsModal(product);
+  };
+
   // Schedule product publishing
   const handleSchedulePublish = async (productId) => {
     if (!scheduleDate) {
@@ -181,7 +289,8 @@ const ProductManagement = () => {
       const { error } = await updateProduct(productId, {
         'publishSchedule.scheduledPublish': true,
         'publishSchedule.publishDate': publishDateTime,
-        'publishSchedule.status': 'scheduled'
+        'publishSchedule.status': 'scheduled',
+        updatedAt: new Date().toISOString()
       });
 
       if (!error) {
@@ -216,7 +325,8 @@ const ProductManagement = () => {
       const { error } = await updateProduct(productId, {
         'publishSchedule.scheduledPublish': false,
         'publishSchedule.status': 'draft',
-        'publishSchedule.publishDate': null
+        'publishSchedule.publishDate': null,
+        updatedAt: new Date().toISOString()
       });
 
       if (!error) {
@@ -247,7 +357,8 @@ const ProductManagement = () => {
       const { error } = await updateProduct(productId, {
         'publishSchedule.scheduledPublish': false,
         'publishSchedule.status': 'published',
-        'publishSchedule.publishDate': new Date()
+        'publishSchedule.publishDate': new Date(),
+        updatedAt: new Date().toISOString()
       });
 
       if (!error) {
@@ -278,7 +389,8 @@ const ProductManagement = () => {
       const { error } = await updateProduct(productId, {
         'publishSchedule.scheduledPublish': false,
         'publishSchedule.status': 'draft',
-        'publishSchedule.publishDate': null
+        'publishSchedule.publishDate': null,
+        updatedAt: new Date().toISOString()
       });
 
       if (!error) {
@@ -352,11 +464,6 @@ const ProductManagement = () => {
     );
   };
 
-  // Filter products based on search term
-  const filteredProducts = products.filter(product => 
-    productMatchesSearch(product, searchTerm)
-  );
-
   // Auto switch to mobile view on smaller screens
   useEffect(() => {
     const handleResize = () => {
@@ -377,6 +484,15 @@ const ProductManagement = () => {
   const publishedProductsCount = products.filter(
     product => product.publishSchedule?.status === 'published'
   ).length;
+
+  // Get recently added products (last 7 days)
+  const recentProductsCount = products.filter(product => {
+    if (!product.createdAt) return false;
+    const createdDate = new Date(product.createdAt);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return createdDate > weekAgo;
+  }).length;
 
   return (
     <>
@@ -446,19 +562,12 @@ const ProductManagement = () => {
             <div className="rounded-2xl p-6 shadow-lg border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Total Value</p>
-                  <p className="text-3xl font-bold mt-1">
-                    {calculateTotalValue().toLocaleString()}
-                  </p>
+                  <p className="text-sm font-medium">Recently Added</p>
+                  <p className="text-3xl font-bold mt-1">{recentProductsCount}</p>
+                  <p className="text-xs text-gray-500 mt-1">Last 7 days</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Image 
-                    src={newCurrency} 
-                    alt="Currency Symbol" 
-                    width={24} 
-                    height={24}
-                    className="text-purple-600 text-xl font-bold"
-                  />
+                  <FiCalendar className="text-purple-600 text-xl" />
                 </div>
               </div>
             </div>
@@ -533,6 +642,56 @@ const ProductManagement = () => {
             </div>
           )}
 
+          {/* Date Details Modal */}
+          {dateDetailsModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+                <h3 className="text-xl font-bold mb-4">Product Timeline</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="font-medium">Product Name:</span>
+                    <span className="text-gray-900">{dateDetailsModal.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="font-medium">SKU:</span>
+                    <span className="text-gray-600">{dateDetailsModal.sku}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="font-medium">Created At:</span>
+                    <div className="text-right">
+                      <div className="text-gray-900">{formatDate(dateDetailsModal.createdAt)}</div>
+                      <div className="text-sm text-gray-500">{getTimeAgo(dateDetailsModal.createdAt)}</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="font-medium">Last Updated:</span>
+                    <div className="text-right">
+                      <div className="text-gray-900">{formatDate(dateDetailsModal.updatedAt)}</div>
+                      <div className="text-sm text-gray-500">{getTimeAgo(dateDetailsModal.updatedAt)}</div>
+                    </div>
+                  </div>
+                  {dateDetailsModal.publishSchedule?.publishDate && (
+                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                      <span className="font-medium">Scheduled Publish:</span>
+                      <div className="text-right">
+                        <div className="text-gray-900">{formatDate(dateDetailsModal.publishSchedule.publishDate)}</div>
+                        <div className="text-sm text-gray-500">{getTimeAgo(dateDetailsModal.publishSchedule.publishDate)}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-3 mt-6">
+                  <Button
+                    onClick={() => setDateDetailsModal(null)}
+                    className="flex-1"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Products Table/Cards */}
           <div className="rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             {/* Desktop Table View */}
@@ -541,7 +700,13 @@ const ProductManagement = () => {
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                   <tr>
                     <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
-                      Product
+                      <button
+                        onClick={() => handleSort('name')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Product
+                        {getSortIcon('name')}
+                      </button>
                     </th>
                     <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
                       Category
@@ -553,10 +718,25 @@ const ProductManagement = () => {
                       Stock
                     </th>
                     <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
-                      Status
+                      <button
+                        onClick={() => handleSort('createdAt')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Created
+                        {getSortIcon('createdAt')}
+                      </button>
                     </th>
                     <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
-                      Schedule
+                      <button
+                        onClick={() => handleSort('updatedAt')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Last Updated
+                        {getSortIcon('updatedAt')}
+                      </button>
+                    </th>
+                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
+                      Status
                     </th>
                     <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
                       Actions
@@ -564,7 +744,7 @@ const ProductManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredProducts.map((product, i) => (
+                  {sortedProducts.map((product, i) => (
                     <tr 
                       key={product._id || i} 
                       className="transition-colors hover:bg-gray-50"
@@ -574,7 +754,7 @@ const ProductManagement = () => {
                           <Image
                             src={product.image || "/placeholder.png"}
                             alt={product.name || "Product image"}
-                            unoptimized   // <--- bypasses Vercel
+                            unoptimized
                             width={50}
                             height={50}
                             className="w-12 h-12 object-cover rounded-xl border border-gray-200"
@@ -626,24 +806,52 @@ const ProductManagement = () => {
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                            (product.stockQuantity || product.stock) > 15
-                              ? "bg-green-100 text-green-800"
-                              : (product.stockQuantity || product.stock) > 0
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                        <button
+                          onClick={() => handleViewDateDetails(product)}
+                          className="text-left hover:text-blue-600 transition-colors group"
                         >
-                          {(product.stockQuantity || product.stock) > 15
-                            ? "In Stock"
-                            : (product.stockQuantity || product.stock) > 0
-                            ? "Low Stock"
-                            : "Out of Stock"}
-                        </span>
+                          <div className="text-xs text-gray-500">Created</div>
+                          <div className="text-sm font-medium group-hover:text-blue-600">
+                            {getTimeAgo(product.createdAt)}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {formatDate(product.createdAt)}
+                          </div>
+                        </button>
                       </td>
                       <td className="py-4 px-6">
-                        {getScheduleBadge(product)}
+                        <button
+                          onClick={() => handleViewDateDetails(product)}
+                          className="text-left hover:text-blue-600 transition-colors group"
+                        >
+                          <div className="text-xs text-gray-500">Updated</div>
+                          <div className="text-sm font-medium group-hover:text-blue-600">
+                            {getTimeAgo(product.updatedAt)}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {formatDate(product.updatedAt)}
+                          </div>
+                        </button>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              (product.stockQuantity || product.stock) > 15
+                                ? "bg-green-100 text-green-800"
+                                : (product.stockQuantity || product.stock) > 0
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {(product.stockQuantity || product.stock) > 15
+                              ? "In Stock"
+                              : (product.stockQuantity || product.stock) > 0
+                              ? "Low Stock"
+                              : "Out of Stock"}
+                          </span>
+                          {getScheduleBadge(product)}
+                        </div>
                       </td>
                       <td className="py-4 px-6 relative">
                         <button
@@ -659,6 +867,18 @@ const ProductManagement = () => {
 
                         {dropdownOpen === product._id && (
                           <div className="absolute right-6 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
+                            {/* View Timeline Option */}
+                            <button
+                              onClick={() => {
+                                handleViewDateDetails(product);
+                                setDropdownOpen(null);
+                              }}
+                              className="flex items-center w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                              <FiEye className="mr-3 text-gray-500" />
+                              View Timeline
+                            </button>
+
                             {/* Edit Option */}
                             <button
                               onClick={() => {
@@ -746,7 +966,12 @@ const ProductManagement = () => {
               {/* Pagination */}
               <div className="flex justify-between items-center px-6 py-4 border-t border-gray-200">
                 <div className="text-sm text-gray-600">
-                  Showing {filteredProducts.length} of {totalProducts} products
+                  Showing {sortedProducts.length} of {totalProducts} products
+                  {sortConfig.key && (
+                    <span className="ml-2 text-blue-600">
+                      (Sorted by {sortConfig.key} {sortConfig.direction})
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -779,7 +1004,7 @@ const ProductManagement = () => {
             {/* Mobile Card View */}
             <div className="md:hidden">
               <div className="p-4 space-y-4">
-                {filteredProducts.map((product, i) => (
+                {sortedProducts.map((product, i) => (
                   <div
                     key={product._id || i}
                     className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm"
@@ -801,7 +1026,6 @@ const ProductManagement = () => {
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                               {getCategoryName(product)}
                             </span>
-                            {getScheduleBadge(product)}
                           </div>
                         </div>
                       </div>
@@ -838,27 +1062,60 @@ const ProductManagement = () => {
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Status</p>
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            (product.stockQuantity || product.stock) > 15
-                              ? "bg-green-100 text-green-800"
-                              : (product.stockQuantity || product.stock) > 0
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                        <p className="text-gray-600">Created</p>
+                        <button
+                          onClick={() => handleViewDateDetails(product)}
+                          className="text-left hover:text-blue-600 transition-colors"
                         >
-                          {(product.stockQuantity || product.stock) > 15
-                            ? "In Stock"
-                            : (product.stockQuantity || product.stock) > 0
-                            ? "Low Stock"
-                            : "Out of Stock"}
-                        </span>
+                          <p className="font-semibold text-gray-900 text-sm">
+                            {getTimeAgo(product.createdAt)}
+                          </p>
+                        </button>
                       </div>
+                      <div>
+                        <p className="text-gray-600">Updated</p>
+                        <button
+                          onClick={() => handleViewDateDetails(product)}
+                          className="text-left hover:text-blue-600 transition-colors"
+                        >
+                          <p className="font-semibold text-gray-900 text-sm">
+                            {getTimeAgo(product.updatedAt)}
+                          </p>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          (product.stockQuantity || product.stock) > 15
+                            ? "bg-green-100 text-green-800"
+                            : (product.stockQuantity || product.stock) > 0
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {(product.stockQuantity || product.stock) > 15
+                          ? "In Stock"
+                          : (product.stockQuantity || product.stock) > 0
+                          ? "Low Stock"
+                          : "Out of Stock"}
+                      </span>
                     </div>
 
                     {dropdownOpen === product._id && (
                       <div className="mt-3 border-t border-gray-200 pt-3 space-y-1">
+                        <button
+                          onClick={() => {
+                            handleViewDateDetails(product);
+                            setDropdownOpen(null);
+                          }}
+                          className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <FiEye className="mr-2 text-gray-500" />
+                          View Timeline
+                        </button>
+
                         <button
                           onClick={() => {
                             handleEdit(product._id);
@@ -940,7 +1197,7 @@ const ProductManagement = () => {
             </div>
 
             {/* Empty State */}
-            {filteredProducts.length === 0 && !loading && (
+            {sortedProducts.length === 0 && !loading && (
               <div className="py-16 text-center">
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <FiSearch className="text-3xl text-gray-400" />

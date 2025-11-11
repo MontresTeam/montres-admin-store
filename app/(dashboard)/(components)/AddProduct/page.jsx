@@ -9,7 +9,7 @@ import newCurrency from "../../../../public/assets/newSymbole.png";
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
-    // Basic Info
+    // Basic Info - Required: brand, model, category, watchType
     brand: "",
     model: "",
     referenceNumber: "",
@@ -17,15 +17,16 @@ const AddProduct = () => {
     serialNumber: "",
     additionalTitle: "",
     watchType: "",
+    watchStyle: "",
     scopeOfDelivery: "",
     includedAccessories: "",
-    category: "", // ✅ This is the correct field
+    category: "",
 
     // Item Features
     productionYear: "",
     approximateYear: false,
     unknownYear: false,
-    gender: "",
+    gender: "Men/Unisex",
     movement: "",
     dialColor: "",
     caseMaterial: "",
@@ -43,21 +44,21 @@ const AddProduct = () => {
     powerReserve: "",
     jewels: "",
 
-    // Functions (array to store selected functions)
+    // Functions
     functions: [],
 
     // Condition
     condition: "",
+    itemCondition: "",
     replacementParts: [],
 
-    // Pricing & Inventory
+    // Pricing & Inventory - regularPrice is optional
     regularPrice: "",
     salePrice: "",
     taxStatus: "taxable",
     stockQuantity: "",
 
     // Category & Classification
-  
     collection: "None",
 
     // Description & Meta
@@ -83,26 +84,33 @@ const AddProduct = () => {
 
   // Options data
   const scopeOfDeliveryOptions = [
-    "Watch Only",
-    "Watch with original box",
-    "Watch with original papers",
-    "Watch with original box and original papers",
-    "Montres safe box",
+    "Full Set (Watch + Original Box + Original Papers)",
+    "Watch with Original Papers",
+    "Watch with Original Box",
+    "Watch with Montres Safe Box",
+    "Watch Only"
   ];
 
-  const watchTypes = [
-    "Luxury watch",
+  const watchStyles = [
+    "luxury watch",
     "Classic watch",
     "Sports watch",
     "Vintage watch",
     "Dress watch",
-    "Diver's watch",
-    "Pilot watch",
-    "Racing watch",
-    "Smartwatch",
+    "Drivers watch",
+    "pilot watch",
+    "Racing watch"
   ];
 
-  const category = [
+  const watchTypes = [
+    "Wrist Watch",
+    "Pocket Watch", 
+    "Clocks",
+    "Stopwatch",
+    "Smart Watch",
+  ];
+
+  const categoryOptions = [
     "Watch",
     "Jewellery",
     "Gold",
@@ -110,6 +118,17 @@ const AddProduct = () => {
     "Home Accessories",
     "Personal Accessories",
     "Pens",
+  ];
+
+  const includedAccessoriesOptions = [
+    "Extra Strap",
+    "Original Strap", 
+    "Warranty Card",
+    "Certificate",
+    "Travel Case",
+    "Bezel Protector",
+    "Cleaning Cloth",
+    "Other Accessories"
   ];
 
   const genders = ["Men/Unisex", "Women"];
@@ -195,14 +214,19 @@ const AddProduct = () => {
     "Dot/round marker"
   ];
 
-  const conditions = [
-    "New",
-    "Like New",
+  const itemConditions = [
     "Excellent",
-    "Very Good",
-    "Good",
+    "Good", 
     "Fair",
-    "Poor",
+    "Poor / Not Working / For Parts"
+  ];
+
+  const conditions = [
+    "Brand New",
+    "Unworn / Like New",
+    "Pre-Owned",
+    "Excellent",
+    "Not Working / For Parts"
   ];
 
   const taxStatusOptions = [
@@ -287,6 +311,7 @@ const AddProduct = () => {
         setFormData((prev) => ({
           ...prev,
           [name]: checked,
+          ...(name === "unknownYear" && checked && { productionYear: "" })
         }));
       } else if (name === "functions") {
         setFormData((prev) => ({
@@ -345,9 +370,9 @@ const AddProduct = () => {
     setError("");
     setSuccess("");
 
-    // Validate required fields
-    if (!formData.brand.trim() || !formData.model.trim()) {
-      setError("Brand and Model are required");
+    // Validate required fields based on schema
+    if (!formData.brand.trim() || !formData.model.trim() || !formData.category.trim() || !formData.watchType.trim()) {
+      setError("Brand, Model, Category, and Watch Type are required fields");
       setLoading(false);
       return;
     }
@@ -377,18 +402,26 @@ const AddProduct = () => {
           if (Array.isArray(value)) {
             value.forEach((item) => productData.append(key, item));
           }
-          // Handle numeric fields
+          // Handle numeric fields - regularPrice is optional
           else if (
             [
-              "regularPrice",
               "salePrice",
               "stockQuantity",
               "powerReserve",
               "jewels",
+              "strapSize",
+              "caseSize",
             ].includes(key)
           ) {
             const numValue = parseFloat(value) || 0;
             productData.append(key, numValue.toString());
+          }
+          // Handle regularPrice separately since it's optional
+          else if (key === "regularPrice") {
+            if (value !== "") {
+              const numValue = parseFloat(value) || 0;
+              productData.append(key, numValue.toString());
+            }
           }
           // Handle boolean fields
           else if (typeof value === "boolean") {
@@ -466,12 +499,13 @@ const AddProduct = () => {
       serialNumber: "",
       additionalTitle: "",
       watchType: "",
+      watchStyle: "",
       scopeOfDelivery: "",
       includedAccessories: "",
       productionYear: "",
       approximateYear: false,
       unknownYear: false,
-      gender: "",
+      gender: "Men/Unisex",
       movement: "",
       dialColor: "",
       caseMaterial: "",
@@ -488,12 +522,13 @@ const AddProduct = () => {
       jewels: "",
       functions: [],
       condition: "",
+      itemCondition: "",
       replacementParts: [],
       regularPrice: "",
       salePrice: "",
       taxStatus: "taxable",
       stockQuantity: "",
-      category: "", // Keep this one
+      category: "",
       collection: "None",
       description: "",
       visibility: "visible",
@@ -600,7 +635,49 @@ const AddProduct = () => {
                   />
                 </div>
 
-                {/* Reference Number */}
+                {/* Category - Required */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {categoryOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Watch Type - Required */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Watch Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="watchType"
+                    value={formData.watchType}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    required
+                  >
+                    <option value="">Select Watch Type</option>
+                    {watchTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Reference Number - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Reference Number
@@ -615,7 +692,7 @@ const AddProduct = () => {
                   />
                 </div>
 
-                {/* sku */}
+                {/* SKU - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     SKU
@@ -626,11 +703,11 @@ const AddProduct = () => {
                     value={formData.sku}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="uniqe code"
+                    placeholder="Unique code"
                   />
                 </div>
 
-                {/* Serial Number */}
+                {/* Serial Number - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Serial Number
@@ -645,7 +722,7 @@ const AddProduct = () => {
                   />
                 </div>
 
-                {/* Additional Title */}
+                {/* Additional Title - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Additional Title
@@ -660,27 +737,27 @@ const AddProduct = () => {
                   />
                 </div>
 
-                {/* Type of Watch */}
+                {/* Watch Style - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Type of Watch
+                    watchStyle category
                   </label>
                   <select
-                    name="watchType"
-                    value={formData.watchType}
+                    name="watchStyle"
+                    value={formData.watchStyle}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
-                    <option value="">Select Watch Type</option>
-                    {watchTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
+                    <option value="">Select Watch Style</option>
+                    {watchStyles.map((style) => (
+                      <option key={style} value={style}>
+                        {style}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Scope of Delivery */}
+                {/* Scope of Delivery - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Scope of Delivery
@@ -700,33 +777,19 @@ const AddProduct = () => {
                   </select>
                 </div>
 
-                {/* Included Accessories */}
+                {/* Included Accessories - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Included Accessories
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="includedAccessories"
                     value={formData.includedAccessories}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="e.g., Warranty card, manual, etc."
-                  />
-                </div>
-                {/* category */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                   category
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
-                    <option value="">Select category</option>
-                    {category.map((option) => (
+                    <option value="">Select Included Accessories</option>
+                    {includedAccessoriesOptions.map((option) => (
                       <option key={option} value={option}>
                         {option}
                       </option>
@@ -749,7 +812,7 @@ const AddProduct = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Production Year */}
+                {/* Production Year - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Year of Production
@@ -759,14 +822,17 @@ const AddProduct = () => {
                     name="productionYear"
                     value={formData.productionYear}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="e.g., 2023"
+                    disabled={formData.unknownYear}
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
+                      formData.unknownYear ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
+                    placeholder={formData.unknownYear ? "Unknown" : "e.g., 2023"}
                     min="1900"
                     max="2030"
                   />
                 </div>
 
-                {/* Approximate Year Checkbox */}
+                {/* Approximate Year Checkbox - Optional */}
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -780,7 +846,7 @@ const AddProduct = () => {
                   </label>
                 </div>
 
-                {/* Unknown Year Checkbox */}
+                {/* Unknown Year Checkbox - Optional */}
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -794,7 +860,7 @@ const AddProduct = () => {
                   </label>
                 </div>
 
-                {/* Gender */}
+                {/* Gender - Optional (has default) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Gender
@@ -805,7 +871,6 @@ const AddProduct = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
-                    <option value="">Select Gender</option>
                     {genders.map((gender) => (
                       <option key={gender} value={gender}>
                         {gender}
@@ -814,7 +879,7 @@ const AddProduct = () => {
                   </select>
                 </div>
 
-                {/* Movement */}
+                {/* Movement - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Movement
@@ -834,7 +899,7 @@ const AddProduct = () => {
                   </select>
                 </div>
 
-                {/* Dial Color */}
+                {/* Dial Color - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Dial Color
@@ -854,7 +919,7 @@ const AddProduct = () => {
                   </select>
                 </div>
 
-                {/* Case Material */}
+                {/* Case Material - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Case Material
@@ -874,7 +939,7 @@ const AddProduct = () => {
                   </select>
                 </div>
 
-                {/* Strap Material */}
+                {/* Strap Material - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Strap Material
@@ -1161,7 +1226,7 @@ const AddProduct = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Condition */}
+                {/* Condition - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Condition
@@ -1181,8 +1246,28 @@ const AddProduct = () => {
                   </select>
                 </div>
 
-                {/* Replacement Parts */}
-                <div className="space-y-3">
+                {/* Item Condition - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Item Condition
+                  </label>
+                  <select
+                    name="itemCondition"
+                    value={formData.itemCondition}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Item Condition</option>
+                    {itemConditions.map((condition) => (
+                      <option key={condition} value={condition}>
+                        {condition}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Replacement Parts - Optional */}
+                <div className="space-y-3 lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Replacement Parts & Customization
                   </label>
@@ -1223,10 +1308,10 @@ const AddProduct = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Regular Price */}
+                {/* Regular Price - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Regular Price <span className="text-red-500">*</span>
+                    Retail Price
                   </label>
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
@@ -1247,22 +1332,21 @@ const AddProduct = () => {
                       placeholder="0.00"
                       min="0"
                       step="0.01"
-                      required
                     />
                   </div>
                 </div>
 
-                {/* Sale Price */}
+                {/* Sale Price - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Sale Price
+                    Selling Price
                   </label>
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                       <Image
                         src={newCurrency}
                         alt="Currency"
-                        unoptimized   // <--- bypasses Vercel
+                        unoptimized
                         width={16}
                         height={16}
                         className="w-4 h-4"
@@ -1281,7 +1365,7 @@ const AddProduct = () => {
                   </div>
                 </div>
 
-                {/* Tax Status */}
+                {/* Tax Status - Optional (has default) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Tax Status
@@ -1300,7 +1384,7 @@ const AddProduct = () => {
                   </select>
                 </div>
 
-                {/* Stock Quantity */}
+                {/* Stock Quantity - Optional (has default) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Stock Quantity
@@ -1332,7 +1416,7 @@ const AddProduct = () => {
               </div>
 
               <div className="space-y-6">
-                {/* Main Image Upload */}
+                {/* Main Image Upload - Required */}
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
                     Main Image <span className="text-red-500">*</span>
@@ -1343,7 +1427,7 @@ const AddProduct = () => {
                         <Image
                           src={mainImagePreview}
                           alt="Main product image"
-                          unoptimized   // <--- bypasses Vercel
+                          unoptimized
                           width={200}
                           height={200}
                           className="w-full h-full object-cover"
@@ -1408,7 +1492,7 @@ const AddProduct = () => {
                   )}
                 </div>
 
-                {/* Cover Images Upload */}
+                {/* Cover Images Upload - Required (5-10) */}
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
                     Additional Images (5-10 required)
@@ -1436,7 +1520,7 @@ const AddProduct = () => {
                               <Image
                                 src={preview}
                                 alt={`Cover image ${index + 1}`}
-                                unoptimized   // <--- bypasses Vercel
+                                unoptimized
                                 width={200}
                                 height={200}
                                 className="w-full h-full object-cover"
@@ -1546,7 +1630,7 @@ const AddProduct = () => {
               </div>
 
               <div className="space-y-6">
-                {/* SEO Title */}
+                {/* SEO Title - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     SEO Title
@@ -1566,7 +1650,7 @@ const AddProduct = () => {
                   </p>
                 </div>
 
-                {/* SEO Description */}
+                {/* SEO Description - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     SEO Description
@@ -1586,7 +1670,7 @@ const AddProduct = () => {
                   </p>
                 </div>
 
-                {/* SEO Keywords */}
+                {/* SEO Keywords - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     SEO Keywords
@@ -1619,7 +1703,7 @@ const AddProduct = () => {
               </div>
 
               <div className="space-y-6">
-                {/* Full Description */}
+                {/* Full Description - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Full Description
