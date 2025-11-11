@@ -177,19 +177,20 @@ const AddProduct = () => {
   ];
 
   const strapMaterials = [
-    "Leather",
-    "Metal Bracelet",
-    "Gold/Steel",
-    "Gold",
-    "Steel",
-    "Rubber",
-    "Nylon",
-    "Fabric",
-    "Silicone",
-    "Alligator",
-    "Crocodile",
-    "Suede",
-    "Canvas",
+  "Alligator",
+  "Canvas",
+  "Crocodile",
+  "Fabric",
+  "Gold",
+  "Gold/Steel",
+  "Leather",
+  "Metal Bracelet",
+  "Nylon",
+  "Rubber",
+  "Silicone",
+  "Suede",
+  "Steel",
+  "18k White Gold"
   ];
 
   const crystals = ["Sapphire", "Mineral", "Acrylic", "Hardlex", "Plexiglass"];
