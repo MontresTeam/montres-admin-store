@@ -25,7 +25,9 @@ const ContactMessage = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await axios.get("http://localhost:9000/api/contact/");
+      const response = await axios.get("https://api.montres.ae/api/contact/");
+      console.log(response,"response");
+      
       const result = response.data;
 
       if (result.success) {

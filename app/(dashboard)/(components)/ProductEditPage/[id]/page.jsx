@@ -201,14 +201,15 @@ const ProductEditPage = () => {
   const crystals = ["Sapphire", "Mineral", "Acrylic", "Hardlex", "Plexiglass"];
 
   const bezelMaterials = [
-    "Stainless Steel",
-    "Ceramic",
-    "Aluminum",
-    "Gold",
-    "18k yellowGold",
-    "Titanium",
-    "Gold Plated",
-    "Rubber",
+  "Aluminum",
+  "Ceramic",
+  "Gold",
+  "18k Yellow Gold",
+  "Gold Plated",
+  "Rubber",
+  "Stainless Steel",
+  "Titanium",
+  "Tungsten"
   ];
 
   const DIALNUMERALS = [

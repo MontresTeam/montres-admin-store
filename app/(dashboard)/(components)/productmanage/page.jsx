@@ -12,6 +12,10 @@ import {
   FiEye,
   FiArrowUp,
   FiArrowDown,
+  FiWatch,
+  FiShoppingBag,
+  FiStar,
+  FiAward,
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
@@ -36,8 +40,8 @@ const ProductManagement = () => {
   
   // Timeline sorting states
   const [sortConfig, setSortConfig] = useState({
-    key: 'createdAt', // 'createdAt', 'updatedAt', 'publishDate'
-    direction: 'desc' // 'asc', 'desc'
+    key: 'createdAt',
+    direction: 'desc'
   });
   
   // Schedule publishing states
@@ -47,6 +51,50 @@ const ProductManagement = () => {
 
   // Date details modal state
   const [dateDetailsModal, setDateDetailsModal] = useState(null);
+
+  // Product categories
+  const productCategories = [
+    {
+      id: 'watches',
+      name: 'Watches',
+      icon: FiWatch,
+      description: 'Luxury & premium watches',
+      color: 'blue',
+      route: '/AddProduct'
+    },
+    {
+      id: 'accessories',
+      name: 'Accessories',
+      icon: FiShoppingBag,
+      description: 'Fashion accessories',
+      color: 'purple',
+      route: '/AddAccessories'
+    },
+    {
+      id: 'leather-goods',
+      name: 'Leather Goods',
+      icon: FiShoppingBag,
+      description: 'Premium leather products',
+      color: 'amber',
+      route: '/AddLeatherGoods'
+    },
+    {
+      id: 'jewelry',
+      name: 'Jewelry',
+      icon: FiStar,
+      description: 'Fine jewelry collection',
+      color: 'pink',
+      route: '/AddJewelry'
+    },
+    {
+      id: 'gold',
+      name: 'Gold',
+      icon: FiAward,
+      description: 'Gold products & items',
+      color: 'yellow',
+      route: '/AddGold'
+    }
+  ];
 
   const loadProducts = async () => {
     setLoading(true);
@@ -77,7 +125,7 @@ const ProductManagement = () => {
 
   // Helper function to get category name
   const getCategoryName = (product) => {
-    return product.category || product.category ||  "Uncategorized";
+    return product.category || product.category || "Uncategorized";
   };
 
   // Helper function to check if product matches search term
@@ -113,7 +161,7 @@ const ProductManagement = () => {
 
   // Format date for sorting (ISO string)
   const getSortableDate = (dateString) => {
-    if (!dateString) return new Date(0); // Very old date for null values
+    if (!dateString) return new Date(0);
     return new Date(dateString);
   };
 
@@ -194,13 +242,9 @@ const ProductManagement = () => {
     });
   }, [products, searchTerm, sortConfig]);
 
-  // Calculate total value function
-  const calculateTotalValue = () => {
-    return products.reduce((sum, product) => {
-      const price = product.salePrice || product.price || 0;
-      const stock = product.stockQuantity || product.stock || 0;
-      return sum + (price * stock);
-    }, 0);
+  // Handle add product for different categories
+  const handleAddProduct = (category) => {
+    router.push(category.route);
   };
 
   // Handle delete product
@@ -209,10 +253,8 @@ const ProductManagement = () => {
       const { error } = await deleteProduct(id);
       
       if (!error) {
-        // Remove product from local state
         setProducts(prevProducts => prevProducts.filter(product => product._id !== id));
         
-        // Show success message
         Toastify({
           text: "Product deleted successfully!",
           duration: 3000,
@@ -222,7 +264,6 @@ const ProductManagement = () => {
           stopOnFocus: true,
         }).showToast();
         
-        // Reload products to sync with server
         loadProducts();
       } else {
         throw new Error(error);
@@ -241,14 +282,6 @@ const ProductManagement = () => {
     
     setDropdownOpen(null);
   };
-
-  const handleAdd = () => {
-    router.push(`/AddProduct`);
-  };
-
-  useEffect(() => {
-    loadProducts();
-  }, [page, searchTerm]);
 
   const handleEdit = (id) => {
     router.push(`/ProductEditPage/${id}`);
@@ -303,7 +336,7 @@ const ProductManagement = () => {
         }).showToast();
         
         setScheduleModal(null);
-        loadProducts(); // Refresh the list
+        loadProducts();
       } else {
         throw new Error(error);
       }
@@ -464,6 +497,18 @@ const ProductManagement = () => {
     );
   };
 
+  // Color classes for categories
+  const getColorClasses = (color) => {
+    const colorMap = {
+      blue: 'bg-blue-500 hover:bg-blue-600 border-blue-200',
+      purple: 'bg-purple-500 hover:bg-purple-600 border-purple-200',
+      amber: 'bg-amber-500 hover:bg-amber-600 border-amber-200',
+      pink: 'bg-pink-500 hover:bg-pink-600 border-pink-200',
+      yellow: 'bg-yellow-500 hover:bg-yellow-600 border-yellow-200'
+    };
+    return colorMap[color] || 'bg-gray-500 hover:bg-gray-600 border-gray-200';
+  };
+
   // Auto switch to mobile view on smaller screens
   useEffect(() => {
     const handleResize = () => {
@@ -471,7 +516,7 @@ const ProductManagement = () => {
     };
 
     window.addEventListener("resize", handleResize);
-    handleResize(); // Set initial value
+    handleResize();
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -494,6 +539,10 @@ const ProductManagement = () => {
     return createdDate > weekAgo;
   }).length;
 
+  useEffect(() => {
+    loadProducts();
+  }, [page, searchTerm]);
+
   return (
     <>
       <DashboardBreadcrumb text="Product Management" />
@@ -510,14 +559,27 @@ const ProductManagement = () => {
                   Manage your products, inventory, pricing, and publishing schedule
                 </p>
               </div>
+            </div>
+          </div>
 
-              <Button
-                onClick={handleAdd}
-                className="flex items-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <FiPlus className="mr-2 text-lg" />
-                Add Product
-              </Button>
+          {/* Category Selection Cards */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-6">Add New Products</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              {productCategories.map((category) => {
+                const IconComponent = category.icon;
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => handleAddProduct(category)}
+                    className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-lg text-white ${getColorClasses(category.color)}`}
+                  >
+                    <IconComponent className="text-2xl mb-3" />
+                    <span className="font-semibold text-lg mb-1">{category.name}</span>
+                    <span className="text-sm text-white text-opacity-90 text-center">{category.description}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -867,7 +929,6 @@ const ProductManagement = () => {
 
                         {dropdownOpen === product._id && (
                           <div className="absolute right-6 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
-                            {/* View Timeline Option */}
                             <button
                               onClick={() => {
                                 handleViewDateDetails(product);
@@ -879,7 +940,6 @@ const ProductManagement = () => {
                               View Timeline
                             </button>
 
-                            {/* Edit Option */}
                             <button
                               onClick={() => {
                                 handleEdit(product._id);
@@ -891,7 +951,6 @@ const ProductManagement = () => {
                               Edit Product
                             </button>
                             
-                            {/* Publishing Options */}
                             {(!product.publishSchedule || product.publishSchedule.status === 'draft') && (
                               <>
                                 <button
@@ -945,7 +1004,6 @@ const ProductManagement = () => {
                               </button>
                             )}
                             
-                            {/* Delete Option */}
                             <button
                               onClick={() => {
                                 handleDelete(product._id);
@@ -1208,13 +1266,21 @@ const ProductManagement = () => {
                 <p className="text-gray-600 mb-6">
                   {searchTerm ? "Try adjusting your search terms." : "Get started by adding your first product."}
                 </p>
-                <button
-                  onClick={handleAdd}
-                  className="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
-                >
-                  <FiPlus className="mr-2" />
-                  Add Your First Product
-                </button>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {productCategories.slice(0, 2).map((category) => {
+                    const IconComponent = category.icon;
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => handleAddProduct(category)}
+                        className={`flex items-center px-4 py-2 rounded-lg text-white ${getColorClasses(category.color)}`}
+                      >
+                        <IconComponent className="mr-2" />
+                        Add {category.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
