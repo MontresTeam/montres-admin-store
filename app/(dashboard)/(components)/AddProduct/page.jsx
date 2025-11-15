@@ -20,6 +20,7 @@ const AddProduct = () => {
     watchStyle: "",
     scopeOfDelivery: "",
     includedAccessories: "",
+    badges:"",
     category: "",
 
     // Item Features
@@ -88,7 +89,7 @@ const AddProduct = () => {
     "Watch with Original Papers",
     "Watch with Original Box",
     "Watch with Montres Safe Box",
-    "Watch Only"
+    "Watch Only",
   ];
 
   const watchStyles = [
@@ -99,12 +100,12 @@ const AddProduct = () => {
     "Dress watch",
     "Drivers watch",
     "pilot watch",
-    "Racing watch"
+    "Racing watch",
   ];
 
   const watchTypes = [
     "Wrist Watch",
-    "Pocket Watch", 
+    "Pocket Watch",
     "Clocks",
     "Stopwatch",
     "Smart Watch",
@@ -115,20 +116,19 @@ const AddProduct = () => {
     "Jewellery",
     "Gold",
     "Accessories",
-    "Home Accessories",
-    "Personal Accessories",
-    "Pens",
+    "Leather Goods",
+    "Leather Bags",
   ];
 
   const includedAccessoriesOptions = [
     "Extra Strap",
-    "Original Strap", 
+    "Original Strap",
     "Warranty Card",
     "Certificate",
     "Travel Case",
     "Bezel Protector",
     "Cleaning Cloth",
-    "Other Accessories"
+    "Other Accessories",
   ];
 
   const genders = ["Men/Unisex", "Women"];
@@ -177,34 +177,34 @@ const AddProduct = () => {
   ];
 
   const strapMaterials = [
-  "Alligator",
-  "Canvas",
-  "Crocodile",
-  "Fabric",
-  "Gold",
-  "Gold/Steel",
-  "Leather",
-  "Metal Bracelet",
-  "Nylon",
-  "Rubber",
-  "Silicone",
-  "Suede",
-  "Steel",
-  "18k White Gold"
+    "Alligator",
+    "Canvas",
+    "Crocodile",
+    "Fabric",
+    "Gold",
+    "Gold/Steel",
+    "Leather",
+    "Metal Bracelet",
+    "Nylon",
+    "Rubber",
+    "Silicone",
+    "Suede",
+    "Steel",
+    "18k White Gold",
   ];
 
   const crystals = ["Sapphire", "Mineral", "Acrylic", "Hardlex", "Plexiglass"];
 
   const bezelMaterials = [
-  "Aluminum",
-  "Ceramic",
-  "Gold",
-  "18k Yellow Gold",
-  "Gold Plated",
-  "Rubber",
-  "Stainless Steel",
-  "Titanium",
-  "Tungsten"
+    "Aluminum",
+    "Ceramic",
+    "Gold",
+    "18k Yellow Gold",
+    "Gold Plated",
+    "Rubber",
+    "Stainless Steel",
+    "Titanium",
+    "Tungsten",
   ];
 
   const DIALNUMERALS = [
@@ -213,14 +213,14 @@ const AddProduct = () => {
     "No Numerals",
     "Lines",
     "Gemstone",
-    "Dot/round marker"
+    "Dot/round marker",
   ];
 
   const itemConditions = [
     "Excellent",
-    "Good", 
+    "Good",
     "Fair",
-    "Poor / Not Working / For Parts"
+    "Poor / Not Working / For Parts",
   ];
 
   const conditions = [
@@ -228,8 +228,13 @@ const AddProduct = () => {
     "Unworn / Like New",
     "Pre-Owned",
     "Excellent",
-    "Not Working / For Parts"
+    "Not Working / For Parts",
   ];
+
+  const Badges = [
+    "Popular", 
+    "New Arrivals"
+  ]
 
   const taxStatusOptions = [
     { value: "taxable", label: "Taxable" },
@@ -313,7 +318,7 @@ const AddProduct = () => {
         setFormData((prev) => ({
           ...prev,
           [name]: checked,
-          ...(name === "unknownYear" && checked && { productionYear: "" })
+          ...(name === "unknownYear" && checked && { productionYear: "" }),
         }));
       } else if (name === "functions") {
         setFormData((prev) => ({
@@ -328,6 +333,13 @@ const AddProduct = () => {
           replacementParts: checked
             ? [...prev.replacementParts, value]
             : prev.replacementParts.filter((item) => item !== value),
+        }));
+      }else if(name === "badges"){
+        setFormData((prev) => ({
+          ...prev,
+          badges: checked
+            ? [...prev.badges, value]
+            : prev.badges.filter((item) => item !== value),
         }));
       }
     } else if (name === "mainImage" && files && files.length > 0) {
@@ -373,7 +385,12 @@ const AddProduct = () => {
     setSuccess("");
 
     // Validate required fields based on schema
-    if (!formData.brand.trim() || !formData.model.trim() || !formData.category.trim() || !formData.watchType.trim()) {
+    if (
+      !formData.brand.trim() ||
+      !formData.model.trim() ||
+      !formData.category.trim() ||
+      !formData.watchType.trim()
+    ) {
       setError("Brand, Model, Category, and Watch Type are required fields");
       setLoading(false);
       return;
@@ -504,6 +521,7 @@ const AddProduct = () => {
       watchStyle: "",
       scopeOfDelivery: "",
       includedAccessories: "",
+      badges:"",
       productionYear: "",
       approximateYear: false,
       unknownYear: false,
@@ -798,6 +816,26 @@ const AddProduct = () => {
                     ))}
                   </select>
                 </div>
+
+                  {/* Included Accessories - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                 Badges
+                  </label>
+                  <select
+                    name="badges"
+                    value={formData.badges}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Badges</option>
+                    {Badges.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -826,9 +864,13 @@ const AddProduct = () => {
                     onChange={handleChange}
                     disabled={formData.unknownYear}
                     className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
-                      formData.unknownYear ? "bg-gray-100 cursor-not-allowed" : ""
+                      formData.unknownYear
+                        ? "bg-gray-100 cursor-not-allowed"
+                        : ""
                     }`}
-                    placeholder={formData.unknownYear ? "Unknown" : "e.g., 2023"}
+                    placeholder={
+                      formData.unknownYear ? "Unknown" : "e.g., 2023"
+                    }
                     min="1900"
                     max="2030"
                   />

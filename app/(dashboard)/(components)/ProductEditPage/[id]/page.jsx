@@ -33,6 +33,7 @@ const ProductEditPage = () => {
     watchStyle: "",
     scopeOfDelivery: "",
     includedAccessories: "",
+    badges: "", // FIXED: Changed from array to string
     category: "",
 
     // Item Features
@@ -120,9 +121,13 @@ const ProductEditPage = () => {
     "Jewellery",
     "Gold",
     "Accessories",
-    "Home Accessories",
-    "Personal Accessories",
-    "Pens",
+    "Leather Goods",
+    "Leather Bags",
+  ];
+
+  const Badges = [
+    "Popular", 
+    "New Arrivals"
   ];
 
   const includedAccessoriesOptions = [
@@ -182,34 +187,34 @@ const ProductEditPage = () => {
   ];
 
   const strapMaterials = [
-  "Alligator",
-  "Canvas",
-  "Crocodile",
-  "Fabric",
-  "Gold",
-  "Gold/Steel",
-  "Leather",
-  "Metal Bracelet",
-  "Nylon",
-  "Rubber",
-  "Silicone",
-  "Suede",
-  "Steel",
-  "18k White Gold"
+    "Alligator",
+    "Canvas",
+    "Crocodile",
+    "Fabric",
+    "Gold",
+    "Gold/Steel",
+    "Leather",
+    "Metal Bracelet",
+    "Nylon",
+    "Rubber",
+    "Silicone",
+    "Suede",
+    "Steel",
+    "18k White Gold",
   ];
 
   const crystals = ["Sapphire", "Mineral", "Acrylic", "Hardlex", "Plexiglass"];
 
   const bezelMaterials = [
-  "Aluminum",
-  "Ceramic",
-  "Gold",
-  "18k Yellow Gold",
-  "Gold Plated",
-  "Rubber",
-  "Stainless Steel",
-  "Titanium",
-  "Tungsten"
+    "Aluminum",
+    "Ceramic",
+    "Gold",
+    "18k Yellow Gold",
+    "Gold Plated",
+    "Rubber",
+    "Stainless Steel",
+    "Titanium",
+    "Tungsten",
   ];
 
   const DIALNUMERALS = [
@@ -310,7 +315,6 @@ const ProductEditPage = () => {
     "Movement replacement parts",
   ];
 
-  
   const getImageUrl = (image) => {
     if (typeof image === "string") return image;
     if (image && image.url) return image.url;
@@ -350,6 +354,10 @@ const ProductEditPage = () => {
             ? product.includedAccessories[0] || ""
             : product.includedAccessories || "",
           category: product.category || "",
+          // FIXED: Handle badges as single value
+          badges: Array.isArray(product.badges) 
+            ? product.badges[0] || "" 
+            : product.badges || "",
 
           // Item Features
           productionYear: product.productionYear || "",
@@ -468,6 +476,7 @@ const ProductEditPage = () => {
             : prev.replacementParts.filter((item) => item !== value),
         }));
       }
+      // REMOVED: badges checkbox logic since it's now a single select
     } else if (name === "mainImage" && files && files.length > 0) {
       const file = files[0];
       setMainImage(file);
@@ -570,6 +579,12 @@ const ProductEditPage = () => {
               .filter((tag) => tag);
             if (tagsArray.length > 0) {
               tagsArray.forEach((tag) => productData.append(key, tag));
+            }
+          }
+          // Handle badges as single value
+          else if (key === "badges") {
+            if (value && value !== "") {
+              productData.append(key, value);
             }
           }
           // Handle all other fields
@@ -945,6 +960,26 @@ const ProductEditPage = () => {
                   >
                     <option value="">Select Included Accessories</option>
                     {includedAccessoriesOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Badges - Single Select */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Badges
+                  </label>
+                  <select
+                    name="badges"
+                    value={formData.badges}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Badges</option>
+                    {Badges.map((option) => (
                       <option key={option} value={option}>
                         {option}
                       </option>
