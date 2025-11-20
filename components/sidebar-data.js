@@ -8,6 +8,7 @@ import {
   ShoppingBasket,
   MessageSquare,
   UsersRound,
+  Boxes
 } from "lucide-react";
 
 import { FiDollarSign } from "react-icons/fi"; // Feather Icons
@@ -54,24 +55,32 @@ export const data = {
       icon: ClipboardList,
     },
 
+    // ⭐ NEW INVENTORY STOCK MANAGEMENT
     {
-      title: "Brand New", // Add as main menu item
+      title: "Inventory Stock Management",
+      url: "/InventoryStock",
+      icon: Boxes, // use Boxes / Package / Layers / Warehouse icon (lucide-react)
+      isActive: true,
+    },
+
+    {
+      title: "Brand New",
       url: "/BrandNew",
-      icon: Star, // You can use Star, Tag, or any appropriate icon
+      icon: Star,
       isActive: true,
     },
 
     {
       title: "Financial Overview",
-      url: "/financial-overview", // or "#" if you don't have a page yet
-      icon: FiDollarSign, // example icon from react-icons/heroicons or your icon set
-      isActive: false, // set true if you want it active by default
+      url: "/financial-overview",
+      icon: FiDollarSign,
+      isActive: false,
     },
 
     {
       title: "Inquiries",
       url: "#",
-      icon: MessageSquare, // or Mail, or Inbox icon from lucide-react
+      icon: MessageSquare,
       items: [
         {
           title: "Contact Messages",
@@ -79,13 +88,13 @@ export const data = {
           circleColor: "bg-blue-500",
         },
         {
-          title: "Support Tickets", // optional, if you later add more
+          title: "Support Tickets",
           url: "/support-tickets",
           circleColor: "bg-green-500",
         },
       ],
     },
-
+    
     // {
     //   title: "Setting",
     //   url: "#",
