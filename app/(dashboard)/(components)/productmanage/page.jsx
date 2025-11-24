@@ -295,7 +295,8 @@ const handleEdit = (id) => {
   const leatherKeywords = [
     "bag",
     "wallet",
-    "holder"
+    "holder",
+    "card"
   ];
 
   const isLeatherGoods = leatherKeywords.some(keyword =>
