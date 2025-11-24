@@ -1,11 +1,18 @@
 "use client"
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
-import DashboardBreadcrumb from '../../../../components/layout/dashboard-breadcrumb';
-import newcurrencysymbol from '../../../../public/assets/newSymbole.png';
+import Image from 'next/image';
 
-const Page = () => {
+import DashboardBreadcrumb from '../../../../../components/layout/dashboard-breadcrumb';
+import newcurrencysymbol from '../../../../../public/assets/newSymbole.png';
+import { fetchProduct } from '@/service/productService';
+
+const EditLeatherGoods = () => {
+  const { id } = useParams();
+  const router = useRouter();
+  // const productId = params.id;
+
   // Static data options - MATCHING SCHEMA ENUMS
   const mainCategoryOptions = [
     'Hand Bag',
@@ -13,13 +20,13 @@ const Page = () => {
     'Card Holder', 
     'Belt',
     'Briefcase',
-    'Pounch' // Note: Fixed typo from 'Pouch' to match schema
+    'Pounch'
   ];
 
   const subCategoryOptions = [
     "Tote Bag",
     "Crossbody Bag",
-    "shoulder/crossbody bag", // Note: Added to match schema
+    "shoulder/crossbody bag",
     "Shoulder Bag",
     "Clutch",
     "Backpack",
@@ -39,8 +46,8 @@ const Page = () => {
     'Pebble leather',
     'Canvas + Leather mix',
     'Vegan Leather (PU)',
-    'Leather', // Added to match schema
-    'Fabric' // Added to match schema
+    'Leather',
+    'Fabric'
   ];
 
   const interiorMaterialOptions = [
@@ -61,20 +68,49 @@ const Page = () => {
   ];
 
   const colorOptions = [
-    'Black', 'black/brown', 'White', 'Silver', 'Gold', 'Rose Gold', 'Brown', 
-    'Blue', 'Red', 'Green', 'Purple', 'Pink', 'Yellow', 'Orange', 'Gray', 
-    'Multi-color', 'Transparent', 'Metallic', 'Chrome', 'Gunmetal', 'Beige'
+     "Black",
+      "black/brown",
+      "White",
+      "Silver",
+      "Gold",
+      "Rose Gold",
+      "Brown",
+      "Blue",
+      "Red",
+      "Green",
+      "Purple",
+      "Pink",
+      "Yellow",
+      "Orange",
+      "Gray",
+      "Multi-color",
+      "Transparent",
+      "Metallic",
+      "Chrome",
+      "Gunmetal",
+      "Beige",
   ];
 
   const hardwareColorOptions = [
-    "Gold", "Rose Gold", "Silver", "Platinum", "Chrome", "Gunmetal", 
-    "Black Metal", "Brass", "Matte Gold", "Matte Silver", "Ruthenium", 
-    "Palladium", "Antique Gold", "Antique Silver"
+    "Gold",
+      "Rose Gold",
+      "Silver",
+      "Platinum",
+      "Chrome",
+      "Gunmetal",
+      "Black Metal",
+      "Brass",
+      "Matte Gold",
+      "Matte Silver",
+      "Ruthenium",
+      "Palladium",
+      "Antique Gold",
+      "Antique Silver",
   ];
 
   const taxStatusOptions = [
     { value: 'taxable', label: 'Taxable' },
-    { value: 'shipping', label: 'Shipping only' }, // Fixed to match schema
+    { value: 'shipping', label: 'Shipping only' },
     { value: 'none', label: 'None' }
   ];
 
@@ -89,7 +125,7 @@ const Page = () => {
     "Extra links",
     "Cleaning cloth",
     "Adjustment tools",
-    "Only bag" // Added to match schema
+    "Only bag"
   ];
 
   const scopeOfDeliveryOptions = [
@@ -98,8 +134,8 @@ const Page = () => {
     "Without papers",
     "Original box only",
     "Generic packaging",
-    "Dust bag", // Added to match schema
-    "Only bag" // Added to match schema
+    "Dust bag",
+    "Only bag"
   ];
 
   const conditionOptions = [
@@ -195,8 +231,80 @@ const Page = () => {
   const [mainImagePreview, setMainImagePreview] = useState('');
   const [coverImages, setCoverImages] = useState([]);
   const [coverImagePreviews, setCoverImagePreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+// Fetch product data on component mount
+
+  const loadProducts = async () => {
+    try {
+      setFetchLoading(true);
+
+      const { data, error } = await fetchProduct({ id });
+
+      if (!error && data) {
+        console.log("Product data:", data);
+        const productData = data.product || data;
+
+        // Set form data with fetched product data
+        setFormData({
+          MainCategory: productData.leatherMainCategory || '',
+          SubCategory: productData.leatherSubCategory || '',
+          Brand: productData.brand || '',
+          Model: productData.model || '',
+          modelCode: productData.modelCode || '',
+          additionalTitle: productData.additionalTitle || '',
+          serialNumber: productData.serialNumber || '',
+          sku: productData.sku || '',
+          productionYear: productData.productionYear || '',
+          approximateYear: productData.approximateYear || false,
+          unknownYear: productData.unknownYear || false,
+          gender: productData.gender || '',
+          Material: productData.leatherMaterial || '',
+          interiorMaterial: productData.interiorMaterial || '',
+          Color: productData.dialColor || '',
+          hardwareColor: productData.hardwareColor || '',
+          condition: productData.condition || '',
+          itemCondition: productData.itemCondition || '',
+          conditionNotes: productData.conditionNotes || '',
+          size: productData.size || { width: '', height: '', depth: '' },
+          strapLength: productData.strapLength || '',
+          accessoriesAndDelivery: productData.accessoriesAndDelivery || [],
+          scopeOfDeliveryOptions: productData.scopeOfDeliveryOptions || [],
+          taxStatus: productData.taxStatus || 'taxable',
+          stockQuantity: productData.stockQuantity || 1,
+          inStock: productData.inStock !== undefined ? productData.inStock : true,
+          retailPrice: productData.retailPrice || '',
+          sellingPrice: productData.sellingPrice || '',
+          badges: productData.badges || [],
+          seoTitle: productData.seoTitle || '',
+          seoDescription: productData.seoDescription || '',
+          seoKeywords: productData.seoKeywords || '',
+          description: productData.description || ''
+        });
+
+        // Set existing images if available
+        if (productData.images?.length > 0) {
+          setExistingImages(productData.images);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching product data:", error);
+      setError("Failed to fetch product data");
+    } finally {
+      setFetchLoading(false);
+    }
+  };
+
+
+// Separate useEffect for loadProducts
+useEffect(() => {
+  if (id) loadProducts();
+}, [id]);
+
 
   // Handle input changes
   const handleChange = (e) => {
@@ -276,17 +384,10 @@ const Page = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
       // Validation - REQUIRED FIELDS
-      if (!mainImage) {
-        throw new Error('Main image is required');
-      }
-
-      if (coverImages.length < 5 || coverImages.length > 15) {
-        throw new Error('Please upload between 5 and 15 additional images');
-      }
-
       if (!formData.MainCategory || !formData.Brand) {
         throw new Error('Main Category and Brand are required fields');
       }
@@ -316,69 +417,50 @@ const Page = () => {
         }
       });
 
-      // Append images
-      submitData.append('mainImage', mainImage);
+      // Append images if new ones are uploaded
+      if (mainImage) {
+        submitData.append('mainImage', mainImage);
+      }
       coverImages.forEach((image) => {
         submitData.append('coverImages', image);
       });
 
-      // API call with Axios
-      const response = await axios.post('http://localhost:9000/api/leather/Add', submitData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // API call to update product
+      const response = await axios.put(
+        `http://localhost:9000/api/leather/Updateleather/${id}`,
+        submitData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
 
-      if (response.data && response.data.success) {
-        // Show success message
-        alert('Leather product added successfully!');
+      if (response.data) {
+        setSuccess('Product updated successfully!');
         
-        // Reset form
-        setFormData({
-          MainCategory: '',
-          SubCategory: '',
-          Brand: '',
-          Model: '',
-          modelCode: '',
-          additionalTitle: '',
-          serialNumber: '',
-          sku: '',
-          productionYear: '',
-          approximateYear: false,
-          unknownYear: false,
-          gender: '',
-          Material: '',
-          interiorMaterial: '',
-          Color: '',
-          hardwareColor: '',
-          condition: '',
-          itemCondition: '',
-          conditionNotes: '',
-          size: { width: '', height: '', depth: '' },
-          strapLength: '',
-          accessoriesAndDelivery: [],
-          scopeOfDeliveryOptions: [],
-          taxStatus: 'taxable',
-          stockQuantity: 1,
-          inStock: true,
-          badges: [],
-          seoTitle: '',
-          seoDescription: '',
-          seoKeywords: '',
-          retailPrice: '',
-          sellingPrice: '',
-          description: ''
-        });
-        setMainImage(null);
-        setMainImagePreview('');
-        setCoverImages([]);
-        setCoverImagePreviews([]);
-      } else {
-        throw new Error(response.data?.message || 'Failed to add product');
+        // Show success toast
+        if (typeof window !== 'undefined') {
+          const Toastify = require('toastify-js');
+          Toastify({
+            text: 'Product updated successfully!',
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            style: { background: "linear-gradient(to right, #00b09b, #96c93d)" },
+          }).showToast();
+        }
+
+        // Redirect after success
+        setTimeout(() => {
+          router.push('/productmanage');
+        }, 2000);
       }
       
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Something went wrong';
+      console.error('Error updating product:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to update product';
       setError(errorMessage);
       
       // Show error toast
@@ -410,30 +492,62 @@ const Page = () => {
     setCoverImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Remove existing image
+  const removeExistingImage = (index) => {
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   // Handle cancel
   const handleCancel = () => {
     if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
-      window.history.back();
+      router.back();
     }
   };
+
+  if (fetchLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading product data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-8">
-          <DashboardBreadcrumb text="Add new product to your store" />
+          <DashboardBreadcrumb text="Edit leather product" />
           <div className="mt-4 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Add Leather Goods (Premium Leather Products)
+                Edit Leather Goods
               </h1>
               <p className="mt-1 text-sm text-gray-600">
-                Add a new premium leather product to your store with details, pricing, and inventory information
+                Update premium leather product details
               </p>
+            </div>
+            <div className="text-sm text-gray-500">
+              Product ID: {id}
             </div>
           </div>
         </div>
+
+        {/* Success Message */}
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-2 text-green-700">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-medium">Success:</span>
+              <span>{success}</span>
+            </div>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -582,6 +696,34 @@ const Page = () => {
                     placeholder="Product serial number"
                   />
                 </div>
+
+                {/* Gender - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Gender</label>
+                  <select
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Gender</option>
+                    {genderOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* In Stock Checkbox */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="inStock"
+                    checked={formData.inStock}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label className="text-sm font-medium text-gray-700">In Stock</label>
+                </div>
               </div>
             </div>
 
@@ -693,37 +835,6 @@ const Page = () => {
                     ))}
                   </select>
                 </div>
-
-                {/* Gender - Optional */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Gender</label>
-                  <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    <option value="">Select Gender</option>
-                    {genderOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Strap Length - Optional */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Strap Length (cm)</label>
-                  <input
-                    type="number"
-                    name="strapLength"
-                    value={formData.strapLength}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Strap length in centimeters"
-                    min="0"
-                    step="0.1"
-                  />
-                </div>
               </div>
 
               {/* Size Dimensions */}
@@ -763,6 +874,21 @@ const Page = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="Depth"
+                    min="0"
+                    step="0.1"
+                  />
+                </div>
+
+                {/* Strap Length - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Strap Length (cm)</label>
+                  <input
+                    type="number"
+                    name="strapLength"
+                    value={formData.strapLength}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Strap length"
                     min="0"
                     step="0.1"
                   />
@@ -998,18 +1124,6 @@ const Page = () => {
                   />
                 </div>
               </div>
-
-              {/* In Stock Checkbox */}
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="inStock"
-                  checked={formData.inStock}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label className="text-sm font-medium text-gray-700">In Stock</label>
-              </div>
             </div>
 
             {/* Media Section */}
@@ -1020,22 +1134,55 @@ const Page = () => {
                   Media
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Product images - main image is required, 5-15 additional images
+                  Product images - update main image or add additional images
                 </p>
               </div>
 
               <div className="space-y-6">
-                {/* Main Image Upload - REQUIRED */}
+                {/* Existing Images */}
+                {existingImages.length > 0 && (
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Existing Images
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {existingImages.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
+                            <Image
+                              src={image.url || image}
+                              alt={`Existing image ${index + 1}`}
+                              width={200}
+                              height={200}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(index)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Main Image Upload - Optional for update */}
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
-                    Main Image <span className="text-red-500">*</span>
+                    Update Main Image
                   </label>
                   {mainImagePreview ? (
                     <div className="relative inline-block">
                       <div className="w-48 h-48 rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
                         <Image
                           src={mainImagePreview}
-                          alt="Main product image"
+                          alt="New main product image"
                           width={200}
                           height={200}
                           className="w-full h-full object-cover"
@@ -1068,31 +1215,27 @@ const Page = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                           </div>
-                          <span className="text-sm font-medium text-gray-700">Upload Main Image</span>
-                          <p className="text-xs text-gray-500">This will be the primary product image</p>
+                          <span className="text-sm font-medium text-gray-700">Update Main Image</span>
+                          <p className="text-xs text-gray-500">Optional - upload new main image</p>
                         </div>
                       </label>
                     </div>
                   )}
                 </div>
 
-                {/* Cover Images Upload - REQUIRED (5-15) */}
+                {/* Cover Images Upload - Optional for update */}
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
-                    Additional Images (5-15 required)
+                    Add Additional Images
                   </label>
 
+                  {/* Cover Image Previews */}
                   {coverImagePreviews.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm text-gray-600">
-                          {coverImagePreviews.length} images selected (min: 5, max: 15)
+                          {coverImagePreviews.length} new images selected
                         </p>
-                        {coverImagePreviews.length < 5 && (
-                          <p className="text-sm text-red-600 font-medium">
-                            Please add {5 - coverImagePreviews.length} more images
-                          </p>
-                        )}
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {coverImagePreviews.map((preview, index) => (
@@ -1100,7 +1243,7 @@ const Page = () => {
                             <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
                               <Image
                                 src={preview}
-                                alt={`Cover image ${index + 1}`}
+                                alt={`New cover image ${index + 1}`}
                                 width={200}
                                 height={200}
                                 className="w-full h-full object-cover"
@@ -1121,6 +1264,7 @@ const Page = () => {
                     </div>
                   )}
 
+                  {/* Cover Images File Upload */}
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
                     <input
                       type="file"
@@ -1139,22 +1283,10 @@ const Page = () => {
                           </svg>
                         </div>
                         <div>
-                          <span className="text-lg font-medium text-gray-700">Click to upload additional images</span>
-                          <p className="text-sm text-gray-500 mt-2">Upload 5-15 product gallery images</p>
+                          <span className="text-lg font-medium text-gray-700">Click to add more images</span>
+                          <p className="text-sm text-gray-500 mt-2">Upload additional product gallery images</p>
                           <p className="text-sm text-gray-500">PNG, JPG, WEBP up to 5MB each</p>
-                          <p className="text-sm text-gray-500">Multiple files allowed (5-15 required)</p>
                         </div>
-                        {coverImagePreviews.length > 0 && (
-                          <p className={`text-sm font-medium ${
-                            coverImagePreviews.length >= 5 && coverImagePreviews.length <= 15
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}>
-                            {coverImagePreviews.length} additional image(s) selected
-                            {coverImagePreviews.length < 5 && ` - Need ${5 - coverImagePreviews.length} more`}
-                            {coverImagePreviews.length > 15 && ` - Maximum 15 allowed`}
-                          </p>
-                        )}
                       </div>
                     </label>
                   </div>
@@ -1229,21 +1361,9 @@ const Page = () => {
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
               <button
                 type="submit"
-                disabled={
-                  loading || 
-                  !mainImage || 
-                  coverImages.length < 5 || 
-                  coverImages.length > 15 ||
-                  !formData.MainCategory ||
-                  !formData.Brand
-                }
+                disabled={loading || !formData.MainCategory || !formData.Brand}
                 className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl ${
-                  loading || 
-                  !mainImage || 
-                  coverImages.length < 5 || 
-                  coverImages.length > 15 ||
-                  !formData.MainCategory ||
-                  !formData.Brand
+                  loading || !formData.MainCategory || !formData.Brand
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
@@ -1255,14 +1375,14 @@ const Page = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Adding Product...
+                      Updating Product...
                     </>
                   ) : (
                     <>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Add New Product
+                      Update Product
                     </>
                   )}
                 </div>
@@ -1285,4 +1405,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default EditLeatherGoods;

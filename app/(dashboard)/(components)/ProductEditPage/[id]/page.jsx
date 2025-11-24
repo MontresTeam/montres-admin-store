@@ -451,6 +451,9 @@ const ProductEditPage = () => {
     if (id) loadProducts();
   }, [id]);
 
+
+  
+
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
 

@@ -51,29 +51,23 @@ const Page = () => {
   ];
 
   const conditionOptions = [
-    'New with tags',
-    'New without tags',
-    'Like new',
+    'Brand New',
+    'Unworn / Like New',
+    'Pre-Owned',
     'Excellent',
-    'Very good',
-    'Good',
-    'Fair',
-    'For parts/repair'
+    'Not Working / For Parts'
   ];
 
   const itemConditionOptions = [
-    'Never used',
-    'Used - Like new',
-    'Used - Excellent',
-    'Used - Very good',
-    'Used - Good',
-    'Used - Fair',
-    'Used - Worn'
+    'Excellent',
+    'Good',
+    'Fair',
+    'Poor / Not Working / For Parts'
   ];
 
-  const genderOptions = ['Men', 'Women', 'Unisex', 'Kids'];
+  const genderOptions = ['Men/Unisex', 'Women'];
 
-  const includedAccessoriesOptions = [
+  const accessoriesAndDeliveryOptions = [
     'Original box',
     'Dust bag',
     'Certificate of authenticity',
@@ -96,35 +90,42 @@ const Page = () => {
 
   const taxStatusOptions = [
     { value: 'taxable', label: 'Taxable' },
-    { value: 'shipping_only', label: 'Shipping only' },
+    { value: 'shipping', label: 'Shipping only' },
     { value: 'none', label: 'None' }
+  ];
+
+  const badgeOptions = [
+    { value: 'Popular', label: 'Popular' },
+    { value: 'New Arrivals', label: 'New Arrivals' }
   ];
 
   // Form state
   const [formData, setFormData] = useState({
-    // Basic Information
+    // Basic Information - Category is required
     category: '',
     subCategory: '',
     brand: '',
     model: '',
     additionalTitle: '',
-    productName: '',
+    serialNumber: '',
     
-    // Condition
+    // Year Information
+    productionYear: '',
+    approximateYear: false,
+    unknownYear: false,
+    
+    // Condition & Details
     condition: '',
     itemCondition: '',
     gender: '',
     
-    // Accessories & Delivery
-    includedAccessories: [],
-    scopeOfDelivery: '',
+    // Materials & Colors (arrays)
+    material: [],
+    color: [],
     
-    // Product Details
-    sku: '',
-    productionYear: '',
-    material: '',
-    color: '',
-    productType: '',
+    // Accessories & Delivery (arrays)
+    accessoriesAndDelivery: [],
+    scopeOfDeliveryOptions: [],
     
     // Pricing
     retailPrice: '',
@@ -132,24 +133,20 @@ const Page = () => {
     
     // Inventory
     taxStatus: 'taxable',
-    stockQuantity: 1,
+    stockQuantity: 0,
+    inStock: true,
+    
+    // Badges
+    badges: [],
     
     // SEO
     seoTitle: '',
     seoDescription: '',
     seoKeywords: '',
-    
-    // Description
-    description: '',
-    
-    // Auto fields
-    uploadDate: new Date().toISOString().split('T')[0]
   });
 
-  const [mainImage, setMainImage] = useState(null);
-  const [mainImagePreview, setMainImagePreview] = useState('');
-  const [coverImages, setCoverImages] = useState([]);
-  const [coverImagePreviews, setCoverImagePreviews] = useState([]);
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -158,25 +155,55 @@ const Page = () => {
     const { name, value, type, checked, files } = e.target;
     
     if (type === 'checkbox') {
-      if (name === 'includedAccessories') {
+      if (name === 'accessoriesAndDelivery') {
         setFormData(prev => ({
           ...prev,
-          includedAccessories: checked 
-            ? [...prev.includedAccessories, value]
-            : prev.includedAccessories.filter(item => item !== value)
+          accessoriesAndDelivery: checked 
+            ? [...prev.accessoriesAndDelivery, value]
+            : prev.accessoriesAndDelivery.filter(item => item !== value)
+        }));
+      } else if (name === 'scopeOfDeliveryOptions') {
+        setFormData(prev => ({
+          ...prev,
+          scopeOfDeliveryOptions: checked 
+            ? [...prev.scopeOfDeliveryOptions, value]
+            : prev.scopeOfDeliveryOptions.filter(item => item !== value)
+        }));
+      } else if (name === 'material') {
+        setFormData(prev => ({
+          ...prev,
+          material: checked 
+            ? [...prev.material, value]
+            : prev.material.filter(item => item !== value)
+        }));
+      } else if (name === 'color') {
+        setFormData(prev => ({
+          ...prev,
+          color: checked 
+            ? [...prev.color, value]
+            : prev.color.filter(item => item !== value)
+        }));
+      } else if (name === 'badges') {
+        setFormData(prev => ({
+          ...prev,
+          badges: checked 
+            ? [...prev.badges, value]
+            : prev.badges.filter(item => item !== value)
+        }));
+      } else {
+        // Handle boolean checkboxes
+        setFormData(prev => ({
+          ...prev,
+          [name]: checked
         }));
       }
     } else if (type === 'file') {
-      if (name === 'mainImage' && files.length > 0) {
-        const file = files[0];
-        setMainImage(file);
-        setMainImagePreview(URL.createObjectURL(file));
-      } else if (name === 'coverImages' && files.length > 0) {
+      if (files.length > 0) {
         const newFiles = Array.from(files);
         const newPreviews = newFiles.map(file => URL.createObjectURL(file));
         
-        setCoverImages(prev => [...prev, ...newFiles]);
-        setCoverImagePreviews(prev => [...prev, ...newPreviews]);
+        setImages(prev => [...prev, ...newFiles]);
+        setImagePreviews(prev => [...prev, ...newPreviews]);
       }
     } else {
       setFormData(prev => ({
@@ -193,17 +220,13 @@ const Page = () => {
     setError('');
 
     try {
-      // Validation
-      if (!mainImage) {
-        throw new Error('Main image is required');
+      // Validation - Only category is mandatory according to schema
+      if (!formData.category) {
+        throw new Error('Category is required');
       }
 
-      if (coverImages.length < 5 || coverImages.length > 15) {
-        throw new Error('Please upload between 5 and 15 additional images');
-      }
-
-      if (!formData.brand || !formData.gender) {
-        throw new Error('Brand and Gender are required fields');
+      if (images.length === 0) {
+        throw new Error('At least one product image is required');
       }
 
       // Prepare form data for submission
@@ -211,28 +234,26 @@ const Page = () => {
       
       // Append form data
       Object.keys(formData).forEach(key => {
-        if (key === 'includedAccessories') {
-          formData[key].forEach(item => submitData.append('includedAccessories[]', item));
+        if (Array.isArray(formData[key])) {
+          formData[key].forEach(item => submitData.append(`${key}[]`, item));
         } else {
           submitData.append(key, formData[key]);
         }
       });
 
       // Append images
-      submitData.append('mainImage', mainImage);
-      coverImages.forEach((image, index) => {
-        submitData.append(`coverImages`, image);
+      images.forEach((image, index) => {
+        submitData.append(`images`, image);
       });
 
       // Here you would typically send to your API
       console.log('Form data:', formData);
-      console.log('Main image:', mainImage);
-      console.log('Cover images:', coverImages);
+      console.log('Images:', images);
 
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      alert('Product added successfully!');
+      alert('Accessory added successfully!');
       // Reset form or redirect
       
     } catch (err) {
@@ -242,16 +263,10 @@ const Page = () => {
     }
   };
 
-  // Remove main image
-  const removeMainImage = () => {
-    setMainImage(null);
-    setMainImagePreview('');
-  };
-
-  // Remove cover image
-  const removeCoverImage = (index) => {
-    setCoverImages(prev => prev.filter((_, i) => i !== index));
-    setCoverImagePreviews(prev => prev.filter((_, i) => i !== index));
+  // Remove image
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   // Handle cancel
@@ -265,12 +280,25 @@ const Page = () => {
   // Get available subcategories based on selected category
   const availableSubCategories = formData.category ? subCategoryOptions[formData.category] || [] : [];
 
+  // Handle year checkboxes logic
+  useEffect(() => {
+    if (formData.approximateYear) {
+      setFormData(prev => ({ ...prev, unknownYear: false }));
+    }
+  }, [formData.approximateYear]);
+
+  useEffect(() => {
+    if (formData.unknownYear) {
+      setFormData(prev => ({ ...prev, approximateYear: false, productionYear: '' }));
+    }
+  }, [formData.unknownYear]);
+
   return (
     <div className="min-h-screen bg-gray-50/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-8">
-          <DashboardBreadcrumb text="Add new product to your store" />
+          <DashboardBreadcrumb text="Add new accessory to your store" />
           <div className="mt-4 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
@@ -343,17 +371,16 @@ const Page = () => {
                   </select>
                 </div>
 
-                {/* Sub Category - Required */}
+                {/* Sub Category - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Sub Category <span className="text-red-500">*</span>
+                    Sub Category
                   </label>
                   <select
                     name="subCategory"
                     value={formData.subCategory}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    required
                     disabled={!formData.category}
                   >
                     <option value="">Select Sub Category</option>
@@ -365,10 +392,10 @@ const Page = () => {
                   </select>
                 </div>
 
-                {/* Brand - Required */}
+                {/* Brand - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Brand <span className="text-red-500">*</span>
+                    Brand
                   </label>
                   <input
                     type="text"
@@ -377,7 +404,6 @@ const Page = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="Enter brand name"
-                    required
                   />
                 </div>
 
@@ -396,22 +422,6 @@ const Page = () => {
                   />
                 </div>
 
-                {/* Product Name - Required */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Product Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="productName"
-                    value={formData.productName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Enter product name"
-                    required
-                  />
-                </div>
-
                 {/* Additional Title - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -425,6 +435,87 @@ const Page = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="Additional title or description"
                   />
+                </div>
+
+                {/* Serial Number - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Serial Number
+                  </label>
+                  <input
+                    type="text"
+                    name="serialNumber"
+                    value={formData.serialNumber}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Enter serial number"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Year Information Section */}
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                  Year Information
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Production year details
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Production Year - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Production Year
+                  </label>
+                  <input
+                    type="number"
+                    name="productionYear"
+                    value={formData.productionYear}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="e.g., 2023"
+                    min="1900"
+                    max="2030"
+                    disabled={formData.unknownYear}
+                  />
+                </div>
+
+                {/* Approximate Year - Optional */}
+                <div className="space-y-2 flex items-end">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="approximateYear"
+                      checked={formData.approximateYear}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      disabled={formData.unknownYear}
+                    />
+                    <label className="text-sm font-medium text-gray-700">
+                      Approximate Year
+                    </label>
+                  </div>
+                </div>
+
+                {/* Unknown Year - Optional */}
+                <div className="space-y-2 flex items-end">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="unknownYear"
+                      checked={formData.unknownYear}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label className="text-sm font-medium text-gray-700">
+                      Unknown Year
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -482,17 +573,16 @@ const Page = () => {
                   </select>
                 </div>
 
-                {/* Gender - Required */}
+                {/* Gender - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Gender <span className="text-red-500">*</span>
+                    Gender
                   </label>
                   <select
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    required
                   >
                     <option value="">Select Gender</option>
                     {genderOptions.map((option) => (
@@ -502,62 +592,49 @@ const Page = () => {
                     ))}
                   </select>
                 </div>
+              </div>
 
-                {/* Material - Optional */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Material
-                  </label>
-                  <select
-                    name="material"
-                    value={formData.material}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    <option value="">Select Material</option>
-                    {materialOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
+              {/* Materials - Optional (multiple select) */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Materials
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+                  {materialOptions.map((option) => (
+                    <div key={option} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="material"
+                        value={option}
+                        checked={formData.material.includes(option)}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label className="text-sm text-gray-700">{option}</label>
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-                {/* Color - Optional */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Color
-                  </label>
-                  <select
-                    name="color"
-                    value={formData.color}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    <option value="">Select Color</option>
-                    {colorOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Production Year - Optional */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Production Year
-                  </label>
-                  <input
-                    type="number"
-                    name="productionYear"
-                    value={formData.productionYear}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="e.g., 2023"
-                    min="1900"
-                    max="2030"
-                  />
+              {/* Colors - Optional (multiple select) */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Colors
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+                  {colorOptions.map((option) => (
+                    <div key={option} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="color"
+                        value={option}
+                        checked={formData.color.includes(option)}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label className="text-sm text-gray-700">{option}</label>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -581,13 +658,13 @@ const Page = () => {
                     Included Accessories
                   </label>
                   <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg">
-                    {includedAccessoriesOptions.map((option) => (
+                    {accessoriesAndDeliveryOptions.map((option) => (
                       <div key={option} className="flex items-center space-x-2">
                         <input
                           type="checkbox"
-                          name="includedAccessories"
+                          name="accessoriesAndDelivery"
                           value={option}
-                          checked={formData.includedAccessories.includes(option)}
+                          checked={formData.accessoriesAndDelivery.includes(option)}
                           onChange={handleChange}
                           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
@@ -598,38 +675,25 @@ const Page = () => {
                 </div>
 
                 {/* Scope of Delivery - Optional */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
                     Scope of Delivery
                   </label>
-                  <select
-                    name="scopeOfDelivery"
-                    value={formData.scopeOfDelivery}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    <option value="">Select Scope of Delivery</option>
+                  <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg">
                     {scopeOfDeliveryOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
+                      <div key={option} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          name="scopeOfDeliveryOptions"
+                          value={option}
+                          checked={formData.scopeOfDeliveryOptions.includes(option)}
+                          onChange={handleChange}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label className="text-sm text-gray-700">{option}</label>
+                      </div>
                     ))}
-                  </select>
-                </div>
-
-                {/* SKU - Optional */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    SKU
-                  </label>
-                  <input
-                    type="text"
-                    name="sku"
-                    value={formData.sku}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Unique code"
-                  />
+                  </div>
                 </div>
               </div>
             </div>
@@ -737,6 +801,44 @@ const Page = () => {
                     min="0"
                   />
                 </div>
+
+                {/* In Stock - Optional (has default) */}
+                <div className="space-y-2 flex items-end">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="inStock"
+                      checked={formData.inStock}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label className="text-sm font-medium text-gray-700">
+                      In Stock
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Badges - Optional */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Badges
+                </label>
+                <div className="flex flex-wrap gap-4">
+                  {badgeOptions.map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="badges"
+                        value={option.value}
+                        checked={formData.badges.includes(option.value)}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label className="text-sm text-gray-700">{option.label}</label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -748,62 +850,43 @@ const Page = () => {
                   Media
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Product images - main image is required, 5-15 additional images
+                  Product images - at least one image is required
                 </p>
               </div>
 
               <div className="space-y-6">
-                {/* Main Image Upload - Required */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Main Image <span className="text-red-500">*</span>
-                  </label>
-                  {mainImagePreview ? (
-                    <div className="relative inline-block">
-                      <div className="w-48 h-48 rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
-                        <Image
-                          src={mainImagePreview}
-                          alt="Main product image"
-                          width={200}
-                          height={200}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={removeMainImage}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200"
-                      >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
+                {/* Image Previews */}
+                {imagePreviews.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-600">
+                        {imagePreviews.length} images selected
+                      </p>
+                      {imagePreviews.length === 0 && (
+                        <p className="text-sm text-red-600 font-medium">
+                          Please add at least one image
+                        </p>
+                      )}
                     </div>
-                  ) : (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200 max-w-md">
-                      <input
-                        type="file"
-                        name="mainImage"
-                        onChange={handleChange}
-                        className="hidden"
-                        id="mainImage"
-                        accept="image/*"
-                      />
-                      <label htmlFor="mainImage" className="cursor-pointer">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
+                            <Image
+                              src={preview}
+                              alt={`Product image ${index + 1}`}
+                              width={200}
+                              height={200}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                          >
                             <svg
-                              className="w-6 h-6 text-blue-600"
+                              className="w-3 h-3"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -812,139 +895,62 @@ const Page = () => {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                d="M6 18L18 6M6 6l12 12"
                               />
                             </svg>
-                          </div>
-                          <span className="text-sm font-medium text-gray-700">
-                            Upload Main Image
-                          </span>
-                          <p className="text-xs text-gray-500">
-                            This will be the primary product image
-                          </p>
+                          </button>
                         </div>
-                      </label>
+                      ))}
                     </div>
-                  )}
-                </div>
-
-                {/* Cover Images Upload - Required (5-15) */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Additional Images (5-15 required)
-                  </label>
-
-                  {/* Cover Image Previews */}
-                  {coverImagePreviews.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-600">
-                          {coverImagePreviews.length} images selected (min: 5, max: 15)
-                        </p>
-                        {coverImagePreviews.length < 5 && (
-                          <p className="text-sm text-red-600 font-medium">
-                            Please add {5 - coverImagePreviews.length} more images
-                          </p>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {coverImagePreviews.map((preview, index) => (
-                          <div key={index} className="relative group">
-                            <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
-                              <Image
-                                src={preview}
-                                alt={`Cover image ${index + 1}`}
-                                width={200}
-                                height={200}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeCoverImage(index)}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-                            >
-                              <svg
-                                className="w-3 h-3"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Cover Images File Upload */}
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
-                    <input
-                      type="file"
-                      name="coverImages"
-                      onChange={handleChange}
-                      multiple
-                      className="hidden"
-                      id="coverImages"
-                      accept="image/*"
-                    />
-                    <label htmlFor="coverImages" className="cursor-pointer">
-                      <div className="flex flex-col items-center justify-center gap-4">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                          <svg
-                            className="w-8 h-8 text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                        </div>
-                        <div>
-                          <span className="text-lg font-medium text-gray-700">
-                            Click to upload additional images
-                          </span>
-                          <p className="text-sm text-gray-500 mt-2">
-                            Upload 5-15 product gallery images
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            PNG, JPG, WEBP up to 5MB each
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Multiple files allowed (5-15 required)
-                          </p>
-                        </div>
-                        {coverImagePreviews.length > 0 && (
-                          <p
-                            className={`text-sm font-medium ${
-                              coverImagePreviews.length >= 5 &&
-                              coverImagePreviews.length <= 15
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {coverImagePreviews.length} additional image(s) selected
-                            {coverImagePreviews.length < 5 &&
-                              ` - Need ${5 - coverImagePreviews.length} more`}
-                            {coverImagePreviews.length > 15 &&
-                              ` - Maximum 15 allowed`}
-                          </p>
-                        )}
-                      </div>
-                    </label>
                   </div>
+                )}
+
+                {/* File Upload */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
+                  <input
+                    type="file"
+                    name="images"
+                    onChange={handleChange}
+                    multiple
+                    className="hidden"
+                    id="images"
+                    accept="image/*"
+                  />
+                  <label htmlFor="images" className="cursor-pointer">
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-8 h-8 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <span className="text-lg font-medium text-gray-700">
+                          Click to upload product images
+                        </span>
+                        <p className="text-sm text-gray-500 mt-2">
+                          PNG, JPG, WEBP up to 5MB each
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Multiple files allowed (at least 1 required)
+                        </p>
+                      </div>
+                      {imagePreviews.length > 0 && (
+                        <p className="text-sm font-medium text-green-600">
+                          {imagePreviews.length} image(s) selected
+                        </p>
+                      )}
+                    </div>
+                  </label>
                 </div>
               </div>
             </div>
@@ -1022,55 +1028,13 @@ const Page = () => {
               </div>
             </div>
 
-            {/* Description Section */}
-            <div className="space-y-6">
-              <div className="border-b border-gray-200 pb-4">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
-                  Description
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Product descriptions and details
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                {/* Full Description - Optional */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Full Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
-                    placeholder="Detailed product description..."
-                    rows={6}
-                  />
-                </div>
-              </div>
-            </div>
-
             {/* Submit Button */}
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
               <button
                 type="submit"
-                disabled={
-                  loading || 
-                  !mainImage || 
-                  coverImages.length < 5 || 
-                  coverImages.length > 15 ||
-                  !formData.brand ||
-                  !formData.gender
-                }
+                disabled={loading || !formData.category || images.length === 0}
                 className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl ${
-                  loading || 
-                  !mainImage || 
-                  coverImages.length < 5 || 
-                  coverImages.length > 15 ||
-                  !formData.brand ||
-                  !formData.gender
+                  loading || !formData.category || images.length === 0
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
@@ -1098,7 +1062,7 @@ const Page = () => {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      Adding Product...
+                      Adding Accessory...
                     </>
                   ) : (
                     <>
@@ -1115,7 +1079,7 @@ const Page = () => {
                           d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                         />
                       </svg>
-                      Add New Product
+                      Add New Accessory
                     </>
                   )}
                 </div>

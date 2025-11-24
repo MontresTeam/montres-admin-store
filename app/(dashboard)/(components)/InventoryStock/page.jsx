@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import { 
   PlusIcon, 
   MagnifyingGlassIcon, 
@@ -12,78 +13,15 @@ import {
   XMarkIcon,
   FunnelIcon,
   ChevronDownIcon,
-  ChevronUpIcon
+  ChevronUpIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import newCurrency from '../../../../public/assets/newSymbole.png';
 
 const InventoryStockManagement = () => {
-  const [inventory, setInventory] = useState([
-    {
-      id: '1',
-      brand: 'Apple',
-      productName: 'iPhone 15 Pro',
-      codeInternal: 'APL-IP15P-256',
-      quantity: 15,
-      status: 'available',
-      cost: 850,
-      sellingPrice: 1199,
-      lastUpdated: '2024-01-15'
-    },
-    {
-      id: '2',
-      brand: 'Samsung',
-      productName: 'Galaxy S24 Ultra',
-      codeInternal: 'SAM-GS24U-512',
-      quantity: 8,
-      status: 'sold',
-      cost: 900,
-      sellingPrice: 1299,
-      soldPrice: 1250,
-      paymentMethod: 'stripe',
-      receivingAmount: 1250,
-      lastUpdated: '2024-01-14'
-    },
-    {
-      id: '3',
-      brand: 'Google',
-      productName: 'Pixel 8 Pro',
-      codeInternal: 'GOOG-P8P-128',
-      quantity: 0,
-      status: 'auction',
-      cost: 700,
-      sellingPrice: 999,
-      soldPrice: 950,
-      paymentMethod: 'tabby',
-      receivingAmount: 950,
-      lastUpdated: '2024-01-13'
-    },
-    {
-      id: '4',
-      brand: 'OnePlus',
-      productName: '12 Pro',
-      codeInternal: 'OP-12P-256',
-      quantity: 25,
-      status: 'available',
-      cost: 650,
-      sellingPrice: 899,
-      lastUpdated: '2024-01-16'
-    },
-    {
-      id: '5',
-      brand: 'Xiaomi',
-      productName: '14 Ultra',
-      codeInternal: 'XM-14U-512',
-      quantity: 3,
-      status: 'sold',
-      cost: 750,
-      sellingPrice: 1099,
-      soldPrice: 1050,
-      paymentMethod: 'mamo',
-      receivingAmount: 1050,
-      lastUpdated: '2024-01-12'
-    }
-  ]);
-
+  const [inventory, setInventory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
@@ -96,15 +34,35 @@ const InventoryStockManagement = () => {
   const [editingStatus, setEditingStatus] = useState(null);
   const fileInputRef = useRef(null);
 
+  // Fetch inventory data from API
+  const fetchInventory = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:9000/api/invontry/');
+      setInventory(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching inventory:', err);
+      setError('Failed to load inventory data');
+      showNotification('Failed to load inventory data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
   const brands = [...new Set(inventory.map(item => item.brand))];
 
   const filteredInventory = inventory.filter(item => {
     const matchesSearch = 
-      item.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.codeInternal.toLowerCase().includes(searchTerm.toLowerCase());
+      item.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.productName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.internalCode?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || item.status?.toLowerCase() === statusFilter.toLowerCase();
     const matchesBrand = brandFilter === 'all' || item.brand === brandFilter;
     
     return matchesSearch && matchesStatus && matchesBrand;
@@ -114,10 +72,13 @@ const InventoryStockManagement = () => {
     if (!sortConfig.key) return filteredInventory;
 
     return [...filteredInventory].sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key]) {
+      const aValue = a[sortConfig.key] || '';
+      const bValue = b[sortConfig.key] || '';
+      
+      if (aValue < bValue) {
         return sortConfig.direction === 'asc' ? -1 : 1;
       }
-      if (a[sortConfig.key] > b[sortConfig.key]) {
+      if (aValue > bValue) {
         return sortConfig.direction === 'asc' ? 1 : -1;
       }
       return 0;
@@ -133,14 +94,14 @@ const InventoryStockManagement = () => {
 
   const stats = {
     totalItems: inventory.length,
-    available: inventory.filter(item => item.status === 'available').length,
-    sold: inventory.filter(item => item.status === 'sold').length,
-    auction: inventory.filter(item => item.status === 'auction').length,
-    totalValue: inventory.reduce((sum, item) => sum + (item.cost * item.quantity), 0),
+    available: inventory.filter(item => item.status?.toLowerCase() === 'available').length,
+    sold: inventory.filter(item => item.status?.toLowerCase() === 'sold').length,
+    auction: inventory.filter(item => item.status?.toLowerCase() === 'auction').length,
+    totalValue: inventory.reduce((sum, item) => sum + (item.cost * (item.quantity || 0)), 0),
     totalRevenue: inventory
-      .filter(item => item.status === 'sold' || item.status === 'auction')
+      .filter(item => item.status?.toLowerCase() === 'sold' || item.status?.toLowerCase() === 'auction')
       .reduce((sum, item) => sum + (item.receivingAmount || 0), 0),
-    lowStock: inventory.filter(item => item.quantity > 0 && item.quantity <= 5).length
+    lowStock: inventory.filter(item => (item.quantity || 0) > 0 && (item.quantity || 0) <= 5).length
   };
 
   const showNotification = (message, type = 'success') => {
@@ -167,52 +128,84 @@ const InventoryStockManagement = () => {
     link.click();
   };
 
-  const handleAddItem = (item) => {
-    const newItem = {
-      ...item,
-      id: Date.now().toString(),
-      lastUpdated: new Date().toISOString().split('T')[0]
-    };
-    setInventory(prev => [...prev, newItem]);
-    setShowAddModal(false);
-    showNotification('Item added successfully!', 'success');
-  };
-
-  const handleDeleteItem = (id) => {
-    if (confirm('Are you sure you want to delete this item?')) {
-      setInventory(prev => prev.filter(item => item.id !== id));
-      showNotification('Item deleted successfully!', 'success');
+  const handleAddItem = async (item) => {
+    try {
+      const newItem = {
+        ...item,
+        internalCode: item.codeInternal, // Map to API field name
+        lastUpdated: new Date().toISOString().split('T')[0]
+      };
+      
+      const response = await axios.post('http://localhost:9000/api/invontry/', newItem);
+      setInventory(prev => [...prev, response.data]);
+      setShowAddModal(false);
+      showNotification('Item added successfully!', 'success');
+    } catch (err) {
+      console.error('Error adding item:', err);
+      showNotification('Failed to add item', 'error');
     }
   };
 
-  const handleStatusChange = (id, newStatus) => {
-    setInventory(prev => prev.map(item => 
-      item.id === id ? { ...item, status: newStatus } : item
-    ));
-    setEditingStatus(null);
-    showNotification(`Status updated to ${newStatus}`, 'success');
+  const handleDeleteItem = async (id) => {
+    if (confirm('Are you sure you want to delete this item?')) {
+      try {
+        await axios.delete(`http://localhost:9000/api/invontry/${id}`);
+        setInventory(prev => prev.filter(item => item._id !== id));
+        showNotification('Item deleted successfully!', 'success');
+      } catch (err) {
+        console.error('Error deleting item:', err);
+        showNotification('Failed to delete item', 'error');
+      }
+    }
   };
 
-  const handleBulkAction = () => {
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await axios.put(`http://localhost:9000/api/invontry/${id}`, { status: newStatus });
+      setInventory(prev => prev.map(item => 
+        item._id === id ? { ...item, status: newStatus } : item
+      ));
+      setEditingStatus(null);
+      showNotification(`Status updated to ${newStatus}`, 'success');
+    } catch (err) {
+      console.error('Error updating status:', err);
+      showNotification('Failed to update status', 'error');
+    }
+  };
+
+  const handleBulkAction = async () => {
     if (bulkAction && selectedItems.size > 0) {
-      switch (bulkAction) {
-        case 'delete':
-          if (confirm(`Are you sure you want to delete ${selectedItems.size} items?`)) {
-            setInventory(prev => prev.filter(item => !selectedItems.has(item.id)));
-            setSelectedItems(new Set());
-            showNotification(`${selectedItems.size} items deleted successfully!`, 'success');
-          }
-          break;
-        case 'mark_sold':
-          setInventory(prev => prev.map(item => 
-            selectedItems.has(item.id) ? { ...item, status: 'sold' } : item
-          ));
-          showNotification(`${selectedItems.size} items marked as sold!`, 'success');
-          break;
-        default:
-          break;
+      try {
+        switch (bulkAction) {
+          case 'delete':
+            if (confirm(`Are you sure you want to delete ${selectedItems.size} items?`)) {
+              // Delete each selected item
+              for (const id of selectedItems) {
+                await axios.delete(`http://localhost:9000/api/invontry/${id}`);
+              }
+              setInventory(prev => prev.filter(item => !selectedItems.has(item._id)));
+              setSelectedItems(new Set());
+              showNotification(`${selectedItems.size} items deleted successfully!`, 'success');
+            }
+            break;
+          case 'mark_sold':
+            // Update each selected item to sold status
+            for (const id of selectedItems) {
+              await axios.put(`http://localhost:9000/api/invontry/${id}`, { status: 'sold' });
+            }
+            setInventory(prev => prev.map(item => 
+              selectedItems.has(item._id) ? { ...item, status: 'sold' } : item
+            ));
+            showNotification(`${selectedItems.size} items marked as sold!`, 'success');
+            break;
+          default:
+            break;
+        }
+        setBulkAction('');
+      } catch (err) {
+        console.error('Error performing bulk action:', err);
+        showNotification('Failed to perform bulk action', 'error');
       }
-      setBulkAction('');
     }
   };
 
@@ -220,7 +213,7 @@ const InventoryStockManagement = () => {
     if (selectedItems.size === sortedInventory.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(sortedInventory.map(item => item.id)));
+      setSelectedItems(new Set(sortedInventory.map(item => item._id)));
     }
   };
 
@@ -235,7 +228,8 @@ const InventoryStockManagement = () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    const statusLower = status?.toLowerCase();
+    switch (statusLower) {
       case 'available': return 'bg-green-100 text-green-800 border-green-200';
       case 'sold': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'auction': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -255,8 +249,9 @@ const InventoryStockManagement = () => {
   };
 
   const getQuantityColor = (quantity) => {
-    if (quantity > 10) return 'bg-green-100 text-green-800 border-green-200';
-    if (quantity > 0) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    const qty = quantity || 0;
+    if (qty > 10) return 'bg-green-100 text-green-800 border-green-200';
+    if (qty > 0) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     return 'bg-red-100 text-red-800 border-red-200';
   };
 
@@ -284,6 +279,137 @@ const InventoryStockManagement = () => {
       </div>
     </th>
   );
+
+  // Mobile Card View Component
+  const MobileInventoryCard = ({ item }) => (
+    <div className="bg-white rounded-lg border border-gray-200 p-4 mb-3 shadow-sm">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={selectedItems.has(item._id)}
+            onChange={() => toggleSelectItem(item._id)}
+            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+          />
+          <div>
+            <h3 className="font-semibold text-gray-900 text-sm">{item.brand}</h3>
+            <p className="text-xs text-gray-500">{item.productName || 'No product name'}</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => setEditingStatus(item._id)}
+          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(item.status)}`}
+        >
+          {item.status?.charAt(0).toUpperCase() + item.status?.slice(1).toLowerCase()}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 text-xs mb-3">
+        <div>
+          <span className="text-gray-500">Code:</span>
+          <div className="font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded mt-1">
+            {item.internalCode || 'N/A'}
+          </div>
+        </div>
+        <div>
+          <span className="text-gray-500">Qty:</span>
+          <div className="mt-1">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getQuantityColor(item.quantity)}`}>
+              {item.quantity || 0}
+            </span>
+          </div>
+        </div>
+        <div>
+          <span className="text-gray-500">Cost:</span>
+          <div className="font-semibold text-gray-900 mt-1">
+            {formatCurrency(item.cost)}
+          </div>
+        </div>
+        <div>
+          <span className="text-gray-500">Selling:</span>
+          <div className="font-semibold text-green-600 mt-1">
+            {formatCurrency(item.sellingPrice)}
+          </div>
+        </div>
+      </div>
+
+      {(item.status?.toLowerCase() === 'sold' || item.status?.toLowerCase() === 'auction') && (
+        <div className="grid grid-cols-2 gap-3 text-xs mb-3 p-2 bg-gray-50 rounded">
+          <div>
+            <span className="text-gray-500">Sold Price:</span>
+            <div className="font-semibold text-blue-600 mt-1">
+              {formatCurrency(item.soldPrice)}
+            </div>
+          </div>
+          <div>
+            <span className="text-gray-500">Received:</span>
+            <div className="font-semibold text-purple-600 mt-1">
+              {formatCurrency(item.receivingAmount)}
+            </div>
+          </div>
+          {item.paymentMethod && (
+            <div className="col-span-2">
+              <span className="text-gray-500">Payment:</span>
+              <div className="mt-1">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getPaymentMethodColor(item.paymentMethod)}`}>
+                  {item.paymentMethod}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+        <div className="text-xs text-gray-500">
+          Updated: {new Date(item.updatedAt).toLocaleDateString()}
+        </div>
+        <div className="flex items-center gap-1">
+          <button className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors">
+            <EyeIcon className="w-3 h-3" />
+          </button>
+          <button className="p-1 text-green-600 hover:bg-green-100 rounded transition-colors">
+            <PencilIcon className="w-3 h-3" />
+          </button>
+          <button 
+            onClick={() => handleDeleteItem(item._id)}
+            className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+          >
+            <TrashIcon className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <ArrowPathIcon className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
+          <p className="text-gray-600">Loading inventory...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <ChartBarIcon className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={fetchInventory}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors mx-auto"
+          >
+            <ArrowPathIcon className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 md:p-6">
@@ -313,6 +439,13 @@ const InventoryStockManagement = () => {
             <p className="text-gray-600 mt-1 text-sm md:text-base">Manage your store's current stock and sales</p>
           </div>
           <div className="mt-2 md:mt-0 flex items-center gap-2 text-xs md:text-sm text-gray-500">
+            <button
+              onClick={fetchInventory}
+              className="flex items-center gap-1 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Refresh data"
+            >
+              <ArrowPathIcon className="w-4 h-4" />
+            </button>
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             Last updated: {new Date().toLocaleDateString()}
           </div>
@@ -501,8 +634,8 @@ const InventoryStockManagement = () => {
         </div>
       )}
 
-      {/* Inventory Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Desktop Table View (hidden on mobile) */}
+      <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1000px]">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -516,7 +649,7 @@ const InventoryStockManagement = () => {
                   />
                 </th>
                 <SortableHeader sortKey="brand">BRAND/PRODUCT</SortableHeader>
-                <SortableHeader sortKey="codeInternal">CODE</SortableHeader>
+                <SortableHeader sortKey="internalCode">CODE</SortableHeader>
                 <SortableHeader sortKey="quantity">QTY</SortableHeader>
                 <SortableHeader sortKey="status">STATUS</SortableHeader>
                 <SortableHeader sortKey="cost">COST</SortableHeader>
@@ -532,40 +665,40 @@ const InventoryStockManagement = () => {
             <tbody className="divide-y divide-gray-200">
               {sortedInventory.map((item) => (
                 <tr 
-                  key={item.id} 
+                  key={item._id} 
                   className={`hover:bg-gray-50 transition-colors ${
-                    selectedItems.has(item.id) ? 'bg-blue-50' : ''
+                    selectedItems.has(item._id) ? 'bg-blue-50' : ''
                   }`}
                 >
                   <td className="px-2 py-2">
                     <input
                       type="checkbox"
-                      checked={selectedItems.has(item.id)}
-                      onChange={() => toggleSelectItem(item.id)}
+                      checked={selectedItems.has(item._id)}
+                      onChange={() => toggleSelectItem(item._id)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
                     />
                   </td>
                   <td className="px-3 py-3">
                     <div>
                       <div className="font-semibold text-gray-900 text-sm">{item.brand}</div>
-                      <div className="text-xs text-gray-500">{item.productName}</div>
+                      <div className="text-xs text-gray-500">{item.productName || 'No product name'}</div>
                     </div>
                   </td>
                   <td className="px-3 py-3">
                     <code className="text-xs font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                      {item.codeInternal}
+                      {item.internalCode || 'N/A'}
                     </code>
                   </td>
                   <td className="px-3 py-3">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getQuantityColor(item.quantity)}`}>
-                      {item.quantity}
+                      {item.quantity || 0}
                     </span>
                   </td>
                   <td className="px-3 py-3">
-                    {editingStatus === item.id ? (
+                    {editingStatus === item._id ? (
                       <select
                         value={item.status}
-                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                        onChange={(e) => handleStatusChange(item._id, e.target.value)}
                         className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
                         autoFocus
                         onBlur={() => setEditingStatus(null)}
@@ -576,10 +709,10 @@ const InventoryStockManagement = () => {
                       </select>
                     ) : (
                       <button
-                        onClick={() => setEditingStatus(item.id)}
+                        onClick={() => setEditingStatus(item._id)}
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(item.status)} hover:opacity-80 transition-opacity`}
                       >
-                        {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                        {item.status?.charAt(0).toUpperCase() + item.status?.slice(1).toLowerCase()}
                       </button>
                     )}
                   </td>
@@ -625,7 +758,7 @@ const InventoryStockManagement = () => {
                         <PencilIcon className="w-3 h-3" />
                       </button>
                       <button 
-                        onClick={() => handleDeleteItem(item.id)}
+                        onClick={() => handleDeleteItem(item._id)}
                         className="p-1 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                         title="Delete Item"
                       >
@@ -641,6 +774,20 @@ const InventoryStockManagement = () => {
 
         {sortedInventory.length === 0 && (
           <div className="text-center py-8">
+            <ChartBarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">No inventory items found</p>
+            <p className="text-gray-400 text-xs mt-1">Try adjusting your search or filters</p>
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Card View (shown on mobile) */}
+      <div className="lg:hidden">
+        {sortedInventory.map((item) => (
+          <MobileInventoryCard key={item._id} item={item} />
+        ))}
+        {sortedInventory.length === 0 && (
+          <div className="text-center py-8 bg-white rounded-xl border border-gray-200">
             <ChartBarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 text-sm">No inventory items found</p>
             <p className="text-gray-400 text-xs mt-1">Try adjusting your search or filters</p>

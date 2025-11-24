@@ -283,9 +283,27 @@ const ProductManagement = () => {
     setDropdownOpen(null);
   };
 
-  const handleEdit = (id) => {
+const handleEdit = (id) => {
+  const product = products.find(p => p._id === id);
+  console.log("productAll",product);
+  
+  if (!product) return;
+
+  const name = product.name?.toLowerCase() || "";
+  const category = product.category?.toLowerCase() || "";
+  const mainCategory = product.MainCategory?.toLowerCase() || "";
+
+  const isBag = 
+    name.includes("bag") ||
+    category.includes("bag") ||
+    mainCategory.includes("bag");
+
+  if (isBag) {
+    router.push(`/LeatherGoodsEdit/${id}`);
+  } else {
     router.push(`/ProductEditPage/${id}`);
-  };
+  }
+};
 
   // View date details
   const handleViewDateDetails = (product) => {

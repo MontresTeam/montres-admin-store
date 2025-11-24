@@ -11,7 +11,20 @@ import {
   Boxes
 } from "lucide-react";
 
-import { FiDollarSign } from "react-icons/fi"; // Feather Icons
+
+import newCurrency from "../public/assets/newSymbole.png";
+import Image from "next/image";
+
+// ✅ Inline component for PNG icon
+const CurrencyPngIcon = () => (
+  <Image
+    src={newCurrency}
+    alt="currency"
+    width={18}
+    height={18}
+    className="object-contain"
+  />
+);
 
 export const data = {
   navMain: [
@@ -73,7 +86,7 @@ export const data = {
     {
       title: "Financial Overview",
       url: "/financial-overview",
-      icon: FiDollarSign,
+      icon: CurrencyPngIcon,
       isActive: false,
     },
 
