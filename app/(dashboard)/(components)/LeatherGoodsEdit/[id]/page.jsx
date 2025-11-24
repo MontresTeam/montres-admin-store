@@ -427,7 +427,7 @@ useEffect(() => {
 
       // API call to update product
       const response = await axios.put(
-        `http://localhost:9000/api/leather/Updateleather/${id}`,
+        `https://api.montres.ae/api/leather/Updateleather/${id}`,
         submitData,
         {
           headers: {
