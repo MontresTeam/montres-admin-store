@@ -14,7 +14,9 @@ import {
   FunnelIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import newCurrency from '../../../../public/assets/newSymbole.png';
 
@@ -33,6 +35,10 @@ const InventoryStockManagement = () => {
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const [editingStatus, setEditingStatus] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
 
   // Fetch inventory data from API
   const fetchInventory = async () => {
@@ -53,6 +59,11 @@ const InventoryStockManagement = () => {
   useEffect(() => {
     fetchInventory();
   }, []);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, brandFilter]);
 
   const brands = [...new Set(inventory.map(item => item.brand))];
 
@@ -85,11 +96,40 @@ const InventoryStockManagement = () => {
     });
   }, [filteredInventory, sortConfig]);
 
+  // Pagination calculations
+  const totalItems = sortedInventory.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+  const currentItems = sortedInventory.slice(startIndex, endIndex);
+
   const handleSort = (key) => {
     setSortConfig({
       key,
       direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc'
     });
+  };
+
+  // Pagination handlers
+  const goToPage = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleItemsPerPageChange = (value) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   const stats = {
@@ -210,10 +250,10 @@ const InventoryStockManagement = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedItems.size === sortedInventory.length) {
+    if (selectedItems.size === currentItems.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(sortedInventory.map(item => item._id)));
+      setSelectedItems(new Set(currentItems.map(item => item._id)));
     }
   };
 
@@ -279,6 +319,89 @@ const InventoryStockManagement = () => {
       </div>
     </th>
   );
+
+  // Pagination Component
+  const Pagination = () => {
+    // Generate page numbers to show
+    const getPageNumbers = () => {
+      const pages = [];
+      const maxVisiblePages = window.innerWidth < 768 ? 3 : 5;
+      
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      return pages;
+    };
+
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 p-3 bg-white rounded-lg border border-gray-200">
+        {/* Items per page selector */}
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <span>Show:</span>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => handleItemsPerPageChange(e.target.value)}
+            className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <span>items per page</span>
+        </div>
+
+        {/* Page info */}
+        <div className="text-sm text-gray-600">
+          Showing {startIndex + 1}-{endIndex} of {totalItems} items
+        </div>
+
+        {/* Page navigation */}
+        <div className="flex items-center gap-1">
+          {/* Previous button */}
+          <button
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+          >
+            <ChevronLeftIcon className="w-4 h-4" />
+          </button>
+
+          {/* Page numbers */}
+          {getPageNumbers().map(page => (
+            <button
+              key={page}
+              onClick={() => goToPage(page)}
+              className={`min-w-[2.5rem] px-2 py-1 text-sm rounded-lg border transition-colors ${
+                currentPage === page
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-300 hover:bg-gray-50 text-gray-700'
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          {/* Next button */}
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+          >
+            <ChevronRightIcon className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   // Mobile Card View Component
   const MobileInventoryCard = ({ item }) => (
@@ -585,13 +708,16 @@ const InventoryStockManagement = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Stock Level</label>
-                <select className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="all">All Stock Levels</option>
-                  <option value="out">Out of Stock</option>
-                  <option value="low">Low Stock (1-5)</option>
-                  <option value="medium">Medium Stock (6-15)</option>
-                  <option value="high">High Stock (16+)</option>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Items Per Page</label>
+                <select
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(e.target.value)}
+                >
+                  <option value="10">10 items</option>
+                  <option value="20">20 items</option>
+                  <option value="50">50 items</option>
+                  <option value="100">100 items</option>
                 </select>
               </div>
             </div>
@@ -643,7 +769,7 @@ const InventoryStockManagement = () => {
                 <th className="w-10 px-2 py-2">
                   <input
                     type="checkbox"
-                    checked={selectedItems.size === sortedInventory.length && sortedInventory.length > 0}
+                    checked={selectedItems.size === currentItems.length && currentItems.length > 0}
                     onChange={toggleSelectAll}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
                   />
@@ -663,7 +789,7 @@ const InventoryStockManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {sortedInventory.map((item) => (
+              {currentItems.map((item) => (
                 <tr 
                   key={item._id} 
                   className={`hover:bg-gray-50 transition-colors ${
@@ -772,27 +898,33 @@ const InventoryStockManagement = () => {
           </table>
         </div>
 
-        {sortedInventory.length === 0 && (
+        {currentItems.length === 0 && (
           <div className="text-center py-8">
             <ChartBarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 text-sm">No inventory items found</p>
             <p className="text-gray-400 text-xs mt-1">Try adjusting your search or filters</p>
           </div>
         )}
+
+        {/* Pagination for desktop */}
+        {totalPages > 1 && <Pagination />}
       </div>
 
       {/* Mobile Card View (shown on mobile) */}
       <div className="lg:hidden">
-        {sortedInventory.map((item) => (
+        {currentItems.map((item) => (
           <MobileInventoryCard key={item._id} item={item} />
         ))}
-        {sortedInventory.length === 0 && (
+        {currentItems.length === 0 && (
           <div className="text-center py-8 bg-white rounded-xl border border-gray-200">
             <ChartBarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 text-sm">No inventory items found</p>
             <p className="text-gray-400 text-xs mt-1">Try adjusting your search or filters</p>
           </div>
         )}
+
+        {/* Pagination for mobile */}
+        {totalPages > 1 && <Pagination />}
       </div>
 
       {/* Add Item Modal */}
@@ -807,7 +939,7 @@ const InventoryStockManagement = () => {
   );
 };
 
-// Add Item Modal Component
+// Add Item Modal Component (keep the same as before)
 const AddItemModal = ({ onClose, onSave, brands }) => {
   const [formData, setFormData] = useState({
     brand: '',
