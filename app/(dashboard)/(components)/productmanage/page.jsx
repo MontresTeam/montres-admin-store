@@ -285,20 +285,24 @@ const ProductManagement = () => {
 
 const handleEdit = (id) => {
   const product = products.find(p => p._id === id);
-  console.log("productAll",product);
-  
+  console.log("productAll", product);
+
   if (!product) return;
 
   const name = product.name?.toLowerCase() || "";
-  const category = product.category?.toLowerCase() || "";
-  const mainCategory = product.MainCategory?.toLowerCase() || "";
 
-  const isBag = 
-    name.includes("bag") ||
-    category.includes("bag") ||
-    mainCategory.includes("bag");
+  // Keywords to detect Leather Goods
+  const leatherKeywords = [
+    "bag",
+    "wallet",
+    "holder"
+  ];
 
-  if (isBag) {
+  const isLeatherGoods = leatherKeywords.some(keyword =>
+    name.includes(keyword)
+  );
+
+  if (isLeatherGoods) {
     router.push(`/LeatherGoodsEdit/${id}`);
   } else {
     router.push(`/ProductEditPage/${id}`);
