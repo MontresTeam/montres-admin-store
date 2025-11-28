@@ -15,24 +15,30 @@ const EditLeatherGoods = () => {
 
   // Static data options - MATCHING SCHEMA ENUMS
   const mainCategoryOptions = [
-    'Hand Bag',
-    'Wallet',
-    'Card Holder', 
-    'Belt',
-    'Briefcase',
-    'Pounch'
+  "Bag",
+  "Wallet",
+  "Card Holder",
+  "Briefcase",
+  "Clutch Bag",
+  "Pouch"
   ];
 
   const subCategoryOptions = [
-    "Tote Bag",
-    "Crossbody Bag",
-    "shoulder/crossbody bag",
-    "Shoulder Bag",
-    "Clutch",
-    "Backpack",
-    "Passport Holder",
-    "Reversible Belt",
-    "Executive Case"
+  "Tote Bag",
+  "Crossbody Bag",
+  "Card Holder",
+  "Shoulder/Crossbody Bag",
+  "Shoulder Bag",
+  "Clutch",
+  "Backpack",
+  "Hand Bag",
+  "Coin Purse",
+  "Key Holder",
+  "Travel Bag",
+  "Pouch",
+  "Long Bi-Fold Wallet",
+  "Reversible Belt",
+  "Business Bag"
   ];
 
   const materialOptions = [

@@ -8,24 +8,30 @@ import newcurrencysymbol from '../../../../public/assets/newSymbole.png';
 const Page = () => {
   // Static data options - MATCHING SCHEMA ENUMS
   const mainCategoryOptions = [
-    'Hand Bag',
-    'Wallet',
-    'Card Holder', 
-    'Belt',
-    'Briefcase',
-    'Pounch' // Note: Fixed typo from 'Pouch' to match schema
+  "Bag",
+  "Wallet",
+  "Card Holder",
+  "Briefcase",
+  "Clutch Bag",
+  "Pouch"
   ];
 
   const subCategoryOptions = [
-    "Tote Bag",
-    "Crossbody Bag",
-    "shoulder/crossbody bag", // Note: Added to match schema
-    "Shoulder Bag",
-    "Clutch",
-    "Backpack",
-    "Passport Holder",
-    "Reversible Belt",
-    "Executive Case"
+  "Tote Bag",
+  "Crossbody Bag",
+  "Card Holder",
+  "Shoulder/Crossbody Bag",
+  "Shoulder Bag",
+  "Clutch",
+  "Backpack",
+  "Hand Bag",
+  "Coin Purse",
+  "Key Holder",
+  "Travel Bag",
+  "Pouch",
+  "Long Bi-Fold Wallet",
+  "Reversible Belt",
+  "Business Bag"
   ];
 
   const materialOptions = [
