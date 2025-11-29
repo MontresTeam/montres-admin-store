@@ -216,7 +216,7 @@ const EditLeatherGoods = () => {
     
     // Pricing & Inventory
     taxStatus: 'taxable',
-    stockQuantity: 0,
+     stockQuantity: "",
     inStock: true,
     retailPrice: '',
     sellingPrice: '',
@@ -281,7 +281,7 @@ const EditLeatherGoods = () => {
           accessoriesAndDelivery: productData.accessoriesAndDelivery || [],
           scopeOfDeliveryOptions: productData.scopeOfDeliveryOptions || [],
           taxStatus: productData.taxStatus || 'taxable',
-          stockQuantity: productData.stockQuantity || 1,
+          stockQuantity: productData.stockQuantity || "",
           inStock: productData.inStock !== undefined ? productData.inStock : true,
           retailPrice: productData.retailPrice || '',
           sellingPrice: productData.sellingPrice || '',
