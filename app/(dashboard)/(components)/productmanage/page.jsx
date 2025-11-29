@@ -289,9 +289,21 @@ const handleEdit = (id) => {
 
   if (!product) return;
 
+  const forcedLeatherSKUs = [
+    "MON0044",
+    "MON0042",
+    "MON0295"
+  ];
+
+  const isForcedLeather = forcedLeatherSKUs.includes(product.sku);
+
+  if (isForcedLeather) {
+    router.push(`/LeatherGoodsEdit/${id}`);
+    return;
+  }
+
   const name = product.name?.toLowerCase() || "";
 
-  // Keywords to detect Leather Goods
   const leatherKeywords = [
     "bag",
     "wallet",
@@ -309,6 +321,7 @@ const handleEdit = (id) => {
     router.push(`/ProductEditPage/${id}`);
   }
 };
+
 
   // View date details
   const handleViewDateDetails = (product) => {
