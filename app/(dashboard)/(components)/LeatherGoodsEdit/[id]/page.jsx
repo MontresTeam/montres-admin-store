@@ -216,7 +216,7 @@ const EditLeatherGoods = () => {
     
     // Pricing & Inventory
     taxStatus: 'taxable',
-    stockQuantity: 1,
+    stockQuantity: 0,
     inStock: true,
     retailPrice: '',
     sellingPrice: '',
