@@ -43,12 +43,14 @@ export async function fetchProduct({
   }
 }
 
+
+
 // ✅ Add Product
-// ✅ Add Product
+
 export async function addProduct(formData) {
   try {
     // formData should be a FormData object (because of image upload)
-    const response = await api.post("/admin/product", formData, {
+    const response = await api.post("/admin/product/add", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -70,7 +72,72 @@ export async function updateProduct(id, updatedData) {
     return { data: null, error };
   }
 }
+// Home Product Grid - Example Usage
+export async function getHomeProductGrid() {
+  try {
+    let endpoint = `home`;
+    // ✅ Add search if provided
+    const response = await api.get(endpoint);
 
+    return { data: response.data, error: null, isLoading: false };
+  } catch (error) {
+    return { data: null, error, isLoading: false };
+  }
+}
+
+export const updateHomeProductGrid = async (categoryId, { title, products }) => {
+  try {
+    const res = await api.put(`/home/updatehomeproduct/${categoryId}`, {
+      title,
+      products,
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error updating home product grid:", error);
+    throw error;
+  }
+};
+
+export async function fetchProductAll({ search = "" } = {}) {
+  try {
+    let endpoint = `productAll`;
+
+    // ✅ Add search if provided
+    if (search) {
+      endpoint += `?search=${encodeURIComponent(search)}`;
+    }
+
+    const response = await api.get(endpoint);
+
+    return { data: response.data, error: null, isLoading: false };
+  } catch (error) {
+    return { data: null, error, isLoading: false };
+  }
+}
+
+// Brand New Section - Example Usage
+
+//update this function in brandNew.jsx to use the API
+export const updateBrandNew = async ({ products }) => {
+  try {
+    const res = await api.put('/home/brandnew', { products });
+    return res.data;
+  } catch (error) {
+    console.error("Error updating BrandNew products:", error);
+    throw error;
+  }
+};
+
+// get brand new products
+export const getBrandNew = async () => {
+  try {
+    const res = await api.get('/home/brandnew');
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching BrandNew products:", error);
+    throw error;
+  }
+};
 // ✅ Delete Product
 export async function deleteProduct(id) {
   try {
@@ -81,3 +148,51 @@ export async function deleteProduct(id) {
     return { data: null, error };
   }
 }
+
+
+
+
+// ✅ Get all customer orders
+export async function getOrders() {
+  try {
+    const response = await api.get(`/admin/order/`);
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error("❌ getOrders error:", error);
+    return { data: null, error };
+  }
+}
+
+// ✅ Get a single order by ID
+export async function getOrderById(orderId) {
+  try {
+    const response = await api.get(`/admin/order/${orderId}`);
+    return { data: response.data, error: null };
+  } catch (error) {
+    console.error("❌ getOrderById error:", error);
+    return { data: null, error };
+  }
+}
+
+// trusted section -
+
+export const getTrustedProducts = async () => {
+  try {
+    const res = await api.get('/home/trusted');
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching Trusted products:", error);
+    throw error;
+  }
+};
+
+export const updateTrustedProducts = async ({ newArrivals, montresTrusted, replace = false }) => {
+  try {
+    const res = await api.put('/home/updatetrusted', { newArrivals, montresTrusted, replace });
+    return res.data;
+  } catch (error) {
+    console.error("Error updating Trusted products:", error);
+    throw error;
+  }
+};
+

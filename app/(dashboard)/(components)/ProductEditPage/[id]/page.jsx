@@ -21,24 +21,26 @@ const ProductEditPage = () => {
   const [coverImagePreviews, setCoverImagePreviews] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
 
-  // Form state matching AddProduct component
   const [formData, setFormData] = useState({
-    // Basic Info
+    // Basic Info - Required: brand, model, category, watchType
     brand: "",
     model: "",
     referenceNumber: "",
+    sku: "",
     serialNumber: "",
-    sku:"",
     additionalTitle: "",
     watchType: "",
+    watchStyle: "",
     scopeOfDelivery: "",
     includedAccessories: "",
+    badges: "", // FIXED: Changed from array to string
+    category: "",
 
     // Item Features
     productionYear: "",
     approximateYear: false,
     unknownYear: false,
-    gender: "",
+    gender: "Men/Unisex",
     movement: "",
     dialColor: "",
     caseMaterial: "",
@@ -51,28 +53,26 @@ const ProductEditPage = () => {
     caseColor: "",
     crystal: "",
     bezelMaterial: "",
-    dialNumerical: "",
+    dialNumerals: "",
     caliber: "",
     powerReserve: "",
     jewels: "",
 
-    // Functions (array to store selected functions)
+    // Functions
     functions: [],
 
     // Condition
     condition: "",
+    itemCondition: "",
     replacementParts: [],
 
-    // Pricing & Inventory
+    // Pricing & Inventory - regularPrice is optional
     regularPrice: "",
     salePrice: "",
-    discount: "", // Extra field for edit page
     taxStatus: "taxable",
     stockQuantity: "",
 
     // Category & Classification
-    categories: "",
-    subcategory: "",
     collection: "None",
 
     // Description & Meta
@@ -88,107 +88,233 @@ const ProductEditPage = () => {
     seoKeywords: "",
   });
 
-  // Options data (same as AddProduct)
+  // Options data
   const scopeOfDeliveryOptions = [
+    "Full Set (Watch + Original Box + Original Papers)",
+    "Watch with Original Papers",
+    "Watch with Original Box",
+    "Watch with Montres Safe Box",
     "Watch Only",
-    "Watch with original box",
-    "Watch with original papers",
-    "Watch with original box and original papers",
-    "Montres safe box"
   ];
 
-  const watchTypes = [
-    "Luxury watch",
-    "Classic watch", 
+  const watchStyles = [
+    "luxury watch",
+    "Classic watch",
     "Sports watch",
     "Vintage watch",
     "Dress watch",
-    "Diver's watch",
-    "Pilot watch",
+    "Drivers watch",
+    "pilot watch",
     "Racing watch",
-    "Smartwatch"
+  ];
+
+  const watchTypes = [
+    "Wrist Watch",
+    "Pocket Watch",
+    "Clocks",
+    "Stopwatch",
+    "Smart Watch",
+  ];
+
+  const categoryOptions = [
+    "Watch",
+    "Jewellery",
+    "Gold",
+    "Accessories",
+    "Leather Goods",
+    "Leather Bags",
+  ];
+
+  const Badges = [
+    "Popular", 
+    "New Arrivals"
+  ];
+
+  const includedAccessoriesOptions = [
+    "Extra Strap",
+    "Original Strap",
+    "Warranty Card",
+    "Certificate",
+    "Travel Case",
+    "Bezel Protector",
+    "Cleaning Cloth",
+    "Other Accessories",
   ];
 
   const genders = ["Men/Unisex", "Women"];
-  
+
   const movements = [
     "Automatic",
     "Quartz",
     "Manual",
     "Solar",
     "Kinetic",
-    "Mechanical"
+    "Mechanical",
   ];
 
   const colors = [
-    "Black", "White", "Silver", "Gold", "Rose Gold", "Blue", "Green", "Red",
-    "Brown", "Gray", "Yellow", "Orange", "Purple", "Pink", "Champagne"
+    "Black",
+    "White",
+    "Silver",
+    "Gold",
+    "Rose Gold",
+    "Blue",
+    "Green",
+    "Red",
+    "Brown",
+    "Gray",
+    "Yellow",
+    "Orange",
+    "Purple",
+    "Pink",
+    "Champagne",
+    "Gold/Silver",
   ];
 
   const materials = [
-    "Stainless Steel", "Gold", "Rose Gold", "Platinum", "Titanium", "Ceramic",
-    "Carbon Fiber", "Brass", "Bronze", "Aluminum"
+    "Stainless Steel",
+    "Gold/Steel",
+    "Gold",
+    "Steel",
+    "Rose Gold",
+    "Platinum",
+    "Titanium",
+    "Ceramic",
+    "Carbon Fiber",
+    "Brass",
+    "Bronze",
+    "Aluminum",
   ];
 
   const strapMaterials = [
-    "Leather", "Metal Bracelet", "Rubber", "Nylon", "Fabric", "Silicone",
-    "Alligator", "Crocodile", "Suede", "Canvas"
+    "Alligator",
+    "Canvas",
+    "Crocodile",
+    "Fabric",
+    "Gold",
+    "Gold/Steel",
+    "Leather",
+    "Metal Bracelet",
+    "Nylon",
+    "Rubber",
+    "Silicone",
+    "Suede",
+    "Steel",
+    "18k White Gold",
   ];
 
-  const crystals = [
-    "Sapphire", "Mineral", "Acrylic", "Hardlex", "Plexiglass"
-  ];
+  const crystals = ["Sapphire", "Mineral", "Acrylic", "Hardlex", "Plexiglass"];
 
   const bezelMaterials = [
-    "Stainless Steel", "Ceramic", "Aluminum", "Gold", "Titanium", "Carbon Fiber"
+    "Aluminum",
+    "Ceramic",
+    "Gold",
+    "18k Yellow Gold",
+    "Gold Plated",
+    "Rubber",
+    "Stainless Steel",
+    "Titanium",
+    "Tungsten",
+  ];
+
+  const DIALNUMERALS = [
+    "Arabic Numerals",
+    "Roman Numerals",
+    "No Numerals",
+    "Lines",
+    "Gemstone",
+    "Dot/round marker",
+  ];
+
+  const itemConditions = [
+    "Excellent",
+    "Good",
+    "Fair",
+    "Poor / Not Working / For Parts",
   ];
 
   const conditions = [
-    "New",
-    "Like New",
+    "Brand New",
+    "Unworn / Like New",
+    "Pre-Owned",
     "Excellent",
-    "Very Good", 
-    "Good",
-    "Fair",
-    "Poor"
+    "Not Working / For Parts",
   ];
 
   const taxStatusOptions = [
     { value: "taxable", label: "Taxable" },
     { value: "shipping", label: "Shipping" },
-    { value: "none", label: "None" }
+    { value: "none", label: "None" },
   ];
 
   // Functions from the images
   const functionCategories = {
     "Functions Set 1": [
-      "Search", "Our suggestion", "Date Suggestion", "Moon phase", "Minute repeater",
-      "Chronograph", "Double chronograph", "Flyback", "Panorama date", "Chiming clock",
-      "Repeater", "Tourbillon", "Weekday", "Month", "Year", "Annual calendar",
-      "4-year calendar", "Perpetual calendar"
+      "Search",
+      "Our suggestion",
+      "Date Suggestion",
+      "Moon phase",
+      "Minute repeater",
+      "Chronograph",
+      "Double chronograph",
+      "Flyback",
+      "Panorama date",
+      "Chiming clock",
+      "Repeater",
+      "Tourbillon",
+      "Weekday",
+      "Month",
+      "Year",
+      "Annual calendar",
+      "4-year calendar",
+      "Perpetual calendar",
     ],
     "Functions Set 2": [
-      "Continuous hands", "Tempered blue hands", "Genevian Seal", "Chronometer",
-      "Power Reserve Display", "Rotating Bezel", "Limited Edition", "Crown Left",
-      "Screw-Down Crown", "Helium Valve", "Quick Set", "Screw-Down Push-Buttons",
-      "Only Original Parts", "Luminous indices", "PVD/DLC coating", "World time watch",
-      "Master Chronometer", "Smartwatch"
+      "Continuous hands",
+      "Tempered blue hands",
+      "Genevian Seal",
+      "Chronometer",
+      "Power Reserve Display",
+      "Rotating Bezel",
+      "Limited Edition",
+      "Crown Left",
+      "Screw-Down Crown",
+      "Helium Valve",
+      "Quick Set",
+      "Screw-Down Push-Buttons",
+      "Only Original Parts",
+      "Luminous indices",
+      "PVD/DLC coating",
+      "World time watch",
+      "Master Chronometer",
+      "Smartwatch",
     ],
-    "Functions Set 3": [
-      "Solar watch", "One-hand watches", "Vintage"
-    ],
+    "Functions Set 3": ["Solar watch", "One-hand watches", "Vintage"],
     "Functions Set 4": [
-      "Alarm", "GMT", "Equation of time", "Jumping hour", "Tachymeter"
-    ]
+      "Alarm",
+      "GMT",
+      "Equation of time",
+      "Jumping hour",
+      "Tachymeter",
+    ],
   };
 
   const replacementParts = [
-    "Dial", "Crown", "Clasp", "Leather strap", "Bezel", "Hands", "Pusher",
-    "Crystal", "Coating", "Diamond finishing", "Metal bracelet", "Case back",
-    "Movement replacement parts"
+    "Dial",
+    "Crown",
+    "Clasp",
+    "Leather strap",
+    "Bezel",
+    "Hands",
+    "Pusher",
+    "Crystal",
+    "Coating",
+    "Diamond finishing",
+    "Metal bracelet",
+    "Case back",
+    "Movement replacement parts",
   ];
 
-  // Helper function to get URL from image object or string
   const getImageUrl = (image) => {
     if (typeof image === "string") return image;
     if (image && image.url) return image.url;
@@ -200,32 +326,6 @@ const ProductEditPage = () => {
   const isBlobUrl = (url) => {
     return typeof url === "string" && url.startsWith("blob:");
   };
-
-  // Calculate discount automatically when regular price or sale price changes
-  useEffect(() => {
-    if (formData.regularPrice && formData.salePrice) {
-      const regular = parseFloat(formData.regularPrice);
-      const sale = parseFloat(formData.salePrice);
-      
-      if (regular > 0 && sale < regular) {
-        const discountPercentage = ((regular - sale) / regular) * 100;
-        setFormData(prev => ({
-          ...prev,
-          discount: discountPercentage.toFixed(2)
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          discount: "0"
-        }));
-      }
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        discount: "0"
-      }));
-    }
-  }, [formData.regularPrice, formData.salePrice]);
 
   // Load product data
   const loadProducts = async () => {
@@ -242,18 +342,28 @@ const ProductEditPage = () => {
           brand: product.brand || "",
           model: product.model || "",
           referenceNumber: product.referenceNumber || "",
-          sku:product.sku || "",
+          sku: product.sku || "",
           serialNumber: product.serialNumber || "",
           additionalTitle: product.additionalTitle || "",
           watchType: product.watchType || "",
-          scopeOfDelivery: product.scopeOfDelivery || "",
-          includedAccessories: product.includedAccessories || "",
+          watchStyle: product.watchStyle || "",
+          scopeOfDelivery: Array.isArray(product.scopeOfDelivery)
+            ? product.scopeOfDelivery[0] || ""
+            : product.scopeOfDelivery || "",
+          includedAccessories: Array.isArray(product.includedAccessories)
+            ? product.includedAccessories[0] || ""
+            : product.includedAccessories || "",
+          category: product.category || "",
+          // FIXED: Handle badges as single value
+          badges: Array.isArray(product.badges) 
+            ? product.badges[0] || "" 
+            : product.badges || "",
 
           // Item Features
           productionYear: product.productionYear || "",
           approximateYear: product.approximateYear || false,
           unknownYear: product.unknownYear || false,
-          gender: product.gender || "",
+          gender: product.gender || "Men/Unisex",
           movement: product.movement || "",
           dialColor: product.dialColor || "",
           caseMaterial: product.caseMaterial || "",
@@ -266,7 +376,7 @@ const ProductEditPage = () => {
           caseColor: product.caseColor || "",
           crystal: product.crystal || "",
           bezelMaterial: product.bezelMaterial || "",
-          dialNumerical: product.dialNumerical || "",
+          dialNumerals: product.dialNumerals || "",
           caliber: product.caliber || "",
           powerReserve: product.powerReserve || "",
           jewels: product.jewels || "",
@@ -276,18 +386,18 @@ const ProductEditPage = () => {
 
           // Condition
           condition: product.condition || "",
-          replacementParts: Array.isArray(product.replacementParts) ? product.replacementParts : [],
+          itemCondition: product.itemCondition || "",
+          replacementParts: Array.isArray(product.replacementParts)
+            ? product.replacementParts
+            : [],
 
           // Pricing & Inventory
           regularPrice: product.regularPrice || "",
           salePrice: product.salePrice || "",
-          discount: product.discount || "",
           taxStatus: product.taxStatus || "taxable",
           stockQuantity: product.stockQuantity || "",
 
           // Category & Classification
-          categories: product.categories || "",
-          subcategory: product.subcategory || "",
           collection: product.collection || "None",
 
           // Description & Meta
@@ -295,7 +405,9 @@ const ProductEditPage = () => {
           visibility: product.visibility || "visible",
 
           // Tags
-          tags: Array.isArray(product.tags) ? product.tags.join(", ") : product.tags || "",
+          tags: Array.isArray(product.tags)
+            ? product.tags.join(", ")
+            : product.tags || "",
 
           // SEO Fields
           seoTitle: product.seoTitle || "",
@@ -308,16 +420,18 @@ const ProductEditPage = () => {
           const productImages = product.images;
           setExistingImages(productImages);
 
-          // Set main image (first image as main)
-          if (productImages.length > 0) {
-            setMainImagePreview(getImageUrl(productImages[0]));
+          // Find main image (type: "main") or use first image as main
+          const mainImg =
+            productImages.find((img) => img.type === "main") ||
+            productImages[0];
+          if (mainImg) {
+            setMainImagePreview(getImageUrl(mainImg));
           }
 
-          // Set cover images (rest of the images)
-          if (productImages.length > 1) {
-            const coverPreviews = productImages
-              .slice(1)
-              .map((img) => getImageUrl(img));
+          // Find cover images (type: "cover") or use remaining images as covers
+          const coverImgs = productImages.filter((img) => img !== mainImg);
+          if (coverImgs.length > 0) {
+            const coverPreviews = coverImgs.map((img) => getImageUrl(img));
             setCoverImagePreviews(coverPreviews);
           }
         }
@@ -337,44 +451,46 @@ const ProductEditPage = () => {
     if (id) loadProducts();
   }, [id]);
 
+
+  
+
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
 
     if (type === "checkbox") {
       if (name === "approximateYear" || name === "unknownYear") {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          [name]: checked
+          [name]: checked,
+          ...(name === "unknownYear" && checked && { productionYear: "" }),
         }));
       } else if (name === "functions") {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          functions: checked 
+          functions: checked
             ? [...prev.functions, value]
-            : prev.functions.filter(item => item !== value)
+            : prev.functions.filter((item) => item !== value),
         }));
       } else if (name === "replacementParts") {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          replacementParts: checked 
+          replacementParts: checked
             ? [...prev.replacementParts, value]
-            : prev.replacementParts.filter(item => item !== value)
+            : prev.replacementParts.filter((item) => item !== value),
         }));
       }
-    } 
-    else if (name === "mainImage" && files && files.length > 0) {
+      // REMOVED: badges checkbox logic since it's now a single select
+    } else if (name === "mainImage" && files && files.length > 0) {
       const file = files[0];
       setMainImage(file);
       setMainImagePreview(URL.createObjectURL(file));
-    } 
-    else if (name === "coverImages" && files && files.length > 0) {
+    } else if (name === "coverImages" && files && files.length > 0) {
       const newImages = Array.from(files);
       const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
 
       setCoverImages((prev) => [...prev, ...newImages]);
       setCoverImagePreviews((prev) => [...prev, ...newPreviewUrls]);
-    } 
-    else {
+    } else {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -409,9 +525,14 @@ const ProductEditPage = () => {
     setError("");
     setSuccess("");
 
-    // Validate required fields
-    if (!formData.brand.trim() || !formData.model.trim()) {
-      setError("Brand and Model are required");
+    // Validate required fields based on schema
+    if (
+      !formData.brand.trim() ||
+      !formData.model.trim() ||
+      !formData.category.trim() ||
+      !formData.watchType.trim()
+    ) {
+      setError("Brand, Model, Category, and Watch Type are required fields");
       setLoading(false);
       return;
     }
@@ -422,16 +543,32 @@ const ProductEditPage = () => {
       // Append all basic fields
       Object.keys(formData).forEach((key) => {
         const value = formData[key];
-        
+
         if (value !== "" && value !== null && value !== undefined) {
           // Handle array fields
           if (Array.isArray(value)) {
-            value.forEach(item => productData.append(key, item));
+            value.forEach((item) => productData.append(key, item));
           }
-          // Handle numeric fields
-          else if (["regularPrice", "salePrice", "discount", "stockQuantity", "powerReserve", "jewels"].includes(key)) {
+          // Handle numeric fields - regularPrice is optional
+          else if (
+            [
+              "salePrice",
+              "stockQuantity",
+              "powerReserve",
+              "jewels",
+              "strapSize",
+              "caseSize",
+            ].includes(key)
+          ) {
             const numValue = parseFloat(value) || 0;
             productData.append(key, numValue.toString());
+          }
+          // Handle regularPrice separately since it's optional
+          else if (key === "regularPrice") {
+            if (value !== "") {
+              const numValue = parseFloat(value) || 0;
+              productData.append(key, numValue.toString());
+            }
           }
           // Handle boolean fields
           else if (typeof value === "boolean") {
@@ -439,9 +576,18 @@ const ProductEditPage = () => {
           }
           // Handle tags (comma separated)
           else if (key === "tags") {
-            const tagsArray = value.split(",").map(tag => tag.trim()).filter(tag => tag);
+            const tagsArray = value
+              .split(",")
+              .map((tag) => tag.trim())
+              .filter((tag) => tag);
             if (tagsArray.length > 0) {
-              tagsArray.forEach(tag => productData.append(key, tag));
+              tagsArray.forEach((tag) => productData.append(key, tag));
+            }
+          }
+          // Handle badges as single value
+          else if (key === "badges") {
+            if (value && value !== "") {
+              productData.append(key, value);
             }
           }
           // Handle all other fields
@@ -459,8 +605,6 @@ const ProductEditPage = () => {
       // Handle image uploads
       if (mainImage) {
         productData.append("main", mainImage);
-      } else if (mainImagePreview && !isBlobUrl(mainImagePreview)) {
-        productData.append("existingMainImage", mainImagePreview);
       }
 
       // New cover images
@@ -470,23 +614,12 @@ const ProductEditPage = () => {
         });
       }
 
-      // Existing cover images
-      if (existingImages.length > 1) {
-        const existingCovers = existingImages
-          .slice(1)
-          .map((img) => getImageUrl(img))
-          .filter((url) => url && !isBlobUrl(url));
-
-        existingCovers.forEach((url) => {
-          productData.append("existingCovers", url);
-        });
-      }
-
-      // Add flags for image preservation
+      // If no new images are being uploaded, preserve existing images
       if (!mainImage && coverImages.length === 0) {
         productData.append("preserveExistingImages", "true");
       }
 
+      console.log("Submitting form data...");
       const { data, error } = await updateProduct(id, productData);
       console.log("=== Backend Response ===", { data, error });
 
@@ -675,7 +808,49 @@ const ProductEditPage = () => {
                   />
                 </div>
 
-                {/* Reference Number */}
+                {/* Category - Required */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {categoryOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Watch Type - Required */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Watch Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="watchType"
+                    value={formData.watchType}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    required
+                  >
+                    <option value="">Select Watch Type</option>
+                    {watchTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Reference Number - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Reference Number
@@ -690,7 +865,7 @@ const ProductEditPage = () => {
                   />
                 </div>
 
-                  {/* sku */}
+                {/* SKU - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     SKU
@@ -701,11 +876,11 @@ const ProductEditPage = () => {
                     value={formData.sku}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="uniqe code"
+                    placeholder="Unique code"
                   />
                 </div>
 
-                {/* Serial Number */}
+                {/* Serial Number - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Serial Number
@@ -720,7 +895,7 @@ const ProductEditPage = () => {
                   />
                 </div>
 
-                {/* Additional Title */}
+                {/* Additional Title - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Additional Title
@@ -735,27 +910,27 @@ const ProductEditPage = () => {
                   />
                 </div>
 
-                {/* Type of Watch */}
+                {/* Watch Style - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Type of Watch
+                    watchStyle category
                   </label>
                   <select
-                    name="watchType"
-                    value={formData.watchType}
+                    name="watchStyle"
+                    value={formData.watchStyle}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
-                    <option value="">Select Watch Type</option>
-                    {watchTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
+                    <option value="">Select Watch Style</option>
+                    {watchStyles.map((style) => (
+                      <option key={style} value={style}>
+                        {style}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Scope of Delivery */}
+                {/* Scope of Delivery - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Scope of Delivery
@@ -775,19 +950,44 @@ const ProductEditPage = () => {
                   </select>
                 </div>
 
-                {/* Included Accessories */}
+                {/* Included Accessories - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Included Accessories
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="includedAccessories"
                     value={formData.includedAccessories}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="e.g., Warranty card, manual, etc."
-                  />
+                  >
+                    <option value="">Select Included Accessories</option>
+                    {includedAccessoriesOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Badges - Single Select */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Badges
+                  </label>
+                  <select
+                    name="badges"
+                    value={formData.badges}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Badges</option>
+                    {Badges.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -805,24 +1005,31 @@ const ProductEditPage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Production Year */}
+                {/* Production Year - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Year of Production
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     name="productionYear"
                     value={formData.productionYear}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="e.g., 2023"
+                    disabled={formData.unknownYear}
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
+                      formData.unknownYear
+                        ? "bg-gray-100 cursor-not-allowed"
+                        : ""
+                    }`}
+                    placeholder={
+                      formData.unknownYear ? "Unknown" : "e.g., 2023"
+                    }
                     min="1900"
                     max="2030"
                   />
                 </div>
 
-                {/* Approximate Year Checkbox */}
+                {/* Approximate Year Checkbox - Optional */}
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -836,7 +1043,7 @@ const ProductEditPage = () => {
                   </label>
                 </div>
 
-                {/* Unknown Year Checkbox */}
+                {/* Unknown Year Checkbox - Optional */}
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -850,7 +1057,7 @@ const ProductEditPage = () => {
                   </label>
                 </div>
 
-                {/* Gender */}
+                {/* Gender - Optional (has default) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Gender
@@ -861,7 +1068,6 @@ const ProductEditPage = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
-                    <option value="">Select Gender</option>
                     {genders.map((gender) => (
                       <option key={gender} value={gender}>
                         {gender}
@@ -870,7 +1076,7 @@ const ProductEditPage = () => {
                   </select>
                 </div>
 
-                {/* Movement */}
+                {/* Movement - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Movement
@@ -890,7 +1096,7 @@ const ProductEditPage = () => {
                   </select>
                 </div>
 
-                {/* Dial Color */}
+                {/* Dial Color - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Dial Color
@@ -910,7 +1116,7 @@ const ProductEditPage = () => {
                   </select>
                 </div>
 
-                {/* Case Material */}
+                {/* Case Material - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Case Material
@@ -930,7 +1136,7 @@ const ProductEditPage = () => {
                   </select>
                 </div>
 
-                {/* Strap Material */}
+                {/* Strap Material - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Strap Material
@@ -967,8 +1173,10 @@ const ProductEditPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Strap Information */}
                 <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
-                  <h3 className="text-sm font-semibold text-gray-900">Strap Information</h3>
-                  
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Strap Information
+                  </h3>
+
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Strap Color
@@ -990,7 +1198,7 @@ const ProductEditPage = () => {
 
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Strap Size (mm)
+                      Wrist Size (cm)
                     </label>
                     <input
                       type="number"
@@ -1007,8 +1215,10 @@ const ProductEditPage = () => {
 
                 {/* Case Information */}
                 <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
-                  <h3 className="text-sm font-semibold text-gray-900">Case Information</h3>
-                  
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Case Information
+                  </h3>
+
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Case Size (mm)
@@ -1084,23 +1294,30 @@ const ProductEditPage = () => {
 
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Dial Numerical
+                      Dial Numerals
                     </label>
-                    <input
-                      type="text"
-                      name="dialNumerical"
-                      value={formData.dialNumerical}
+                    <select
+                      name="dialNumerals"
+                      value={formData.dialNumerals}
                       onChange={handleChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., Roman, Arabic, Index"
-                    />
+                    >
+                      <option value="">Select Dial Numerals</option>
+                      {DIALNUMERALS.map((numeral) => (
+                        <option key={numeral} value={numeral}>
+                          {numeral}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
                 {/* Movement Details */}
                 <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
-                  <h3 className="text-sm font-semibold text-gray-900">Movement Details</h3>
-                  
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Movement Details
+                  </h3>
+
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Caliber
@@ -1161,26 +1378,35 @@ const ProductEditPage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(functionCategories).map(([category, functions]) => (
-                  <div key={category} className="space-y-3">
-                    <h3 className="text-sm font-semibold text-gray-900">{category}</h3>
-                    <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-lg">
-                      {functions.map((func) => (
-                        <div key={func} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            name="functions"
-                            value={func}
-                            checked={formData.functions.includes(func)}
-                            onChange={handleChange}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <label className="text-sm text-gray-700">{func}</label>
-                        </div>
-                      ))}
+                {Object.entries(functionCategories).map(
+                  ([category, functions]) => (
+                    <div key={category} className="space-y-3">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        {category}
+                      </h3>
+                      <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-lg">
+                        {functions.map((func) => (
+                          <div
+                            key={func}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              type="checkbox"
+                              name="functions"
+                              value={func}
+                              checked={formData.functions.includes(func)}
+                              onChange={handleChange}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <label className="text-sm text-gray-700">
+                              {func}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             </div>
 
@@ -1197,7 +1423,7 @@ const ProductEditPage = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Condition */}
+                {/* Condition - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Condition
@@ -1217,14 +1443,35 @@ const ProductEditPage = () => {
                   </select>
                 </div>
 
-                {/* Replacement Parts */}
-                <div className="space-y-3">
+                {/* Item Condition - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Item Condition
+                  </label>
+                  <select
+                    name="itemCondition"
+                    value={formData.itemCondition}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Item Condition</option>
+                    {itemConditions.map((condition) => (
+                      <option key={condition} value={condition}>
+                        {condition}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Replacement Parts - Optional */}
+                <div className="space-y-3 lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Replacement Parts & Customization
                   </label>
                   <p className="text-xs text-gray-500 mb-3">
-                    Please indicate which watch components have been replaced or customized.
-                    Replacement parts cannot bear any original manufacturer trademarks or logos.
+                    Please indicate which watch components have been replaced or
+                    customized. Replacement parts cannot bear any original
+                    manufacturer trademarks or logos.
                   </p>
                   <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg">
                     {replacementParts.map((part) => (
@@ -1258,10 +1505,10 @@ const ProductEditPage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Regular Price */}
+                {/* Regular Price - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Regular Price <span className="text-red-500">*</span>
+                    Retail Price
                   </label>
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
@@ -1282,21 +1529,21 @@ const ProductEditPage = () => {
                       placeholder="0.00"
                       min="0"
                       step="0.01"
-                      required
                     />
                   </div>
                 </div>
 
-                {/* Sale Price */}
+                {/* Sale Price - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Sale Price
+                    Selling Price
                   </label>
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                       <Image
                         src={newSymbole}
                         alt="Currency"
+                        unoptimized
                         width={16}
                         height={16}
                         className="w-4 h-4"
@@ -1315,41 +1562,7 @@ const ProductEditPage = () => {
                   </div>
                 </div>
 
-                {/* Discount (Auto-calculated) */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Discount (%)
-                  </label>
-                  <input
-                    type="number"
-                    name="discount"
-                    value={formData.discount}
-                    readOnly
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
-                    placeholder="Auto-calculated"
-                  />
-                  <p className="text-xs text-gray-500">
-                    Automatically calculated from regular and sale prices
-                  </p>
-                </div>
-
-                {/* Stock Quantity */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Stock Quantity
-                  </label>
-                  <input
-                    type="number"
-                    name="stockQuantity"
-                    value={formData.stockQuantity}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="0"
-                    min="0"
-                  />
-                </div>
-
-                {/* Tax Status */}
+                {/* Tax Status - Optional (has default) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Tax Status
@@ -1367,6 +1580,22 @@ const ProductEditPage = () => {
                     ))}
                   </select>
                 </div>
+
+                {/* Stock Quantity - Optional (has default) */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Stock Quantity
+                  </label>
+                  <input
+                    type="number"
+                    name="stockQuantity"
+                    value={formData.stockQuantity}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
               </div>
             </div>
 
@@ -1383,7 +1612,7 @@ const ProductEditPage = () => {
               </div>
 
               <div className="space-y-6">
-                {/* Main Image Upload */}
+                {/* Main Image Upload - Required */}
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
                     Main Image <span className="text-red-500">*</span>
@@ -1394,6 +1623,7 @@ const ProductEditPage = () => {
                         <Image
                           src={mainImagePreview}
                           alt="Main product image"
+                          unoptimized
                           width={200}
                           height={200}
                           className="w-full h-full object-cover"
@@ -1474,6 +1704,7 @@ const ProductEditPage = () => {
                               <Image
                                 src={preview}
                                 alt={`Cover image ${index + 1}`}
+                                unoptimized
                                 width={200}
                                 height={200}
                                 className="w-full h-full object-cover"
@@ -1548,7 +1779,8 @@ const ProductEditPage = () => {
                         </div>
                         {coverImagePreviews.length > 0 && (
                           <p className="text-sm text-green-600 font-medium">
-                            {coverImagePreviews.length} additional image(s) selected
+                            {coverImagePreviews.length} additional image(s)
+                            selected
                           </p>
                         )}
                       </div>
@@ -1571,7 +1803,7 @@ const ProductEditPage = () => {
               </div>
 
               <div className="space-y-6">
-                {/* SEO Title */}
+                {/* SEO Title - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     SEO Title
@@ -1586,11 +1818,12 @@ const ProductEditPage = () => {
                     maxLength="60"
                   />
                   <p className="text-xs text-gray-500">
-                    Recommended: 50-60 characters. Current: {formData.seoTitle.length}
+                    Recommended: 50-60 characters. Current:{" "}
+                    {formData.seoTitle.length}
                   </p>
                 </div>
 
-                {/* SEO Description */}
+                {/* SEO Description - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     SEO Description
@@ -1605,11 +1838,12 @@ const ProductEditPage = () => {
                     maxLength="160"
                   />
                   <p className="text-xs text-gray-500">
-                    Recommended: 150-160 characters. Current: {formData.seoDescription.length}
+                    Recommended: 150-160 characters. Current:{" "}
+                    {formData.seoDescription.length}
                   </p>
                 </div>
 
-                {/* SEO Keywords */}
+                {/* SEO Keywords - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     SEO Keywords
@@ -1642,7 +1876,7 @@ const ProductEditPage = () => {
               </div>
 
               <div className="space-y-6">
-                {/* Full Description */}
+                {/* Full Description - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Full Description
