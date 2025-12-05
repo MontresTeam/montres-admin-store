@@ -31,7 +31,7 @@ const ProductEditPage = () => {
     additionalTitle: "",
     watchType: "",
     watchStyle: "",
-    scopeOfDelivery: "",
+    scopeOfDeliveryWatch: "",
     includedAccessories: "",
     badges: "", // FIXED: Changed from array to string
     category: "",
@@ -347,9 +347,9 @@ const ProductEditPage = () => {
           additionalTitle: product.additionalTitle || "",
           watchType: product.watchType || "",
           watchStyle: product.watchStyle || "",
-          scopeOfDelivery: Array.isArray(product.scopeOfDelivery)
-            ? product.scopeOfDelivery[0] || ""
-            : product.scopeOfDelivery || "",
+          scopeOfDeliveryWatch: Array.isArray(product.scopeOfDeliveryWatch)
+            ? product.scopeOfDeliveryWatch[0] || ""
+            : product.scopeOfDeliveryWatch || "",
           includedAccessories: Array.isArray(product.includedAccessories)
             ? product.includedAccessories[0] || ""
             : product.includedAccessories || "",
@@ -936,8 +936,8 @@ const ProductEditPage = () => {
                     Scope of Delivery
                   </label>
                   <select
-                    name="scopeOfDelivery"
-                    value={formData.scopeOfDelivery}
+                    name="scopeOfDeliveryWatch"
+                    value={formData.scopeOfDeliveryWatch}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
