@@ -33,17 +33,7 @@ const ProductItem = ({ product, isInWishlist, onToggleWishlist, onEditClick }) =
           <FaEdit className="text-xs" />
         </button>
 
-        <button
-          onClick={handleWishlistToggle}
-          className="absolute top-3 right-3 z-10 bg-white/80 hover:bg-white rounded-full p-1.5 shadow-md transition-all duration-200 hover:scale-110"
-          aria-label="Wishlist toggle"
-        >
-          {isInWishlist ? (
-            <FaHeart className="text-red-500 text-sm" />
-          ) : (
-            <FaRegHeart className="text-gray-600 hover:text-red-500 text-sm" />
-          )}
-        </button>
+      
 
         <Image
           src={product?.images?.[0]?.url || product?.images}
@@ -80,6 +70,8 @@ const Trusted = () => {
       try {
         const res = await getTrustedProducts();
         setTrustedData(res.data);
+        console.log(res.data,"New Arrivals");
+        
       } catch (err) {
         console.error("Failed to load trusted products:", err);
       } finally {
@@ -170,12 +162,7 @@ const handleSave = async () => {
         {renderGrid("Montres Trusted", trustedData?.montresTrusted || [], "montresTrusted")}
       </div>
 
-      {wishlist.size > 0 && (
-        <div className="fixed bottom-6 right-6 bg-gradient-to-r from-[#1e518e] to-[#0061b0ee] text-white px-4 py-2 rounded-full shadow-lg z-50 flex items-center space-x-2">
-          <FaHeart />
-          <span className="text-sm font-semibold">{wishlist.size}</span>
-        </div>
-      )}
+     
 
       {isModalOpen && (
         <EditHomeModal

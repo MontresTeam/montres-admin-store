@@ -124,16 +124,7 @@ const BrandNewAdded = () => {
                     </h3>
                   </div>
 
-                  {/* Bottom Link */}
-                  <div className="border-t px-4 py-2">
-                    <a
-                      href="#"
-                      className="flex items-center justify-center text-sm font-medium text-[#1e518e] hover:text-[#0061b0] transition"
-                    >
-                      Get Price
-                      <FaArrowRight className="ml-1 text-xs group-hover:translate-x-1 transition-transform duration-300" />
-                    </a>
-                  </div>
+                 
                 </div>
               ))}
         </div>

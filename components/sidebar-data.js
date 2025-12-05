@@ -1,20 +1,30 @@
 import {
-  Boxes,
-  CalendarDays,
-  ChartPie,
-  Component,
+  ClipboardList,
+  Star,
   House,
   ImageUpscale,
   Mail,
-  MessageCircleMore,
-  Server,
-  Settings,
-  ShieldCheck,
+  Truck,
   ShoppingBasket,
   MessageSquare,
   UsersRound,
-
+  Boxes
 } from "lucide-react";
+
+
+import newCurrency from "../public/assets/newSymbole.png";
+import Image from "next/image";
+
+// ✅ Inline component for PNG icon
+const CurrencyPngIcon = () => (
+  <Image
+    src={newCurrency}
+    alt="currency"
+    width={18}
+    height={18}
+    className="object-contain"
+  />
+);
 
 export const data = {
   navMain: [
@@ -32,7 +42,7 @@ export const data = {
     },
     {
       title: "User Management",
-      url: "/notfound",
+      url: "/users-list",
       icon: UsersRound,
       isActive: true
     },
@@ -48,82 +58,42 @@ export const data = {
       icon: Mail,
     },
     {
-      title: "Chat",
-      url: "/notfound",
-      icon: MessageCircleMore,
+      title: "Delivery Managment",
+      url: "/DeliveryManagement",
+      icon: Truck,
     },
     {
-      title: "Calendar",
-      url: "/notfound",
-      icon: CalendarDays,
+      title: "Order Managment",
+      url: "/orderManagment",
+      icon: ClipboardList,
+    },
+
+    // ⭐ NEW INVENTORY STOCK MANAGEMENT
+    {
+      title: "Inventory Stock Management",
+      url: "/InventoryStock",
+      icon: Boxes, // use Boxes / Package / Layers / Warehouse icon (lucide-react)
+      isActive: true,
     },
 
     {
-      title: "Components",
-      url: "#",
-      icon: Component,
+      title: "Brand New",
+      url: "/BrandNew",
+      icon: Star,
       isActive: true,
-      items: [
-        {
-          title: "Colors",
-          url: "/colors",
-          circleColor: "bg-yellow-500",
-        },
-      ],
     },
 
     {
-      title: "Users",
-      url: "#",
-      icon: UsersRound,
-      isActive: true,
-      items: [
-        {
-          title: "Users List",
-          url: "/users-list",
-          circleColor: "bg-primary",
-        },
-        {
-          title: "Users Grid",
-          url: "/users-grid",
-          circleColor: "bg-yellow-500",
-        },
-        {
-          title: "View Profile",
-          url: "/view-profile",
-          circleColor: "bg-red-600",
-        },
-      ],
-    },
-
-    {
-      title: "Authentication",
-      url: "#",
-      icon: ShieldCheck,
-      isActive: true,
-      items: [
-        {
-          title: "Sign In",
-          url: "/auth/login",
-          circleColor: "bg-primary",
-        },
-        {
-          title: "Sign Up",
-          url: "/auth/register",
-          circleColor: "bg-yellow-500",
-        },
-        {
-          title: "Forgot Password",
-          url: "/auth/forgot-password",
-          circleColor: "bg-cyan-500",
-        },
-      ],
+      title: "Financial Overview",
+      url: "/financial-overview",
+      icon: CurrencyPngIcon,
+      isActive: false,
     },
 
     {
       title: "Inquiries",
       url: "#",
-      icon: MessageSquare, // or Mail, or Inbox icon from lucide-react
+      icon: MessageSquare,
       items: [
         {
           title: "Contact Messages",
@@ -131,13 +101,13 @@ export const data = {
           circleColor: "bg-blue-500",
         },
         {
-          title: "Support Tickets", // optional, if you later add more
+          title: "Support Tickets",
           url: "/support-tickets",
           circleColor: "bg-green-500",
         },
       ],
     },
-
+    
     // {
     //   title: "Setting",
     //   url: "#",

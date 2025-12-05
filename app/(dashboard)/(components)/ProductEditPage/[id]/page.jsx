@@ -9,79 +9,6 @@ import Image from "next/image";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
 
-// Define initial form state to match backend schema
-const initialFormData = {
-  // Basic Info
-  sku: "",
-  serialNumber: "",
-  name: "",
-  regularPrice: "",
-  salePrice: "",
-  discount: "",
-  taxStatus: "taxable",
-  stockQuantity: "",
-  RefenceNumber: "",
-  description: "",
-
-  // Category & Classification
-  gender: "unisex",
-  categories: "",
-  subcategory: "",
-  collection: "None",
-
-  // Tags & Brands
-  tags: "",
-  brands: "",
-
-  // Watch Specifications
-  CaseDiameter: "",
-  Movement: "",
-  Dial: "",
-  WristSize: "",
-  Condition: "",
-  Accessories: "",
-  ProductionYear: "",
-};
-
-// Category options - matches schema enum
-const categories = ["Luxury", "Classic watch", "Sports watch", "Vintage watch"];
-
-// Subcategory options - matches schema enum
-const subcategories = [
-  "Quartz",
-  "Automatic",
-  "Chronograph",
-  "Dress watch",
-  "Limited edition",
-  "Pilot watch",
-  "Diver's watch",
-  "Swiss made",
-  "Moonphase",
-];
-
-// Collection options - matches schema enum
-const collections = [
-  "Classic Collection",
-  "Limited Collection",
-  "Heritage Collection",
-  "Prestige Collection",
-  "Signature Collection",
-  "None",
-];
-
-// Movement options - matches schema enum
-const movements = ["automatic", "quartz", "manual", "solar", "kinetic"];
-
-// Condition options - matches schema enum
-const conditions = [
-  "new",
-  "like-new",
-  "excellent",
-  "very-good",
-  "good",
-  "fair",
-];
-
 const ProductEditPage = () => {
   const { id } = useParams();
   const router = useRouter();
@@ -93,9 +20,301 @@ const ProductEditPage = () => {
   const [coverImages, setCoverImages] = useState([]);
   const [coverImagePreviews, setCoverImagePreviews] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
-  const [formData, setFormData] = useState(initialFormData);
 
-  // Helper function to get URL from image object or string
+  const [formData, setFormData] = useState({
+    // Basic Info - Required: brand, model, category, watchType
+    brand: "",
+    model: "",
+    referenceNumber: "",
+    sku: "",
+    serialNumber: "",
+    additionalTitle: "",
+    watchType: "",
+    watchStyle: "",
+    scopeOfDelivery: "",
+    includedAccessories: "",
+    badges: "", // FIXED: Changed from array to string
+    category: "",
+
+    // Item Features
+    productionYear: "",
+    approximateYear: false,
+    unknownYear: false,
+    gender: "Men/Unisex",
+    movement: "",
+    dialColor: "",
+    caseMaterial: "",
+    strapMaterial: "",
+
+    // Additional Info
+    strapColor: "",
+    strapSize: "",
+    caseSize: "",
+    caseColor: "",
+    crystal: "",
+    bezelMaterial: "",
+    dialNumerals: "",
+    caliber: "",
+    powerReserve: "",
+    jewels: "",
+
+    // Functions
+    functions: [],
+
+    // Condition
+    condition: "",
+    itemCondition: "",
+    replacementParts: [],
+
+    // Pricing & Inventory - regularPrice is optional
+    regularPrice: "",
+    salePrice: "",
+    taxStatus: "taxable",
+    stockQuantity: "",
+
+    // Category & Classification
+    collection: "None",
+
+    // Description & Meta
+    description: "",
+    visibility: "visible",
+
+    // Tags
+    tags: "",
+
+    // SEO Fields
+    seoTitle: "",
+    seoDescription: "",
+    seoKeywords: "",
+  });
+
+  // Options data
+  const scopeOfDeliveryOptions = [
+    "Full Set (Watch + Original Box + Original Papers)",
+    "Watch with Original Papers",
+    "Watch with Original Box",
+    "Watch with Montres Safe Box",
+    "Watch Only",
+  ];
+
+  const watchStyles = [
+    "luxury watch",
+    "Classic watch",
+    "Sports watch",
+    "Vintage watch",
+    "Dress watch",
+    "Drivers watch",
+    "pilot watch",
+    "Racing watch",
+  ];
+
+  const watchTypes = [
+    "Wrist Watch",
+    "Pocket Watch",
+    "Clocks",
+    "Stopwatch",
+    "Smart Watch",
+  ];
+
+  const categoryOptions = [
+    "Watch",
+    "Jewellery",
+    "Gold",
+    "Accessories",
+    "Leather Goods",
+    "Leather Bags",
+  ];
+
+  const Badges = [
+    "Popular", 
+    "New Arrivals"
+  ];
+
+  const includedAccessoriesOptions = [
+    "Extra Strap",
+    "Original Strap",
+    "Warranty Card",
+    "Certificate",
+    "Travel Case",
+    "Bezel Protector",
+    "Cleaning Cloth",
+    "Other Accessories",
+  ];
+
+  const genders = ["Men/Unisex", "Women"];
+
+  const movements = [
+    "Automatic",
+    "Quartz",
+    "Manual",
+    "Solar",
+    "Kinetic",
+    "Mechanical",
+  ];
+
+  const colors = [
+    "Black",
+    "White",
+    "Silver",
+    "Gold",
+    "Rose Gold",
+    "Blue",
+    "Green",
+    "Red",
+    "Brown",
+    "Gray",
+    "Yellow",
+    "Orange",
+    "Purple",
+    "Pink",
+    "Champagne",
+    "Gold/Silver",
+  ];
+
+  const materials = [
+    "Stainless Steel",
+    "Gold/Steel",
+    "Gold",
+    "Steel",
+    "Rose Gold",
+    "Platinum",
+    "Titanium",
+    "Ceramic",
+    "Carbon Fiber",
+    "Brass",
+    "Bronze",
+    "Aluminum",
+  ];
+
+  const strapMaterials = [
+    "Alligator",
+    "Canvas",
+    "Crocodile",
+    "Fabric",
+    "Gold",
+    "Gold/Steel",
+    "Leather",
+    "Metal Bracelet",
+    "Nylon",
+    "Rubber",
+    "Silicone",
+    "Suede",
+    "Steel",
+    "18k White Gold",
+  ];
+
+  const crystals = ["Sapphire", "Mineral", "Acrylic", "Hardlex", "Plexiglass"];
+
+  const bezelMaterials = [
+    "Aluminum",
+    "Ceramic",
+    "Gold",
+    "18k Yellow Gold",
+    "Gold Plated",
+    "Rubber",
+    "Stainless Steel",
+    "Titanium",
+    "Tungsten",
+  ];
+
+  const DIALNUMERALS = [
+    "Arabic Numerals",
+    "Roman Numerals",
+    "No Numerals",
+    "Lines",
+    "Gemstone",
+    "Dot/round marker",
+  ];
+
+  const itemConditions = [
+    "Excellent",
+    "Good",
+    "Fair",
+    "Poor / Not Working / For Parts",
+  ];
+
+  const conditions = [
+    "Brand New",
+    "Unworn / Like New",
+    "Pre-Owned",
+    "Excellent",
+    "Not Working / For Parts",
+  ];
+
+  const taxStatusOptions = [
+    { value: "taxable", label: "Taxable" },
+    { value: "shipping", label: "Shipping" },
+    { value: "none", label: "None" },
+  ];
+
+  // Functions from the images
+  const functionCategories = {
+    "Functions Set 1": [
+      "Search",
+      "Our suggestion",
+      "Date Suggestion",
+      "Moon phase",
+      "Minute repeater",
+      "Chronograph",
+      "Double chronograph",
+      "Flyback",
+      "Panorama date",
+      "Chiming clock",
+      "Repeater",
+      "Tourbillon",
+      "Weekday",
+      "Month",
+      "Year",
+      "Annual calendar",
+      "4-year calendar",
+      "Perpetual calendar",
+    ],
+    "Functions Set 2": [
+      "Continuous hands",
+      "Tempered blue hands",
+      "Genevian Seal",
+      "Chronometer",
+      "Power Reserve Display",
+      "Rotating Bezel",
+      "Limited Edition",
+      "Crown Left",
+      "Screw-Down Crown",
+      "Helium Valve",
+      "Quick Set",
+      "Screw-Down Push-Buttons",
+      "Only Original Parts",
+      "Luminous indices",
+      "PVD/DLC coating",
+      "World time watch",
+      "Master Chronometer",
+      "Smartwatch",
+    ],
+    "Functions Set 3": ["Solar watch", "One-hand watches", "Vintage"],
+    "Functions Set 4": [
+      "Alarm",
+      "GMT",
+      "Equation of time",
+      "Jumping hour",
+      "Tachymeter",
+    ],
+  };
+
+  const replacementParts = [
+    "Dial",
+    "Crown",
+    "Clasp",
+    "Leather strap",
+    "Bezel",
+    "Hands",
+    "Pusher",
+    "Crystal",
+    "Coating",
+    "Diamond finishing",
+    "Metal bracelet",
+    "Case back",
+    "Movement replacement parts",
+  ];
+
   const getImageUrl = (image) => {
     if (typeof image === "string") return image;
     if (image && image.url) return image.url;
@@ -117,59 +336,102 @@ const ProductEditPage = () => {
         console.log("Product data:", data);
         const product = data.product || data;
 
-        // Map the product data to form fields - CORRECTED FIELD MAPPINGS
+        // Map the product data to form fields
         setFormData({
           // Basic Info
+          brand: product.brand || "",
+          model: product.model || "",
+          referenceNumber: product.referenceNumber || "",
           sku: product.sku || "",
           serialNumber: product.serialNumber || "",
-          name: product.name || "",
+          additionalTitle: product.additionalTitle || "",
+          watchType: product.watchType || "",
+          watchStyle: product.watchStyle || "",
+          scopeOfDelivery: Array.isArray(product.scopeOfDelivery)
+            ? product.scopeOfDelivery[0] || ""
+            : product.scopeOfDelivery || "",
+          includedAccessories: Array.isArray(product.includedAccessories)
+            ? product.includedAccessories[0] || ""
+            : product.includedAccessories || "",
+          category: product.category || "",
+          // FIXED: Handle badges as single value
+          badges: Array.isArray(product.badges) 
+            ? product.badges[0] || "" 
+            : product.badges || "",
+
+          // Item Features
+          productionYear: product.productionYear || "",
+          approximateYear: product.approximateYear || false,
+          unknownYear: product.unknownYear || false,
+          gender: product.gender || "Men/Unisex",
+          movement: product.movement || "",
+          dialColor: product.dialColor || "",
+          caseMaterial: product.caseMaterial || "",
+          strapMaterial: product.strapMaterial || "",
+
+          // Additional Info
+          strapColor: product.strapColor || "",
+          strapSize: product.strapSize || "",
+          caseSize: product.caseSize || "",
+          caseColor: product.caseColor || "",
+          crystal: product.crystal || "",
+          bezelMaterial: product.bezelMaterial || "",
+          dialNumerals: product.dialNumerals || "",
+          caliber: product.caliber || "",
+          powerReserve: product.powerReserve || "",
+          jewels: product.jewels || "",
+
+          // Functions
+          functions: Array.isArray(product.functions) ? product.functions : [],
+
+          // Condition
+          condition: product.condition || "",
+          itemCondition: product.itemCondition || "",
+          replacementParts: Array.isArray(product.replacementParts)
+            ? product.replacementParts
+            : [],
+
+          // Pricing & Inventory
           regularPrice: product.regularPrice || "",
           salePrice: product.salePrice || "",
-          discount: product.discount || "",
           taxStatus: product.taxStatus || "taxable",
           stockQuantity: product.stockQuantity || "",
-          RefenceNumber: product.RefenceNumber || "",
-          description: product.description || "",
 
           // Category & Classification
-          gender: product.gender || "unisex",
-          categories: product.categories || "",
-          subcategory: product.subcategory || "",
           collection: product.collection || "None",
 
-          // Tags & Brands
+          // Description & Meta
+          description: product.description || "",
+          visibility: product.visibility || "visible",
+
+          // Tags
           tags: Array.isArray(product.tags)
             ? product.tags.join(", ")
             : product.tags || "",
-          brands: Array.isArray(product.brands)
-            ? product.brands.join(", ")
-            : product.brands || "",
 
-          // Watch Specifications - CORRECTED FIELD NAMES
-          CaseDiameter: product.CaseDiameter || "",
-          Movement: product.Movement || "",
-          Dial: product.Dial || "",
-          WristSize: product.WristSize || "",
-          Condition: product.Condition || "",
-          Accessories: product.Accessories || "",
-          ProductionYear: product.ProductionYear || "",
+          // SEO Fields
+          seoTitle: product.seoTitle || "",
+          seoDescription: product.seoDescription || "",
+          seoKeywords: product.seoKeywords || "",
         });
 
-        // Handle existing images - separate main image and cover images
+        // Handle existing images
         if (product.images && product.images.length > 0) {
           const productImages = product.images;
           setExistingImages(productImages);
 
-          // Set main image (first image as main)
-          if (productImages.length > 0) {
-            setMainImagePreview(getImageUrl(productImages[0]));
+          // Find main image (type: "main") or use first image as main
+          const mainImg =
+            productImages.find((img) => img.type === "main") ||
+            productImages[0];
+          if (mainImg) {
+            setMainImagePreview(getImageUrl(mainImg));
           }
 
-          // Set cover images (rest of the images)
-          if (productImages.length > 1) {
-            const coverPreviews = productImages
-              .slice(1)
-              .map((img) => getImageUrl(img));
+          // Find cover images (type: "cover") or use remaining images as covers
+          const coverImgs = productImages.filter((img) => img !== mainImg);
+          if (coverImgs.length > 0) {
+            const coverPreviews = coverImgs.map((img) => getImageUrl(img));
             setCoverImagePreviews(coverPreviews);
           }
         }
@@ -189,10 +451,36 @@ const ProductEditPage = () => {
     if (id) loadProducts();
   }, [id]);
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
 
-    if (name === "mainImage" && files && files.length > 0) {
+  
+
+  const handleChange = (e) => {
+    const { name, value, type, checked, files } = e.target;
+
+    if (type === "checkbox") {
+      if (name === "approximateYear" || name === "unknownYear") {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: checked,
+          ...(name === "unknownYear" && checked && { productionYear: "" }),
+        }));
+      } else if (name === "functions") {
+        setFormData((prev) => ({
+          ...prev,
+          functions: checked
+            ? [...prev.functions, value]
+            : prev.functions.filter((item) => item !== value),
+        }));
+      } else if (name === "replacementParts") {
+        setFormData((prev) => ({
+          ...prev,
+          replacementParts: checked
+            ? [...prev.replacementParts, value]
+            : prev.replacementParts.filter((item) => item !== value),
+        }));
+      }
+      // REMOVED: badges checkbox logic since it's now a single select
+    } else if (name === "mainImage" && files && files.length > 0) {
       const file = files[0];
       setMainImage(file);
       setMainImagePreview(URL.createObjectURL(file));
@@ -237,15 +525,14 @@ const ProductEditPage = () => {
     setError("");
     setSuccess("");
 
-    // Validate required fields
-    if (!formData.name.trim()) {
-      setError("Product name is required");
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.categories) {
-      setError("Category is required");
+    // Validate required fields based on schema
+    if (
+      !formData.brand.trim() ||
+      !formData.model.trim() ||
+      !formData.category.trim() ||
+      !formData.watchType.trim()
+    ) {
+      setError("Brand, Model, Category, and Watch Type are required fields");
       setLoading(false);
       return;
     }
@@ -258,29 +545,50 @@ const ProductEditPage = () => {
         const value = formData[key];
 
         if (value !== "" && value !== null && value !== undefined) {
-          // Handle array fields (tags and brands)
-          if (key === "tags" || key === "brands") {
-            const arrayValue = value
-              .split(",")
-              .map((item) => item.trim())
-              .filter((item) => item);
-            if (arrayValue.length > 0) {
-              productData.append(key, JSON.stringify(arrayValue));
-            }
+          // Handle array fields
+          if (Array.isArray(value)) {
+            value.forEach((item) => productData.append(key, item));
           }
-          // Handle numeric fields
+          // Handle numeric fields - regularPrice is optional
           else if (
             [
-              "regularPrice",
               "salePrice",
-              "discount",
               "stockQuantity",
-              "CaseDiameter",
-              "WristSize",
+              "powerReserve",
+              "jewels",
+              "strapSize",
+              "caseSize",
             ].includes(key)
           ) {
             const numValue = parseFloat(value) || 0;
             productData.append(key, numValue.toString());
+          }
+          // Handle regularPrice separately since it's optional
+          else if (key === "regularPrice") {
+            if (value !== "") {
+              const numValue = parseFloat(value) || 0;
+              productData.append(key, numValue.toString());
+            }
+          }
+          // Handle boolean fields
+          else if (typeof value === "boolean") {
+            productData.append(key, value.toString());
+          }
+          // Handle tags (comma separated)
+          else if (key === "tags") {
+            const tagsArray = value
+              .split(",")
+              .map((tag) => tag.trim())
+              .filter((tag) => tag);
+            if (tagsArray.length > 0) {
+              tagsArray.forEach((tag) => productData.append(key, tag));
+            }
+          }
+          // Handle badges as single value
+          else if (key === "badges") {
+            if (value && value !== "") {
+              productData.append(key, value);
+            }
           }
           // Handle all other fields
           else {
@@ -289,13 +597,14 @@ const ProductEditPage = () => {
         }
       });
 
-      // Handle image uploads - FIXED FIELD NAMES
+      // Set default values for required backend fields
+      productData.append("published", "true");
+      productData.append("featured", "false");
+      productData.append("inStock", "true");
+
+      // Handle image uploads
       if (mainImage) {
-        // New main image
         productData.append("main", mainImage);
-      } else if (mainImagePreview && !isBlobUrl(mainImagePreview)) {
-        // Existing main image
-        productData.append("existingMainImage", mainImagePreview);
       }
 
       // New cover images
@@ -305,37 +614,12 @@ const ProductEditPage = () => {
         });
       }
 
-      // Existing cover images
-      if (existingImages.length > 1) {
-        const existingCovers = existingImages
-          .slice(1)
-          .map((img) => getImageUrl(img))
-          .filter((url) => url && !isBlobUrl(url));
-
-        existingCovers.forEach((url) => {
-          productData.append("existingCovers", url);
-        });
-      }
-
-      // Add flags for image preservation
+      // If no new images are being uploaded, preserve existing images
       if (!mainImage && coverImages.length === 0) {
         productData.append("preserveExistingImages", "true");
       }
 
-      // Set default values
-      productData.append("published", "true");
-      productData.append("featured", "false");
-      productData.append("inStock", "true");
-
-      // Debug logging
-      console.log("=== FormData Contents ===");
-      for (let [key, value] of productData.entries()) {
-        console.log(
-          key + ":",
-          value instanceof File ? `File: ${value.name}` : value
-        );
-      }
-
+      console.log("Submitting form data...");
       const { data, error } = await updateProduct(id, productData);
       console.log("=== Backend Response ===", { data, error });
 
@@ -403,7 +687,7 @@ const ProductEditPage = () => {
     };
   }, [mainImagePreview, coverImagePreviews]);
 
-  if (loading && !formData.name) {
+  if (loading && !formData.brand) {
     return (
       <div className="min-h-screen bg-gray-50/30 flex items-center justify-center">
         <div className="text-center">
@@ -492,23 +776,96 @@ const ProductEditPage = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Product Name - Required */}
+                {/* Brand - Required */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Product Name <span className="text-red-500">*</span>
+                    Brand <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="brand"
+                    value={formData.brand}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Enter product name"
+                    placeholder="Enter brand name"
                     required
                   />
                 </div>
 
-                {/* SKU */}
+                {/* Model - Required */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Model <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="model"
+                    value={formData.model}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Enter model name"
+                    required
+                  />
+                </div>
+
+                {/* Category - Required */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {categoryOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Watch Type - Required */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Watch Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="watchType"
+                    value={formData.watchType}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    required
+                  >
+                    <option value="">Select Watch Type</option>
+                    {watchTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Reference Number - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Reference Number
+                  </label>
+                  <input
+                    type="text"
+                    name="referenceNumber"
+                    value={formData.referenceNumber}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Reference number"
+                  />
+                </div>
+
+                {/* SKU - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     SKU
@@ -519,11 +876,11 @@ const ProductEditPage = () => {
                     value={formData.sku}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="SKU-001"
+                    placeholder="Unique code"
                   />
                 </div>
 
-                {/* Serial Number */}
+                {/* Serial Number - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Serial Number
@@ -538,19 +895,599 @@ const ProductEditPage = () => {
                   />
                 </div>
 
-                {/* Reference Number */}
+                {/* Additional Title - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Reference Number
+                    Additional Title
                   </label>
                   <input
                     type="text"
-                    name="RefenceNumber"
-                    value={formData.RefenceNumber}
+                    name="additionalTitle"
+                    value={formData.additionalTitle}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Reference number"
+                    placeholder="Additional title or description"
                   />
+                </div>
+
+                {/* Watch Style - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    watchStyle category
+                  </label>
+                  <select
+                    name="watchStyle"
+                    value={formData.watchStyle}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Watch Style</option>
+                    {watchStyles.map((style) => (
+                      <option key={style} value={style}>
+                        {style}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Scope of Delivery - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Scope of Delivery
+                  </label>
+                  <select
+                    name="scopeOfDelivery"
+                    value={formData.scopeOfDelivery}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Scope of Delivery</option>
+                    {scopeOfDeliveryOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Included Accessories - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Included Accessories
+                  </label>
+                  <select
+                    name="includedAccessories"
+                    value={formData.includedAccessories}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Included Accessories</option>
+                    {includedAccessoriesOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Badges - Single Select */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Badges
+                  </label>
+                  <select
+                    name="badges"
+                    value={formData.badges}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Badges</option>
+                    {Badges.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Item Features Section */}
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  Item Features
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Product specifications and features
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Production Year - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Year of Production
+                  </label>
+                  <input
+                    type="text"
+                    name="productionYear"
+                    value={formData.productionYear}
+                    onChange={handleChange}
+                    disabled={formData.unknownYear}
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
+                      formData.unknownYear
+                        ? "bg-gray-100 cursor-not-allowed"
+                        : ""
+                    }`}
+                    placeholder={
+                      formData.unknownYear ? "Unknown" : "e.g., 2023"
+                    }
+                    min="1900"
+                    max="2030"
+                  />
+                </div>
+
+                {/* Approximate Year Checkbox - Optional */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="approximateYear"
+                    checked={formData.approximateYear}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label className="text-sm font-medium text-gray-700">
+                    Approximate Year
+                  </label>
+                </div>
+
+                {/* Unknown Year Checkbox - Optional */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="unknownYear"
+                    checked={formData.unknownYear}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label className="text-sm font-medium text-gray-700">
+                    Unknown Year
+                  </label>
+                </div>
+
+                {/* Gender - Optional (has default) */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Gender
+                  </label>
+                  <select
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    {genders.map((gender) => (
+                      <option key={gender} value={gender}>
+                        {gender}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Movement - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Movement
+                  </label>
+                  <select
+                    name="movement"
+                    value={formData.movement}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Movement</option>
+                    {movements.map((movement) => (
+                      <option key={movement} value={movement}>
+                        {movement}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Dial Color - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Dial Color
+                  </label>
+                  <select
+                    name="dialColor"
+                    value={formData.dialColor}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Dial Color</option>
+                    {colors.map((color) => (
+                      <option key={color} value={color}>
+                        {color}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Case Material - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Case Material
+                  </label>
+                  <select
+                    name="caseMaterial"
+                    value={formData.caseMaterial}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Case Material</option>
+                    {materials.map((material) => (
+                      <option key={material} value={material}>
+                        {material}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Strap Material - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Strap Material
+                  </label>
+                  <select
+                    name="strapMaterial"
+                    value={formData.strapMaterial}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Strap Material</option>
+                    {strapMaterials.map((material) => (
+                      <option key={material} value={material}>
+                        {material}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Information Section */}
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-amber-600 rounded-full"></div>
+                  Additional Information
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Detailed specifications and measurements
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Strap Information */}
+                <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Strap Information
+                  </h3>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Strap Color
+                    </label>
+                    <select
+                      name="strapColor"
+                      value={formData.strapColor}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Color</option>
+                      {colors.map((color) => (
+                        <option key={color} value={color}>
+                          {color}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Wrist Size (cm)
+                    </label>
+                    <input
+                      type="number"
+                      name="strapSize"
+                      value={formData.strapSize}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., 20"
+                      min="0"
+                      step="0.1"
+                    />
+                  </div>
+                </div>
+
+                {/* Case Information */}
+                <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Case Information
+                  </h3>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Case Size (mm)
+                    </label>
+                    <input
+                      type="number"
+                      name="caseSize"
+                      value={formData.caseSize}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., 42"
+                      min="0"
+                      step="0.1"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Case Color
+                    </label>
+                    <select
+                      name="caseColor"
+                      value={formData.caseColor}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Color</option>
+                      {colors.map((color) => (
+                        <option key={color} value={color}>
+                          {color}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Crystal
+                    </label>
+                    <select
+                      name="crystal"
+                      value={formData.crystal}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Crystal</option>
+                      {crystals.map((crystal) => (
+                        <option key={crystal} value={crystal}>
+                          {crystal}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Bezel Material
+                    </label>
+                    <select
+                      name="bezelMaterial"
+                      value={formData.bezelMaterial}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Material</option>
+                      {bezelMaterials.map((material) => (
+                        <option key={material} value={material}>
+                          {material}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Dial Numerals
+                    </label>
+                    <select
+                      name="dialNumerals"
+                      value={formData.dialNumerals}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Dial Numerals</option>
+                      {DIALNUMERALS.map((numeral) => (
+                        <option key={numeral} value={numeral}>
+                          {numeral}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Movement Details */}
+                <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Movement Details
+                  </h3>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Caliber
+                    </label>
+                    <input
+                      type="text"
+                      name="caliber"
+                      value={formData.caliber}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., ETA 2824-2"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Power Reserve (hours)
+                    </label>
+                    <input
+                      type="number"
+                      name="powerReserve"
+                      value={formData.powerReserve}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., 48"
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Number of Jewels
+                    </label>
+                    <input
+                      type="number"
+                      name="jewels"
+                      value={formData.jewels}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., 25"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Functions Section */}
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                  Functions
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Select all applicable watch functions
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.entries(functionCategories).map(
+                  ([category, functions]) => (
+                    <div key={category} className="space-y-3">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        {category}
+                      </h3>
+                      <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-lg">
+                        {functions.map((func) => (
+                          <div
+                            key={func}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              type="checkbox"
+                              name="functions"
+                              value={func}
+                              checked={formData.functions.includes(func)}
+                              onChange={handleChange}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <label className="text-sm text-gray-700">
+                              {func}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Condition Section */}
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                  Condition
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Product condition and replacement parts
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Condition - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Condition
+                  </label>
+                  <select
+                    name="condition"
+                    value={formData.condition}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Condition</option>
+                    {conditions.map((condition) => (
+                      <option key={condition} value={condition}>
+                        {condition}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Item Condition - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Item Condition
+                  </label>
+                  <select
+                    name="itemCondition"
+                    value={formData.itemCondition}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  >
+                    <option value="">Select Item Condition</option>
+                    {itemConditions.map((condition) => (
+                      <option key={condition} value={condition}>
+                        {condition}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Replacement Parts - Optional */}
+                <div className="space-y-3 lg:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Replacement Parts & Customization
+                  </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Please indicate which watch components have been replaced or
+                    customized. Replacement parts cannot bear any original
+                    manufacturer trademarks or logos.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg">
+                    {replacementParts.map((part) => (
+                      <div key={part} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          name="replacementParts"
+                          value={part}
+                          checked={formData.replacementParts.includes(part)}
+                          onChange={handleChange}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label className="text-sm text-gray-700">{part}</label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -559,7 +1496,7 @@ const ProductEditPage = () => {
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
                   Pricing & Inventory
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
@@ -568,13 +1505,13 @@ const ProductEditPage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Regular Price */}
+                {/* Regular Price - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Regular Price <span className="text-red-500">*</span>
+                    Retail Price
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                       <Image
                         src={newSymbole}
                         alt="Currency"
@@ -582,7 +1519,7 @@ const ProductEditPage = () => {
                         height={16}
                         className="w-4 h-4"
                       />
-                    </span>
+                    </div>
                     <input
                       type="number"
                       name="regularPrice"
@@ -592,26 +1529,26 @@ const ProductEditPage = () => {
                       placeholder="0.00"
                       min="0"
                       step="0.01"
-                      required
                     />
                   </div>
                 </div>
 
-                {/* Sale Price */}
+                {/* Sale Price - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Sale Price
+                    Selling Price
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                       <Image
                         src={newSymbole}
                         alt="Currency"
+                        unoptimized
                         width={16}
                         height={16}
                         className="w-4 h-4"
                       />
-                    </span>
+                    </div>
                     <input
                       type="number"
                       name="salePrice"
@@ -625,24 +1562,26 @@ const ProductEditPage = () => {
                   </div>
                 </div>
 
-                {/* Discount */}
+                {/* Tax Status - Optional (has default) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Discount (%)
+                    Tax Status
                   </label>
-                  <input
-                    type="number"
-                    name="discount"
-                    value={formData.discount}
+                  <select
+                    name="taxStatus"
+                    value={formData.taxStatus}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="0"
-                    min="0"
-                    max="100"
-                  />
+                  >
+                    {taxStatusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Stock Quantity */}
+                {/* Stock Quantity - Optional (has default) */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Stock Quantity
@@ -655,296 +1594,6 @@ const ProductEditPage = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="0"
                     min="0"
-                  />
-                </div>
-
-                {/* Tax Status */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Tax Status
-                  </label>
-                  <select
-                    name="taxStatus"
-                    value={formData.taxStatus}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    <option value="taxable">Taxable</option>
-                    <option value="shipping">Shipping</option>
-                    <option value="none">None</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Product Specifications Section */}
-            <div className="space-y-6">
-              <div className="border-b border-gray-200 pb-4">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-amber-600 rounded-full"></div>
-                  Product Specifications
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Detailed product specifications and features
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Collection */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Collection
-                  </label>
-                  <select
-                    name="collection"
-                    value={formData.collection}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    {collections.map((collection) => (
-                      <option key={collection} value={collection}>
-                        {collection}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Case Diameter */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Case Diameter (mm)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="CaseDiameter"
-                      value={formData.CaseDiameter}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                      placeholder="e.g., 42"
-                      min="0"
-                      step="0.1"
-                    />
-                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                      mm
-                    </span>
-                  </div>
-                </div>
-
-                {/* Movement */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Movement Type
-                  </label>
-                  <select
-                    name="Movement"
-                    value={formData.Movement}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    <option value="">Select Movement</option>
-                    {movements.map((movement) => (
-                      <option key={movement} value={movement}>
-                        {movement.charAt(0).toUpperCase() + movement.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Dial */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Dial Type
-                  </label>
-                  <input
-                    type="text"
-                    name="Dial"
-                    value={formData.Dial}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="e.g., Black, Blue, Silver"
-                  />
-                </div>
-
-                {/* Wrist Size */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Wrist Size (cm)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="WristSize"
-                      value={formData.WristSize}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                      placeholder="e.g., 7.5"
-                      min="0"
-                      step="0.1"
-                    />
-                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                      cm
-                    </span>
-                  </div>
-                </div>
-
-                {/* Condition */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Condition
-                  </label>
-                  <select
-                    name="Condition"
-                    value={formData.Condition}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    <option value="">Select Condition</option>
-                    {conditions.map((condition) => (
-                      <option key={condition} value={condition}>
-                        {condition
-                          .split("-")
-                          .map(
-                            (word) =>
-                              word.charAt(0).toUpperCase() + word.slice(1)
-                          )
-                          .join(" ")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Production Year */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Production Year
-                  </label>
-                  <input
-                    name="ProductionYear"
-                    value={formData.ProductionYear}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="e.g., 2023"
-                    min="1900"
-                  />
-                </div>
-
-                {/* Accessories */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Accessories Included
-                  </label>
-                  <input
-                    type="text"
-                    name="Accessories"
-                    value={formData.Accessories}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="e.g., Original box, warranty card"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Category & Classification Section */}
-            <div className="space-y-6">
-              <div className="border-b border-gray-200 pb-4">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                  Category & Classification
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Product categorization and targeting
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Gender */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Gender
-                  </label>
-                  <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    <option value="men/unisex">Male/Unisex</option>
-                    <option value="women">Women</option>
-                  </select>
-                </div>
-
-                {/* Category - Required */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Category <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="categories"
-                    value={formData.categories}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    required
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Subcategory */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Subcategory
-                  </label>
-                  <select
-                    name="subcategory"
-                    value={formData.subcategory}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                  >
-                    <option value="">Select Subcategory</option>
-                    {subcategories.map((subcategory) => (
-                      <option key={subcategory} value={subcategory}>
-                        {subcategory}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Brands */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Brand
-                  </label>
-                  <input
-                    type="text"
-                    name="brands"
-                    value={formData.brands}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Brand name or comma separated brands"
-                  />
-                </div>
-
-                {/* Tags */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Tags
-                  </label>
-                  <input
-                    type="text"
-                    name="tags"
-                    value={formData.tags}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                    placeholder="Comma separated tags"
                   />
                 </div>
               </div>
@@ -963,7 +1612,7 @@ const ProductEditPage = () => {
               </div>
 
               <div className="space-y-6">
-                {/* Main Image Upload */}
+                {/* Main Image Upload - Required */}
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
                     Main Image <span className="text-red-500">*</span>
@@ -974,6 +1623,7 @@ const ProductEditPage = () => {
                         <Image
                           src={mainImagePreview}
                           alt="Main product image"
+                          unoptimized
                           width={200}
                           height={200}
                           className="w-full h-full object-cover"
@@ -1041,7 +1691,7 @@ const ProductEditPage = () => {
                 {/* Cover Images Upload */}
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
-                    Additional Images (up to 5)
+                    Additional Images
                   </label>
 
                   {/* Cover Image Previews */}
@@ -1054,6 +1704,7 @@ const ProductEditPage = () => {
                               <Image
                                 src={preview}
                                 alt={`Cover image ${index + 1}`}
+                                unoptimized
                                 width={200}
                                 height={200}
                                 className="w-full h-full object-cover"
@@ -1123,7 +1774,7 @@ const ProductEditPage = () => {
                             PNG, JPG, WEBP up to 5MB each
                           </p>
                           <p className="text-sm text-gray-500">
-                            Multiple files allowed (max 5)
+                            Multiple files allowed
                           </p>
                         </div>
                         {coverImagePreviews.length > 0 && (
@@ -1139,11 +1790,84 @@ const ProductEditPage = () => {
               </div>
             </div>
 
-            {/* Description Section */}
+            {/* SEO Section */}
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
+                  SEO Settings
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Search engine optimization settings
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                {/* SEO Title - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    SEO Title
+                  </label>
+                  <input
+                    type="text"
+                    name="seoTitle"
+                    value={formData.seoTitle}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="SEO title for search engines"
+                    maxLength="60"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Recommended: 50-60 characters. Current:{" "}
+                    {formData.seoTitle.length}
+                  </p>
+                </div>
+
+                {/* SEO Description - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    SEO Description
+                  </label>
+                  <textarea
+                    name="seoDescription"
+                    value={formData.seoDescription}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
+                    placeholder="SEO description for search engines"
+                    rows="3"
+                    maxLength="160"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Recommended: 150-160 characters. Current:{" "}
+                    {formData.seoDescription.length}
+                  </p>
+                </div>
+
+                {/* SEO Keywords - Optional */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    SEO Keywords
+                  </label>
+                  <input
+                    type="text"
+                    name="seoKeywords"
+                    value={formData.seoKeywords}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    placeholder="Comma-separated keywords (e.g., luxury watch, automatic, men's watch)"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Separate keywords with commas
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Description Section */}
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
                   Description
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
@@ -1152,7 +1876,7 @@ const ProductEditPage = () => {
               </div>
 
               <div className="space-y-6">
-                {/* Full Description */}
+                {/* Full Description - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Full Description

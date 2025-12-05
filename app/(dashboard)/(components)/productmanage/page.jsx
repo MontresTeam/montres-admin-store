@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   FiEdit,
   FiTrash2,
@@ -9,6 +9,16 @@ import {
   FiFilter,
   FiClock,
   FiCalendar,
+  FiEye,
+  FiArrowUp,
+  FiArrowDown,
+  FiWatch,
+  FiShoppingBag,
+  FiStar,
+  FiAward,
+  FiX,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
@@ -31,42 +41,97 @@ const ProductManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileView, setMobileView] = useState(false);
   
+  // Timeline sorting states
+  const [sortConfig, setSortConfig] = useState({
+    key: 'createdAt',
+    direction: 'desc'
+  });
+  
   // Schedule publishing states
   const [scheduleModal, setScheduleModal] = useState(null);
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("12:00");
 
+  // Date details modal state
+  const [dateDetailsModal, setDateDetailsModal] = useState(null);
+
+  // Product categories
+  const productCategories = [
+    {
+      id: 'watches',
+      name: 'Watches',
+      icon: FiWatch,
+      description: 'Luxury & premium watches',
+      color: 'blue',
+      route: '/AddProduct'
+    },
+    {
+      id: 'accessories',
+      name: 'Accessories',
+      icon: FiShoppingBag,
+      description: 'Fashion accessories',
+      color: 'purple',
+      route: '/AddAccessories'
+    },
+    {
+      id: 'leather-goods',
+      name: 'Leather Goods',
+      icon: FiShoppingBag,
+      description: 'Premium leather products',
+      color: 'amber',
+      route: '/AddLeatherGoods'
+    },
+    {
+      id: 'jewelry',
+      name: 'Jewelry',
+      icon: FiStar,
+      description: 'Fine jewelry collection',
+      color: 'pink',
+      route: '/AddJewelry'
+    },
+    {
+      id: 'gold',
+      name: 'Gold',
+      icon: FiAward,
+      description: 'Gold products & items',
+      color: 'yellow',
+      route: '/AddGold'
+    }
+  ];
+
   const loadProducts = async () => {
     setLoading(true);
+    try {
+      const { data, error } = await fetchProduct({
+        page,
+        limit,
+        search: searchTerm,
+      });
 
-    const { data, error } = await fetchProduct({
-      page,
-      limit,
-      search: searchTerm,
-    });
-
-    if (!error && data) {
-      setPage(data.currentPage);
-      setProducts(data.products);
-      setTotalPages(data.totalPages);
-      setTotalProducts(data.totalProducts);
-    } else {
-      console.error("Error fetching products:", error);
-      setProducts([]);
-      setTotalPages(1);
+      if (!error && data) {
+        setPage(data.currentPage);
+        setProducts(data.products);
+        setTotalPages(data.totalPages);
+        setTotalProducts(data.totalProducts);
+      } else {
+        console.error("Error fetching products:", error);
+        setProducts([]);
+        setTotalPages(1);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  // Helper function to safely convert to string and lowercase
   const safeToLowerCase = (value) => {
     return String(value || '').toLowerCase();
   };
 
   // Helper function to get category name
   const getCategoryName = (product) => {
-    return product.categories || product.category || product.subcategory || "Uncategorized";
+    return product.category || product.category || "Uncategorized";
   };
 
   // Helper function to check if product matches search term
@@ -86,29 +151,116 @@ const ProductManagement = () => {
     );
   };
 
-  // Calculate total value function
-  const calculateTotalValue = () => {
-    return products.reduce((sum, product) => {
-      const price = product.salePrice || product.price || 0;
-      const stock = product.stockQuantity || product.stock || 0;
-      return sum + (price * stock);
-    }, 0);
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Format date for sorting (ISO string)
+  const getSortableDate = (dateString) => {
+    if (!dateString) return new Date(0);
+    return new Date(dateString);
+  };
+
+  // Calculate time since creation/update
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return "N/A";
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+    if (diffInHours < 1) {
+      return "Just now";
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)} h ago`;
+    } else if (diffInDays < 7) {
+      return `${Math.floor(diffInDays)} days ago`;
+    } else {
+      return formatDate(dateString);
+    }
+  };
+
+  // Handle sort request
+  const handleSort = (key) => {
+    setSortConfig(prevConfig => ({
+      key,
+      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  // Get sort icon
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <FiArrowUp className="opacity-30" />;
+    }
+    return sortConfig.direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />;
+  };
+
+  // Sort products based on timeline criteria
+  const sortedProducts = useMemo(() => {
+    const filtered = products.filter(product => 
+      productMatchesSearch(product, searchTerm)
+    );
+
+    return [...filtered].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortConfig.key) {
+        case 'createdAt':
+          aValue = getSortableDate(a.createdAt);
+          bValue = getSortableDate(b.createdAt);
+          break;
+        case 'updatedAt':
+          aValue = getSortableDate(a.updatedAt);
+          bValue = getSortableDate(b.updatedAt);
+          break;
+        case 'publishDate':
+          aValue = getSortableDate(a.publishSchedule?.publishDate);
+          bValue = getSortableDate(b.publishSchedule?.publishDate);
+          break;
+        case 'name':
+          aValue = a.name?.toLowerCase() || '';
+          bValue = b.name?.toLowerCase() || '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [products, searchTerm, sortConfig]);
+
+  // Handle add product for different categories
+  const handleAddProduct = (category) => {
+    router.push(category.route);
   };
 
   // Handle delete product
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this product?")) {
-      return;
-    }
-
     try {
       const { error } = await deleteProduct(id);
       
       if (!error) {
-        // Remove product from local state
         setProducts(prevProducts => prevProducts.filter(product => product._id !== id));
         
-        // Show success message
         Toastify({
           text: "Product deleted successfully!",
           duration: 3000,
@@ -118,7 +270,6 @@ const ProductManagement = () => {
           stopOnFocus: true,
         }).showToast();
         
-        // Reload products to sync with server
         loadProducts();
       } else {
         throw new Error(error);
@@ -138,16 +289,59 @@ const ProductManagement = () => {
     setDropdownOpen(null);
   };
 
-  const handleAdd = () => {
-    router.push(`/AddProduct`);
+  // Handle edit with accessories route fix
+  const handleEdit = (id) => {
+    const product = products.find(p => p._id === id);
+    if (!product) {
+      console.warn(`Product with ID ${id} not found`);
+      return;
+    }
+
+    console.log("Editing product:", product);
+
+    // Accessories SKUs - redirect to accessories edit
+    const accessoriesSKUs = ["MON0056", "MON0270"];
+    
+    // Forced Leather SKUs
+    const forcedLeatherSKUs = ["MON0044", "MON0042", "MON0295", "MON0300"];
+    
+    // Check SKU first
+    if (accessoriesSKUs.includes(product.sku)) {
+      router.push(`/AccessoriesEdit/${id}`);
+      return;
+    }
+    
+    if (forcedLeatherSKUs.includes(product.sku)) {
+      router.push(`/LeatherGoodsEdit/${id}`);
+      return;
+    }
+
+    // Check category or name for leather goods
+    const name = (product.name || "").toLowerCase();
+    const category = (product.category || "").toLowerCase();
+    
+    const leatherKeywords = ["bag", "wallet", "holder", "card", "leather", "case"];
+    const isLeatherGoods = leatherKeywords.some(keyword => 
+      name.includes(keyword) || category.includes(keyword)
+    );
+
+    const accessoriesKeywords = ["accessories", "accessory", "strap", "band", "cover", "case"];
+    const isAccessories = accessoriesKeywords.some(keyword =>
+      name.includes(keyword) || category.includes(keyword)
+    );
+
+    if (isAccessories) {
+      router.push(`/AccessoriesEdit/${id}`);
+    } else if (isLeatherGoods) {
+      router.push(`/LeatherGoodsEdit/${id}`);
+    } else {
+      router.push(`/ProductEditPage/${id}`);
+    }
   };
 
-  useEffect(() => {
-    loadProducts();
-  }, [page, searchTerm]);
-
-  const handleEdit = (id) => {
-    router.push(`/ProductEditPage/${id}`);
+  // View date details
+  const handleViewDateDetails = (product) => {
+    setDateDetailsModal(product);
   };
 
   // Schedule product publishing
@@ -180,7 +374,8 @@ const ProductManagement = () => {
       const { error } = await updateProduct(productId, {
         'publishSchedule.scheduledPublish': true,
         'publishSchedule.publishDate': publishDateTime,
-        'publishSchedule.status': 'scheduled'
+        'publishSchedule.status': 'scheduled',
+        updatedAt: new Date().toISOString()
       });
 
       if (!error) {
@@ -193,7 +388,7 @@ const ProductManagement = () => {
         }).showToast();
         
         setScheduleModal(null);
-        loadProducts(); // Refresh the list
+        loadProducts();
       } else {
         throw new Error(error);
       }
@@ -215,7 +410,8 @@ const ProductManagement = () => {
       const { error } = await updateProduct(productId, {
         'publishSchedule.scheduledPublish': false,
         'publishSchedule.status': 'draft',
-        'publishSchedule.publishDate': null
+        'publishSchedule.publishDate': null,
+        updatedAt: new Date().toISOString()
       });
 
       if (!error) {
@@ -246,7 +442,8 @@ const ProductManagement = () => {
       const { error } = await updateProduct(productId, {
         'publishSchedule.scheduledPublish': false,
         'publishSchedule.status': 'published',
-        'publishSchedule.publishDate': new Date()
+        'publishSchedule.publishDate': new Date(),
+        updatedAt: new Date().toISOString()
       });
 
       if (!error) {
@@ -277,7 +474,8 @@ const ProductManagement = () => {
       const { error } = await updateProduct(productId, {
         'publishSchedule.scheduledPublish': false,
         'publishSchedule.status': 'draft',
-        'publishSchedule.publishDate': null
+        'publishSchedule.publishDate': null,
+        updatedAt: new Date().toISOString()
       });
 
       if (!error) {
@@ -351,22 +549,40 @@ const ProductManagement = () => {
     );
   };
 
-  // Filter products based on search term
-  const filteredProducts = products.filter(product => 
-    productMatchesSearch(product, searchTerm)
-  );
+  // Color classes for categories
+  const getColorClasses = (color) => {
+    const colorMap = {
+      blue: 'bg-blue-500 hover:bg-blue-600',
+      purple: 'bg-purple-500 hover:bg-purple-600',
+      amber: 'bg-amber-500 hover:bg-amber-600',
+      pink: 'bg-pink-500 hover:bg-pink-600',
+      yellow: 'bg-yellow-500 hover:bg-yellow-600'
+    };
+    return colorMap[color] || 'bg-gray-500 hover:bg-gray-600';
+  };
 
-  // Auto switch to mobile view on smaller screens
+  // Mobile optimization for responsive design
   useEffect(() => {
     const handleResize = () => {
       setMobileView(window.innerWidth < 768);
     };
 
+    handleResize();
     window.addEventListener("resize", handleResize);
-    handleResize(); // Set initial value
-
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownOpen && !event.target.closest('.dropdown-container')) {
+        setDropdownOpen(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [dropdownOpen]);
 
   // Get scheduled products count for stats
   const scheduledProductsCount = products.filter(
@@ -377,118 +593,205 @@ const ProductManagement = () => {
     product => product.publishSchedule?.status === 'published'
   ).length;
 
+  // Get recently added products (last 7 days)
+  const recentProductsCount = products.filter(product => {
+    if (!product.createdAt) return false;
+    const createdDate = new Date(product.createdAt);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return createdDate > weekAgo;
+  }).length;
+
+  useEffect(() => {
+    loadProducts();
+  }, [page, searchTerm]);
+
+  // Mobile-friendly pagination component
+  const MobilePagination = () => (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-200 bg-gray-50">
+      <div className="text-sm text-gray-600 text-center sm:text-left">
+        Showing {sortedProducts.length} of {totalProducts} products
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+          disabled={page === 1}
+          variant="outline"
+          size="sm"
+          className="h-8 px-3"
+        >
+          <FiChevronLeft className="w-4 h-4" />
+        </Button>
+        
+        <div className="flex items-center gap-1">
+          {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+            let pageNum;
+            if (totalPages <= 3) {
+              pageNum = i + 1;
+            } else if (page === 1) {
+              pageNum = i + 1;
+            } else if (page === totalPages) {
+              pageNum = totalPages - 2 + i;
+            } else {
+              pageNum = page - 1 + i;
+            }
+            
+            return (
+              <Button
+                key={pageNum}
+                onClick={() => setPage(pageNum)}
+                variant={page === pageNum ? "default" : "outline"}
+                size="sm"
+                className="h-8 w-8 p-0"
+              >
+                {pageNum}
+              </Button>
+            );
+          })}
+          {totalPages > 3 && (
+            <span className="px-2 text-sm text-gray-500">...</span>
+          )}
+        </div>
+        
+        <Button
+          onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={page === totalPages}
+          variant="outline"
+          size="sm"
+          className="h-8 px-3"
+        >
+          <FiChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <DashboardBreadcrumb text="Product Management" />
-      <div className="min-h-screen bg-gradient-to-br p-4 sm:p-6 lg:p-8">
+      <div className="min-h-screen bg-gradient-to-br p-3 sm:p-4 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Header Section */}
-          <div className="mb-8">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          {/* Header Section - Mobile Optimized */}
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col gap-4">
               <div>
-                <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
                   Product Management
                 </h1>
-                <p className="">
+                <p className="text-sm sm:text-base text-gray-600">
                   Manage your products, inventory, pricing, and publishing schedule
                 </p>
               </div>
-
-              <Button
-                onClick={handleAdd}
-                className="flex items-center transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <FiPlus className="mr-2 text-lg" />
-                Add Product
-              </Button>
             </div>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="rounded-2xl p-6 shadow-lg border border-gray-100">
+          {/* Category Selection Cards - Mobile Optimized */}
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">Add New Products</h2>
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+              {productCategories.map((category) => {
+                const IconComponent = category.icon;
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => handleAddProduct(category)}
+                    className={`flex flex-col items-center justify-center p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-white/20 transition-all duration-200 active:scale-95 hover:shadow-lg text-white ${getColorClasses(category.color)}`}
+                  >
+                    <IconComponent className="text-xl sm:text-2xl mb-2 sm:mb-3" />
+                    <span className="font-semibold text-sm sm:text-base mb-1">{category.name}</span>
+                    <span className="text-xs sm:text-sm text-white/90 text-center leading-tight">{category.description}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Stats Cards - Mobile Optimized */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Total Products</p>
-                  <p className="text-3xl font-bold mt-1">{totalProducts}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total</p>
+                  <p className="text-xl sm:text-2xl font-bold mt-1">{totalProducts}</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <FiPlus className="text-blue-600 text-xl" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                  <FiPlus className="text-blue-600 text-sm sm:text-base" />
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Published</p>
-                  <p className="text-3xl font-bold mt-1">{publishedProductsCount}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Published</p>
+                  <p className="text-xl sm:text-2xl font-bold mt-1">{publishedProductsCount}</p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <FiCalendar className="text-green-600 text-xl" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                  <FiCalendar className="text-green-600 text-sm sm:text-base" />
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Scheduled</p>
-                  <p className="text-3xl font-bold mt-1">{scheduledProductsCount}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Scheduled</p>
+                  <p className="text-xl sm:text-2xl font-bold mt-1">{scheduledProductsCount}</p>
                 </div>
-                <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                  <FiClock className="text-yellow-600 text-xl" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                  <FiClock className="text-yellow-600 text-sm sm:text-base" />
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Total Value</p>
-                  <p className="text-3xl font-bold mt-1">
-                    {calculateTotalValue().toLocaleString()}
-                  </p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Recent</p>
+                  <p className="text-xl sm:text-2xl font-bold mt-1">{recentProductsCount}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Last 7 days</p>
                 </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Image 
-                    src={newCurrency} 
-                    alt="Currency Symbol" 
-                    width={24} 
-                    height={24}
-                    className="text-purple-600 text-xl font-bold"
-                  />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                  <FiCalendar className="text-purple-600 text-sm sm:text-base" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Search and Filter Bar */}
-          <div className="rounded-2xl p-6 shadow-lg border border-gray-100 mb-6">
-            <div className="flex flex-col sm:flex-row gap-4">
+          {/* Search and Filter Bar - Mobile Optimized */}
+          <div className="rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <div className="flex-1 relative">
-                <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FiSearch className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm sm:text-base" />
                 <input
                   type="text"
-                  placeholder="Search products by name or category..."
+                  placeholder="Search products..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
                 />
               </div>
-              <button className="flex items-center justify-center px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                <FiFilter className="mr-2" />
+              <button className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl hover:bg-gray-50 transition-colors text-sm sm:text-base">
+                <FiFilter className="mr-2 text-sm sm:text-base" />
                 Filter
               </button>
             </div>
           </div>
 
-          {/* Schedule Publishing Modal */}
+          {/* Modals */}
           {scheduleModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-                <h3 className="text-xl font-bold mb-4">Schedule Product Publishing</h3>
-                <p className="text-gray-600 mb-4">Set when you want this product to be published automatically.</p>
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md mx-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold">Schedule Publishing</h3>
+                  <button
+                    onClick={() => setScheduleModal(null)}
+                    className="p-1 hover:bg-gray-100 rounded-full"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="text-gray-600 text-sm sm:text-base mb-4">Set when this product should be published.</p>
                 
                 <div className="space-y-4">
                   <div>
@@ -498,7 +801,7 @@ const ProductManagement = () => {
                       value={scheduleDate}
                       onChange={(e) => setScheduleDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-2.5 sm:p-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                     />
                   </div>
                   <div>
@@ -507,7 +810,7 @@ const ProductManagement = () => {
                       type="time"
                       value={scheduleTime}
                       onChange={(e) => setScheduleTime(e.target.value)}
-                      className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-2.5 sm:p-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                     />
                   </div>
                 </div>
@@ -515,15 +818,15 @@ const ProductManagement = () => {
                 <div className="flex gap-3 mt-6">
                   <Button
                     onClick={() => handleSchedulePublish(scheduleModal)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm sm:text-base py-2"
                   >
                     <FiClock className="mr-2" />
-                    Schedule Publishing
+                    Schedule
                   </Button>
                   <Button
                     onClick={() => setScheduleModal(null)}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 text-sm sm:text-base py-2"
                   >
                     Cancel
                   </Button>
@@ -532,78 +835,158 @@ const ProductManagement = () => {
             </div>
           )}
 
+          {dateDetailsModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold">Product Timeline</h3>
+                  <button
+                    onClick={() => setDateDetailsModal(null)}
+                    className="p-1 hover:bg-gray-100 rounded-full"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="font-medium text-sm sm:text-base">Product:</span>
+                    <span className="text-gray-900 text-sm sm:text-base">{dateDetailsModal.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="font-medium text-sm sm:text-base">SKU:</span>
+                    <span className="text-gray-600 text-sm sm:text-base">{dateDetailsModal.sku}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="font-medium text-sm sm:text-base">Created:</span>
+                    <div className="text-right">
+                      <div className="text-gray-900 text-sm sm:text-base">{formatDate(dateDetailsModal.createdAt)}</div>
+                      <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.createdAt)}</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="font-medium text-sm sm:text-base">Updated:</span>
+                    <div className="text-right">
+                      <div className="text-gray-900 text-sm sm:text-base">{formatDate(dateDetailsModal.updatedAt)}</div>
+                      <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.updatedAt)}</div>
+                    </div>
+                  </div>
+                  {dateDetailsModal.publishSchedule?.publishDate && (
+                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                      <span className="font-medium text-sm sm:text-base">Scheduled:</span>
+                      <div className="text-right">
+                        <div className="text-gray-900 text-sm sm:text-base">{formatDate(dateDetailsModal.publishSchedule.publishDate)}</div>
+                        <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.publishSchedule.publishDate)}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-3 mt-6">
+                  <Button
+                    onClick={() => setDateDetailsModal(null)}
+                    className="flex-1 text-sm sm:text-base py-2"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Products Table/Cards */}
-          <div className="rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Desktop Table View */}
-            <div className="hidden md:block">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full min-w-[800px]">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
-                      Product
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
+                      <button
+                        onClick={() => handleSort('name')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Product
+                        {getSortIcon('name')}
+                      </button>
                     </th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
                       Category
                     </th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
                       Price
                     </th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
                       Stock
                     </th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
+                      <button
+                        onClick={() => handleSort('createdAt')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Created
+                        {getSortIcon('createdAt')}
+                      </button>
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
+                      <button
+                        onClick={() => handleSort('updatedAt')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Updated
+                        {getSortIcon('updatedAt')}
+                      </button>
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
                       Status
                     </th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
-                      Schedule
-                    </th>
-                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filteredProducts.map((product, i) => (
+                  {sortedProducts.map((product, i) => (
                     <tr 
                       key={product._id || i} 
                       className="transition-colors hover:bg-gray-50"
                     >
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-4">
-                          <Image
-                            src={product.image || "/placeholder.png"}
-                            alt={product.name || "Product image"}
-                            width={50}
-                            height={50}
-                            className="w-12 h-12 object-cover rounded-xl border border-gray-200"
-                          />
-                          <div>
-                            <span className="font-medium text-gray-900 block">{product.name}</span>
-                            <span className="text-sm text-gray-500">
-                              SKU: {product.sku || "N/A"}
-                            </span>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                            <Image
+                              src={product.image || "/placeholder.png"}
+                              alt={product.name || "Product image"}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-medium text-gray-900 truncate max-w-[150px]">{product.name}</div>
+                            <div className="text-xs text-gray-500 truncate">
+                              SKU: {product.sku}
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-6">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {getCategoryName(product)}
                         </span>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-3 px-4">
                         <div className="flex flex-col">
-                          <span className="font-semibold text-gray-900 flex items-center">
+                          <span className="font-semibold text-gray-900 flex items-center text-sm">
                             <Image 
                               src={newCurrency} 
                               alt="Currency" 
-                              width={16} 
-                              height={16}
+                              width={14} 
+                              height={14}
                               className="mr-1"
                             />
                             {product.salePrice || product.price || 0}
                           </span>
                           {product.salePrice && product.price && product.salePrice < product.price && (
-                            <span className="text-sm text-gray-500 line-through flex items-center">
+                            <span className="text-xs text-gray-500 line-through flex items-center">
                               <Image 
                                 src={newCurrency} 
                                 alt="Currency" 
@@ -616,60 +999,91 @@ const ProductManagement = () => {
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-6">
-                        <span className={`font-medium ${
+                      <td className="py-3 px-4">
+                        <span className={`font-medium text-sm ${
                           (product.stockQuantity || product.stock) < 10 ? 'text-red-600' : 'text-gray-900'
                         }`}>
                           {product.stockQuantity || product.stock || 0}
                         </span>
                       </td>
-                      <td className="py-4 px-6">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                            (product.stockQuantity || product.stock) > 15
-                              ? "bg-green-100 text-green-800"
-                              : (product.stockQuantity || product.stock) > 0
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => handleViewDateDetails(product)}
+                          className="text-left hover:text-blue-600 transition-colors group"
                         >
-                          {(product.stockQuantity || product.stock) > 15
-                            ? "In Stock"
-                            : (product.stockQuantity || product.stock) > 0
-                            ? "Low Stock"
-                            : "Out of Stock"}
-                        </span>
+                          <div className="text-xs text-gray-500">Created</div>
+                          <div className="text-sm font-medium group-hover:text-blue-600">
+                            {getTimeAgo(product.createdAt)}
+                          </div>
+                        </button>
                       </td>
-                      <td className="py-4 px-6">
-                        {getScheduleBadge(product)}
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => handleViewDateDetails(product)}
+                          className="text-left hover:text-blue-600 transition-colors group"
+                        >
+                          <div className="text-xs text-gray-500">Updated</div>
+                          <div className="text-sm font-medium group-hover:text-blue-600">
+                            {getTimeAgo(product.updatedAt)}
+                          </div>
+                        </button>
                       </td>
-                      <td className="py-4 px-6 relative">
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col gap-1 max-w-[120px]">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              (product.stockQuantity || product.stock) > 15
+                                ? "bg-green-100 text-green-800"
+                                : (product.stockQuantity || product.stock) > 0
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {(product.stockQuantity || product.stock) > 15
+                              ? "In Stock"
+                              : (product.stockQuantity || product.stock) > 0
+                              ? "Low Stock"
+                              : "Out of Stock"}
+                          </span>
+                          {getScheduleBadge(product)}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 relative dropdown-container">
                         <button
                           onClick={() =>
                             setDropdownOpen(
                               dropdownOpen === product._id ? null : product._id
                             )
                           }
-                          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
                         >
-                          <FiMoreVertical className="text-gray-600" />
+                          <FiMoreVertical className="text-gray-600 w-5 h-5" />
                         </button>
 
                         {dropdownOpen === product._id && (
-                          <div className="absolute right-6 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
-                            {/* Edit Option */}
+                          <div className="absolute right-3 mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
+                            <button
+                              onClick={() => {
+                                handleViewDateDetails(product);
+                                setDropdownOpen(null);
+                              }}
+                              className="flex items-center w-full px-3 py-2.5 text-left text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+                            >
+                              <FiEye className="mr-2 text-gray-500" />
+                              View Timeline
+                            </button>
+
                             <button
                               onClick={() => {
                                 handleEdit(product._id);
                                 setDropdownOpen(null);
                               }}
-                              className="flex items-center w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors"
+                              className="flex items-center w-full px-3 py-2.5 text-left text-gray-700 hover:bg-gray-50 transition-colors text-sm"
                             >
-                              <FiEdit className="mr-3 text-gray-500" />
+                              <FiEdit className="mr-2 text-gray-500" />
                               Edit Product
                             </button>
                             
-                            {/* Publishing Options */}
                             {(!product.publishSchedule || product.publishSchedule.status === 'draft') && (
                               <>
                                 <button
@@ -679,19 +1093,19 @@ const ProductManagement = () => {
                                     setScheduleTime("12:00");
                                     setDropdownOpen(null);
                                   }}
-                                  className="flex items-center w-full px-4 py-3 text-left text-blue-600 hover:bg-blue-50 transition-colors"
+                                  className="flex items-center w-full px-3 py-2.5 text-left text-blue-600 hover:bg-blue-50 transition-colors text-sm"
                                 >
-                                  <FiClock className="mr-3" />
-                                  Schedule Publishing
+                                  <FiClock className="mr-2" />
+                                  Schedule
                                 </button>
                                 <button
                                   onClick={() => {
                                     handlePublishNow(product._id);
                                     setDropdownOpen(null);
                                   }}
-                                  className="flex items-center w-full px-4 py-3 text-left text-green-600 hover:bg-green-50 transition-colors"
+                                  className="flex items-center w-full px-3 py-2.5 text-left text-green-600 hover:bg-green-50 transition-colors text-sm"
                                 >
-                                  <FiCalendar className="mr-3" />
+                                  <FiCalendar className="mr-2" />
                                   Publish Now
                                 </button>
                               </>
@@ -703,9 +1117,9 @@ const ProductManagement = () => {
                                   handleCancelSchedule(product._id);
                                   setDropdownOpen(null);
                                 }}
-                                className="flex items-center w-full px-4 py-3 text-left text-orange-600 hover:bg-orange-50 transition-colors"
+                                className="flex items-center w-full px-3 py-2.5 text-left text-orange-600 hover:bg-orange-50 transition-colors text-sm"
                               >
-                                <FiClock className="mr-3" />
+                                <FiClock className="mr-2" />
                                 Cancel Schedule
                               </button>
                             )}
@@ -716,22 +1130,21 @@ const ProductManagement = () => {
                                   handleUnpublish(product._id);
                                   setDropdownOpen(null);
                                 }}
-                                className="flex items-center w-full px-4 py-3 text-left text-gray-600 hover:bg-gray-50 transition-colors"
-                                >
-                                <FiCalendar className="mr-3" />
+                                className="flex items-center w-full px-3 py-2.5 text-left text-gray-600 hover:bg-gray-50 transition-colors text-sm"
+                              >
+                                <FiCalendar className="mr-2" />
                                 Unpublish
                               </button>
                             )}
                             
-                            {/* Delete Option */}
                             <button
                               onClick={() => {
                                 handleDelete(product._id);
                               }}
-                              className="flex items-center w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
+                              className="flex items-center w-full px-3 py-2.5 text-left text-red-600 hover:bg-red-50 transition-colors text-sm border-t border-gray-100"
                             >
-                              <FiTrash2 className="mr-3" />
-                              Delete Product
+                              <FiTrash2 className="mr-2" />
+                              Delete
                             </button>
                           </div>
                         )}
@@ -741,32 +1154,37 @@ const ProductManagement = () => {
                 </tbody>
               </table>
               
-              {/* Pagination */}
-              <div className="flex justify-between items-center px-6 py-4 border-t border-gray-200">
+              {/* Desktop Pagination */}
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 py-3 border-t border-gray-200 bg-gray-50">
                 <div className="text-sm text-gray-600">
-                  Showing {filteredProducts.length} of {totalProducts} products
+                  Showing {sortedProducts.length} of {totalProducts} products
+                  {sortConfig.key && (
+                    <span className="ml-2 text-blue-600 hidden sm:inline">
+                      (Sorted by {sortConfig.key} {sortConfig.direction})
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
                     onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
                     disabled={page === 1}
                     variant="outline"
-                    className="px-4 py-2 disabled:opacity-50"
+                    size="sm"
+                    className="px-3 py-1.5 text-sm"
                   >
                     Previous
                   </Button>
-
-                  <span className="px-4 py-2 text-sm text-gray-600">
+                  <span className="px-3 py-1.5 text-sm text-gray-600">
                     Page {page} of {totalPages}
                   </span>
-
                   <Button
                     onClick={() =>
                       setPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={page === totalPages}
                     variant="outline"
-                    className="px-4 py-2 disabled:opacity-50"
+                    size="sm"
+                    className="px-3 py-1.5 text-sm"
                   >
                     Next
                   </Button>
@@ -776,49 +1194,57 @@ const ProductManagement = () => {
 
             {/* Mobile Card View */}
             <div className="md:hidden">
-              <div className="p-4 space-y-4">
-                {filteredProducts.map((product, i) => (
+              <div className="p-2 sm:p-3 space-y-3">
+                {sortedProducts.map((product, i) => (
                   <div
                     key={product._id || i}
-                    className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm"
+                    className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm"
                   >
+                    {/* Product Header */}
                     <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <Image
-                          src={product.image || "/placeholder.png"}
-                          alt={product.name || "Product image"}
-                          width={48}
-                          height={48}
-                          className="w-12 h-12 object-cover rounded-lg border border-gray-200"
-                        />
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                          <Image
+                            src={product.image || "/placeholder.png"}
+                            alt={product.name || "Product image"}
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-gray-900 text-sm truncate">
                             {product.name}
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 truncate max-w-[100px]">
                               {getCategoryName(product)}
                             </span>
-                            {getScheduleBadge(product)}
+                            <span className="text-xs text-gray-500 truncate">
+                              SKU: {product.sku}
+                            </span>
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() =>
-                          setDropdownOpen(
-                            dropdownOpen === product._id ? null : product._id
-                          )
-                        }
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <FiMoreVertical className="text-gray-600" />
-                      </button>
+                      <div className="relative dropdown-container">
+                        <button
+                          onClick={() =>
+                            setDropdownOpen(
+                              dropdownOpen === product._id ? null : product._id
+                            )
+                          }
+                          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          <FiMoreVertical className="text-gray-600 w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                    {/* Product Details Grid */}
+                    <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                       <div>
-                        <p className="text-gray-600">Price</p>
-                        <p className="font-semibold text-gray-900 flex items-center">
+                        <p className="text-gray-600 text-xs">Price</p>
+                        <p className="font-semibold text-gray-900 flex items-center text-sm">
                           <Image 
                             src={newCurrency} 
                             alt="Currency" 
@@ -830,39 +1256,75 @@ const ProductManagement = () => {
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Stock</p>
-                        <p className="font-semibold text-gray-900">
+                        <p className="text-gray-600 text-xs">Stock</p>
+                        <p className="font-semibold text-gray-900 text-sm">
                           {product.stockQuantity || product.stock || 0}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Status</p>
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            (product.stockQuantity || product.stock) > 15
-                              ? "bg-green-100 text-green-800"
-                              : (product.stockQuantity || product.stock) > 0
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                        <p className="text-gray-600 text-xs">Created</p>
+                        <button
+                          onClick={() => handleViewDateDetails(product)}
+                          className="text-left hover:text-blue-600 transition-colors"
                         >
-                          {(product.stockQuantity || product.stock) > 15
-                            ? "In Stock"
-                            : (product.stockQuantity || product.stock) > 0
-                            ? "Low Stock"
-                            : "Out of Stock"}
-                        </span>
+                          <p className="font-semibold text-gray-900 text-sm truncate">
+                            {getTimeAgo(product.createdAt)}
+                          </p>
+                        </button>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-xs">Updated</p>
+                        <button
+                          onClick={() => handleViewDateDetails(product)}
+                          className="text-left hover:text-blue-600 transition-colors"
+                        >
+                          <p className="font-semibold text-gray-900 text-sm truncate">
+                            {getTimeAgo(product.updatedAt)}
+                          </p>
+                        </button>
                       </div>
                     </div>
 
+                    {/* Status Badges */}
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          (product.stockQuantity || product.stock) > 15
+                            ? "bg-green-100 text-green-800"
+                            : (product.stockQuantity || product.stock) > 0
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {(product.stockQuantity || product.stock) > 15
+                          ? "In Stock"
+                          : (product.stockQuantity || product.stock) > 0
+                          ? "Low Stock"
+                          : "Out of Stock"}
+                      </span>
+                      {getScheduleBadge(product)}
+                    </div>
+
+                    {/* Dropdown Menu for Mobile */}
                     {dropdownOpen === product._id && (
                       <div className="mt-3 border-t border-gray-200 pt-3 space-y-1">
+                        <button
+                          onClick={() => {
+                            handleViewDateDetails(product);
+                            setDropdownOpen(null);
+                          }}
+                          className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+                        >
+                          <FiEye className="mr-2 text-gray-500" />
+                          View Timeline
+                        </button>
+
                         <button
                           onClick={() => {
                             handleEdit(product._id);
                             setDropdownOpen(null);
                           }}
-                          className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm"
                         >
                           <FiEdit className="mr-2 text-gray-500" />
                           Edit Product
@@ -877,7 +1339,7 @@ const ProductManagement = () => {
                                 setScheduleTime("12:00");
                                 setDropdownOpen(null);
                               }}
-                              className="flex items-center w-full px-3 py-2 text-left text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="flex items-center w-full px-3 py-2 text-left text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
                             >
                               <FiClock className="mr-2" />
                               Schedule Publishing
@@ -887,7 +1349,7 @@ const ProductManagement = () => {
                                 handlePublishNow(product._id);
                                 setDropdownOpen(null);
                               }}
-                              className="flex items-center w-full px-3 py-2 text-left text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              className="flex items-center w-full px-3 py-2 text-left text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm"
                             >
                               <FiCalendar className="mr-2" />
                               Publish Now
@@ -901,7 +1363,7 @@ const ProductManagement = () => {
                               handleCancelSchedule(product._id);
                               setDropdownOpen(null);
                             }}
-                            className="flex items-center w-full px-3 py-2 text-left text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                            className="flex items-center w-full px-3 py-2 text-left text-orange-600 hover:bg-orange-50 rounded-lg transition-colors text-sm"
                           >
                             <FiClock className="mr-2" />
                             Cancel Schedule
@@ -914,7 +1376,7 @@ const ProductManagement = () => {
                               handleUnpublish(product._id);
                               setDropdownOpen(null);
                             }}
-                            className="flex items-center w-full px-3 py-2 text-left text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                            className="flex items-center w-full px-3 py-2 text-left text-gray-600 hover:bg-gray-50 rounded-lg transition-colors text-sm"
                           >
                             <FiCalendar className="mr-2" />
                             Unpublish
@@ -925,7 +1387,7 @@ const ProductManagement = () => {
                           onClick={() => {
                             handleDelete(product._id);
                           }}
-                          className="flex items-center w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="flex items-center w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
                         >
                           <FiTrash2 className="mr-2" />
                           Delete Product
@@ -935,40 +1397,51 @@ const ProductManagement = () => {
                   </div>
                 ))}
               </div>
+              
+              {/* Mobile Pagination */}
+              <MobilePagination />
             </div>
 
             {/* Empty State */}
-            {filteredProducts.length === 0 && !loading && (
-              <div className="py-16 text-center">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiSearch className="text-3xl text-gray-400" />
+            {sortedProducts.length === 0 && !loading && (
+              <div className="py-12 sm:py-16 text-center px-4">
+                <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiSearch className="text-2xl sm:text-3xl text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                   No products found
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 text-sm sm:text-base mb-6 max-w-sm mx-auto">
                   {searchTerm ? "Try adjusting your search terms." : "Get started by adding your first product."}
                 </p>
-                <button
-                  onClick={handleAdd}
-                  className="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
-                >
-                  <FiPlus className="mr-2" />
-                  Add Your First Product
-                </button>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {productCategories.slice(0, 2).map((category) => {
+                    const IconComponent = category.icon;
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => handleAddProduct(category)}
+                        className={`flex items-center px-3 py-2 rounded-lg text-white text-sm ${getColorClasses(category.color)}`}
+                      >
+                        <IconComponent className="mr-2" />
+                        Add {category.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
             {/* Loading State */}
             {loading && (
-              <div className="py-16 text-center">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="py-12 sm:py-16 text-center px-4">
+                <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600"></div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                   Loading products...
                 </h3>
-                <p className="text-gray-600">Please wait while we fetch your products.</p>
+                <p className="text-gray-600 text-sm sm:text-base">Please wait while we fetch your products.</p>
               </div>
             )}
           </div>
