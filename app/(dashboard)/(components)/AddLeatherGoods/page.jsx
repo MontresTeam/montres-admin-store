@@ -2,36 +2,40 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
+import { useRouter } from "next/navigation";
 import DashboardBreadcrumb from '../../../../components/layout/dashboard-breadcrumb';
 import newcurrencysymbol from '../../../../public/assets/newSymbole.png';
-
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
 const Page = () => {
+
+    const router = useRouter();
   // Static data options - MATCHING SCHEMA ENUMS
   const mainCategoryOptions = [
-  "Bag",
-  "Wallet",
-  "Card Holder",
-  "Briefcase",
-  "Clutch Bag",
-  "Pouch"
+    "Bag",
+    "Wallet",
+    "Card Holder",
+    "Briefcase",
+    "Clutch Bag",
+    "Pouch"
   ];
 
   const subCategoryOptions = [
-  "Tote Bag",
-  "Crossbody Bag",
-  "Card Holder",
-  "Shoulder/Crossbody Bag",
-  "Shoulder Bag",
-  "Clutch",
-  "Backpack",
-  "Hand Bag",
-  "Coin Purse",
-  "Key Holder",
-  "Travel Bag",
-  "Pouch",
-  "Long Bi-Fold Wallet",
-  "Reversible Belt",
-  "Business Bag"
+    "Tote Bag",
+    "Crossbody Bag",
+    "Card Holder",
+    "Shoulder/Crossbody Bag",
+    "Shoulder Bag",
+    "Clutch",
+    "Backpack",
+    "Hand Bag",
+    "Coin Purse",
+    "Key Holder",
+    "Travel Bag",
+    "Pouch",
+    "Long Bi-Fold Wallet",
+    "Reversible Belt",
+    "Business Bag"
   ];
 
   const materialOptions = [
@@ -80,7 +84,7 @@ const Page = () => {
 
   const taxStatusOptions = [
     { value: 'taxable', label: 'Taxable' },
-    { value: 'shipping', label: 'Shipping only' }, // Fixed to match schema
+    { value: 'shipping', label: 'Shipping only' },
     { value: 'none', label: 'None' }
   ];
 
@@ -95,7 +99,7 @@ const Page = () => {
     "Extra links",
     "Cleaning cloth",
     "Adjustment tools",
-    "Only bag" // Added to match schema
+    "Only bag"
   ];
 
   const scopeOfDeliveryOptions = [
@@ -104,8 +108,8 @@ const Page = () => {
     "Without papers",
     "Original box only",
     "Generic packaging",
-    "Dust bag", // Added to match schema
-    "Only bag" // Added to match schema
+    "Dust bag",
+    "Only bag"
   ];
 
   const conditionOptions = [
@@ -133,7 +137,7 @@ const Page = () => {
     "New Arrivals"
   ];
 
-  // Form state - UPDATED TO MATCH SCHEMA
+  // Form state - UPDATED TO MATCH BACKEND FIELD NAMES
   const [formData, setFormData] = useState({
     // Basic Information - REQUIRED FIELDS
     MainCategory: '',
@@ -174,9 +178,9 @@ const Page = () => {
     },
     strapLength: '',
     
-    // Accessories & Delivery
-    accessoriesAndDelivery: [],
-    scopeOfDeliveryOptions: [],
+    // Accessories & Delivery - CHANGED FIELD NAMES TO MATCH BACKEND
+    leatherAccessories: [], // Changed from accessoriesAndDelivery
+    scopeOfDelivery: [], // Changed from scopeOfDeliveryOptions
     
     // Pricing & Inventory
     taxStatus: 'taxable',
@@ -258,6 +262,30 @@ const Page = () => {
     }
   };
 
+   // -----------------------
+    // Toast helpers
+    // -----------------------
+    const showToast = (text, duration = 3000, gravity = "top", style = {}) => {
+      Toastify({
+        text,
+        duration,
+        gravity,
+        position: "right",
+        close: true,
+        style: {
+          background: "linear-gradient(to right, #00b09b, #96c93d)",
+          color: "#fff",
+          ...style,
+        },
+      }).showToast();
+    };
+  
+    const showError = (text) =>
+      showToast(text, 4000, "top", {
+        background: "linear-gradient(to right, #ff5f6d, #ffc371)",
+      });
+  
+
   // Handle multi-select changes for array fields
   const handleMultiSelectChange = (name, value, isChecked) => {
     setFormData(prev => {
@@ -307,12 +335,15 @@ const Page = () => {
         }
         
         if (key === 'size') {
-          // Handle size object
-          Object.keys(formData.size).forEach(sizeKey => {
-            if (formData.size[sizeKey]) {
-              submitData.append(`size[${sizeKey}]`, formData.size[sizeKey]);
-            }
-          });
+          // Handle size object - create proper nested object
+          const sizeData = {};
+          if (formData.size.width) sizeData.width = formData.size.width;
+          if (formData.size.height) sizeData.height = formData.size.height;
+          if (formData.size.depth) sizeData.depth = formData.size.depth;
+          
+          if (Object.keys(sizeData).length > 0) {
+            submitData.append('size', JSON.stringify(sizeData));
+          }
         } else if (Array.isArray(formData[key])) {
           formData[key].forEach(item => {
             submitData.append(key, item);
@@ -322,14 +353,26 @@ const Page = () => {
         }
       });
 
-      // Append images
-      submitData.append('mainImage', mainImage);
-      coverImages.forEach((image) => {
-        submitData.append('coverImages', image);
-      });
+      // Append main image with field name 'main'
+      if (mainImage) {
+        submitData.append("main", mainImage);
+      }
+
+      // Append cover images with field name 'covers'
+      if (coverImages.length > 0) {
+        coverImages.forEach((file) => {
+          submitData.append("covers", file);
+        });
+      }
+
+      // Log the data being sent for debugging
+      console.log('Form data being sent:');
+      for (let pair of submitData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
 
       // API call with Axios
-      const response = await axios.post('https://api.montres.ae/api/leather/Add', submitData, {
+      const response = await axios.post('http://localhost:9000/api/leather/Add', submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -337,7 +380,7 @@ const Page = () => {
 
       if (response.data && response.data.success) {
         // Show success message
-        alert('Leather product added successfully!');
+        showToast('Leather product added successfully!');
         
         // Reset form
         setFormData({
@@ -362,8 +405,8 @@ const Page = () => {
           conditionNotes: '',
           size: { width: '', height: '', depth: '' },
           strapLength: '',
-          accessoriesAndDelivery: [],
-          scopeOfDeliveryOptions: [],
+          leatherAccessories: [],
+          scopeOfDelivery: [],
           taxStatus: 'taxable',
           stockQuantity: 1,
           inStock: true,
@@ -379,6 +422,12 @@ const Page = () => {
         setMainImagePreview('');
         setCoverImages([]);
         setCoverImagePreviews([]);
+
+        setTimeout(() => {
+        router.push("/productmanage");
+      }, 1200);
+
+      return;
       } else {
         throw new Error(response.data?.message || 'Failed to add product');
       }
@@ -846,7 +895,7 @@ const Page = () => {
               </div>
             </div>
 
-            {/* Accessories & Delivery Section */}
+            {/* Accessories & Delivery Section - UPDATED FIELD NAMES */}
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -860,15 +909,15 @@ const Page = () => {
 
               {/* Accessories and Delivery - Multi-select */}
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">Accessories & Delivery</label>
+                <label className="block text-sm font-medium text-gray-700">Leather Accessories</label>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {accessoriesAndDeliveryOptions.map((option) => (
                     <div key={option} className="flex items-center space-x-2">
                       <input
                         type="checkbox"
                         id={`accessory-${option}`}
-                        checked={formData.accessoriesAndDelivery.includes(option)}
-                        onChange={(e) => handleMultiSelectChange('accessoriesAndDelivery', option, e.target.checked)}
+                        checked={formData.leatherAccessories.includes(option)}
+                        onChange={(e) => handleMultiSelectChange('leatherAccessories', option, e.target.checked)}
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
                       <label htmlFor={`accessory-${option}`} className="text-sm text-gray-700">
@@ -888,8 +937,8 @@ const Page = () => {
                       <input
                         type="checkbox"
                         id={`scope-${option}`}
-                        checked={formData.scopeOfDeliveryOptions.includes(option)}
-                        onChange={(e) => handleMultiSelectChange('scopeOfDeliveryOptions', option, e.target.checked)}
+                        checked={formData.scopeOfDelivery.includes(option)}
+                        onChange={(e) => handleMultiSelectChange('scopeOfDelivery', option, e.target.checked)}
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
                       <label htmlFor={`scope-${option}`} className="text-sm text-gray-700">
