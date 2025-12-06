@@ -230,7 +230,7 @@ const AdminLoginForm = () => {
           };
 
           localStorage.setItem("adminData", JSON.stringify(adminData));
-          
+
           // Store a simple flag to indicate user is logged in
           localStorage.setItem("isAdminLoggedIn", "true");
           sessionStorage.setItem("isAdminLoggedIn", "true");
@@ -296,16 +296,6 @@ const AdminLoginForm = () => {
     }
   };
 
-  // Handle demo login for testing
-  const handleDemoLogin = (role) => {
-    const credentials = DEMO_CREDENTIALS[role];
-    if (credentials) {
-      methods.setValue("username", credentials.username);
-      methods.setValue("password", credentials.password);
-      showToast(`Demo ${role} credentials loaded`, "info");
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col md:flex-row items-center justify-center p-4 md:p-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       {/* Left Side - Brand/Logo Section */}
@@ -323,45 +313,6 @@ const AdminLoginForm = () => {
             <p className="text-lg text-slate-600 dark:text-slate-300">
               Secure access to luxury watch inventory & management
             </p>
-          </div>
-
-          {/* Demo Login Buttons */}
-          <div className="mt-6">
-            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3 text-center">
-              Quick Demo Login
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoLogin("ceo")}
-                className="h-9 text-xs"
-                disabled={isSubmitting}
-              >
-                CEO
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoLogin("sales")}
-                className="h-9 text-xs"
-                disabled={isSubmitting}
-              >
-                Sales
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoLogin("developer")}
-                className="h-9 text-xs"
-                disabled={isSubmitting}
-              >
-                Developer
-              </Button>
-            </div>
           </div>
         </div>
       </div>
