@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   FiEdit,
   FiTrash2,
@@ -19,6 +19,13 @@ import {
   FiX,
   FiChevronLeft,
   FiChevronRight,
+  FiPackage,
+  FiGrid,
+  FiTag,
+  FiDollarSign,
+  FiTrendingUp,
+  FiLayers,
+  FiBox
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
@@ -40,6 +47,7 @@ const ProductManagement = () => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileView, setMobileView] = useState(false);
+  const [searchField, setSearchField] = useState("all"); // "all", "name", "sku", "brand", "model", "ref"
   
   // Timeline sorting states
   const [sortConfig, setSortConfig] = useState({
@@ -55,30 +63,30 @@ const ProductManagement = () => {
   // Date details modal state
   const [dateDetailsModal, setDateDetailsModal] = useState(null);
 
-  // Product categories
+  // Product categories - standardized format
   const productCategories = [
     {
       id: 'watches',
       name: 'Watches',
       icon: FiWatch,
-      description: 'Luxury & premium watches',
-      color: 'blue',
+      description: 'Luxury watches collection',
+      color: 'bg-gradient-to-br from-blue-500 to-blue-600',
       route: '/AddProduct'
     },
     {
       id: 'accessories',
       name: 'Accessories',
       icon: FiShoppingBag,
-      description: 'Fashion accessories',
-      color: 'purple',
+      description: 'Watch accessories',
+      color: 'bg-gradient-to-br from-purple-500 to-purple-600',
       route: '/AddAccessories'
     },
     {
       id: 'leather-goods',
       name: 'Leather Goods',
-      icon: FiShoppingBag,
-      description: 'Premium leather products',
-      color: 'amber',
+      icon: FiPackage,
+      description: 'Premium leather items',
+      color: 'bg-gradient-to-br from-amber-500 to-amber-600',
       route: '/AddLeatherGoods'
     },
     {
@@ -86,26 +94,37 @@ const ProductManagement = () => {
       name: 'Jewelry',
       icon: FiStar,
       description: 'Fine jewelry collection',
-      color: 'pink',
+      color: 'bg-gradient-to-br from-pink-500 to-pink-600',
       route: '/AddJewelry'
     },
     {
       id: 'gold',
-      name: 'Gold',
+      name: 'Gold Items',
       icon: FiAward,
-      description: 'Gold products & items',
-      color: 'yellow',
+      description: 'Gold & precious metals',
+      color: 'bg-gradient-to-br from-yellow-500 to-yellow-600',
       route: '/AddGold'
     }
   ];
 
-  const loadProducts = async () => {
+  // Search field options
+  const searchOptions = [
+    { value: "all", label: "All Fields", icon: FiGrid },
+    { value: "name", label: "Product Name", icon: FiTag },
+    { value: "sku", label: "SKU", icon: FiBox },
+    { value: "brand", label: "Brand", icon: FiTrendingUp },
+    { value: "model", label: "Model", icon: FiLayers },
+    { value: "ref", label: "Ref No.", icon: FiPackage }
+  ];
+
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await fetchProduct({
         page,
         limit,
         search: searchTerm,
+        searchField: searchField === "all" ? undefined : searchField,
       });
 
       if (!error && data) {
@@ -123,32 +142,63 @@ const ProductManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchTerm, searchField]);
 
   const safeToLowerCase = (value) => {
     return String(value || '').toLowerCase();
   };
 
-  // Helper function to get category name
+  // Get category name with fallback
   const getCategoryName = (product) => {
     return product.category || product.category || "Uncategorized";
   };
 
-  // Helper function to check if product matches search term
-  const productMatchesSearch = (product, searchTerm) => {
-    if (!searchTerm) return true;
+  // Enhanced search function with multiple fields
+  const productMatchesSearch = (product, term) => {
+    if (!term) return true;
     
-    const term = safeToLowerCase(searchTerm);
+    const searchTerm = safeToLowerCase(term);
     
-    return (
-      safeToLowerCase(product.name).includes(term) ||
-      safeToLowerCase(getCategoryName(product)).includes(term) ||
-      (product.brands && Array.isArray(product.brands) && 
-       product.brands.some(brand => safeToLowerCase(brand).includes(term))) ||
-      (product.tags && Array.isArray(product.tags) && 
-       product.tags.some(tag => safeToLowerCase(tag).includes(term))) ||
-      safeToLowerCase(product.sku).includes(term)
+    // Always search these basic fields
+    const basicSearch = (
+      safeToLowerCase(product.name).includes(searchTerm) ||
+      safeToLowerCase(product.sku).includes(searchTerm) ||
+      safeToLowerCase(getCategoryName(product)).includes(searchTerm)
     );
+    
+    // If searchField is "all", search all possible fields
+    if (searchField === "all") {
+      return (
+        basicSearch ||
+        (product.brand && safeToLowerCase(product.brand).includes(searchTerm)) ||
+        (product.model && safeToLowerCase(product.model).includes(searchTerm)) ||
+        (product.referenceNumber && safeToLowerCase(product.referenceNumber).includes(searchTerm)) ||
+        (product.brands && Array.isArray(product.brands) && 
+         product.brands.some(brand => safeToLowerCase(brand).includes(searchTerm))) ||
+        (product.tags && Array.isArray(product.tags) && 
+         product.tags.some(tag => safeToLowerCase(tag).includes(searchTerm)))
+      );
+    }
+    
+    // Search specific field based on searchField
+    switch (searchField) {
+      case "name":
+        return safeToLowerCase(product.name).includes(searchTerm);
+      case "sku":
+        return safeToLowerCase(product.sku).includes(searchTerm);
+      case "brand":
+        return (
+          (product.brand && safeToLowerCase(product.brand).includes(searchTerm)) ||
+          (product.brands && Array.isArray(product.brands) && 
+           product.brands.some(brand => safeToLowerCase(brand).includes(searchTerm)))
+        );
+      case "model":
+        return product.model && safeToLowerCase(product.model).includes(searchTerm);
+      case "ref":
+        return product.referenceNumber && safeToLowerCase(product.referenceNumber).includes(searchTerm);
+      default:
+        return basicSearch;
+    }
   };
 
   // Format date for display
@@ -157,7 +207,6 @@ const ProductManagement = () => {
     
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
-      year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -165,13 +214,13 @@ const ProductManagement = () => {
     });
   };
 
-  // Format date for sorting (ISO string)
+  // Get sortable date
   const getSortableDate = (dateString) => {
     if (!dateString) return new Date(0);
     return new Date(dateString);
   };
 
-  // Calculate time since creation/update
+  // Calculate time since creation/update (mobile friendly)
   const getTimeAgo = (dateString) => {
     if (!dateString) return "N/A";
     
@@ -182,13 +231,14 @@ const ProductManagement = () => {
     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 
     if (diffInHours < 1) {
-      return "Just now";
+      return "<1h";
     } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)} h ago`;
-    } else if (diffInDays < 7) {
-      return `${Math.floor(diffInDays)} days ago`;
+      return `${Math.floor(diffInHours)}h`;
+    } else if (diffInDays < 30) {
+      return `${Math.floor(diffInDays)}d`;
     } else {
-      return formatDate(dateString);
+      const diffInMonths = diffInDays / 30;
+      return `${Math.floor(diffInMonths)}mo`;
     }
   };
 
@@ -208,7 +258,7 @@ const ProductManagement = () => {
     return sortConfig.direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />;
   };
 
-  // Sort products based on timeline criteria
+  // Sort products based on criteria
   const sortedProducts = useMemo(() => {
     const filtered = products.filter(product => 
       productMatchesSearch(product, searchTerm)
@@ -234,6 +284,10 @@ const ProductManagement = () => {
           aValue = a.name?.toLowerCase() || '';
           bValue = b.name?.toLowerCase() || '';
           break;
+        case 'price':
+          aValue = a.salePrice || a.price || 0;
+          bValue = b.salePrice || b.price || 0;
+          break;
         default:
           return 0;
       }
@@ -246,15 +300,17 @@ const ProductManagement = () => {
       }
       return 0;
     });
-  }, [products, searchTerm, sortConfig]);
+  }, [products, searchTerm, searchField, sortConfig]);
 
-  // Handle add product for different categories
+  // Handle add product
   const handleAddProduct = (category) => {
     router.push(category.route);
   };
 
   // Handle delete product
   const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    
     try {
       const { error } = await deleteProduct(id);
       
@@ -289,7 +345,7 @@ const ProductManagement = () => {
     setDropdownOpen(null);
   };
 
-  // Handle edit with accessories route fix
+  // Handle edit product
   const handleEdit = (id) => {
     const product = products.find(p => p._id === id);
     if (!product) {
@@ -297,9 +353,7 @@ const ProductManagement = () => {
       return;
     }
 
-    console.log("Editing product:", product);
-
-    // Accessories SKUs - redirect to accessories edit
+    // Accessories SKUs
     const accessoriesSKUs = ["MON0056", "MON0270"];
     
     // Forced Leather SKUs
@@ -316,7 +370,7 @@ const ProductManagement = () => {
       return;
     }
 
-    // Check category or name for leather goods
+    // Check category or name
     const name = (product.name || "").toLowerCase();
     const category = (product.category || "").toLowerCase();
     
@@ -504,7 +558,7 @@ const ProductManagement = () => {
   const getScheduleBadge = (product) => {
     if (!product.publishSchedule) {
       return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
           Draft
         </span>
       );
@@ -514,8 +568,8 @@ const ProductManagement = () => {
     
     if (status === 'published') {
       return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          <FiCalendar className="mr-1" />
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <FiCalendar className="mr-1 w-3 h-3" />
           Published
         </span>
       );
@@ -527,41 +581,54 @@ const ProductManagement = () => {
       
       if (publishDateObj <= now) {
         return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            <FiClock className="mr-1" />
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <FiClock className="mr-1 w-3 h-3" />
             Publishing...
           </span>
         );
       }
       
       return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          <FiClock className="mr-1" />
-          Scheduled: {publishDateObj.toLocaleDateString()}
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          <FiClock className="mr-1 w-3 h-3" />
+          Scheduled
         </span>
       );
     }
 
     return (
-      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
         Draft
       </span>
     );
   };
 
-  // Color classes for categories
-  const getColorClasses = (color) => {
-    const colorMap = {
-      blue: 'bg-blue-500 hover:bg-blue-600',
-      purple: 'bg-purple-500 hover:bg-purple-600',
-      amber: 'bg-amber-500 hover:bg-amber-600',
-      pink: 'bg-pink-500 hover:bg-pink-600',
-      yellow: 'bg-yellow-500 hover:bg-yellow-600'
-    };
-    return colorMap[color] || 'bg-gray-500 hover:bg-gray-600';
+  // Get stock status badge
+  const getStockBadge = (product) => {
+    const stock = product.stockQuantity || product.stock || 0;
+    
+    if (stock > 15) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          In Stock
+        </span>
+      );
+    } else if (stock > 0) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          Low Stock
+        </span>
+      );
+    } else {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          Out of Stock
+        </span>
+      );
+    }
   };
 
-  // Mobile optimization for responsive design
+  // Mobile optimization
   useEffect(() => {
     const handleResize = () => {
       setMobileView(window.innerWidth < 768);
@@ -602,28 +669,34 @@ const ProductManagement = () => {
     return createdDate > weekAgo;
   }).length;
 
+  // Calculate low stock products
+  const lowStockProductsCount = products.filter(product => {
+    const stock = product.stockQuantity || product.stock || 0;
+    return stock > 0 && stock <= 15;
+  }).length;
+
   useEffect(() => {
     loadProducts();
-  }, [page, searchTerm]);
+  }, [page, searchTerm, searchField, loadProducts]);
 
   // Mobile-friendly pagination component
   const MobilePagination = () => (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-200 bg-gray-50">
-      <div className="text-sm text-gray-600 text-center sm:text-left">
-        Showing {sortedProducts.length} of {totalProducts} products
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-gray-200 bg-white">
+      <div className="text-xs sm:text-sm text-gray-600">
+        Showing {sortedProducts.length} of {totalProducts}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <Button
           onClick={() => setPage(prev => Math.max(prev - 1, 1))}
           disabled={page === 1}
           variant="outline"
           size="sm"
-          className="h-8 px-3"
+          className="h-8 w-8 p-0"
         >
           <FiChevronLeft className="w-4 h-4" />
         </Button>
         
-        <div className="flex items-center gap-1">
+        <div className="flex items-center">
           {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
             let pageNum;
             if (totalPages <= 3) {
@@ -648,9 +721,6 @@ const ProductManagement = () => {
               </Button>
             );
           })}
-          {totalPages > 3 && (
-            <span className="px-2 text-sm text-gray-500">...</span>
-          )}
         </div>
         
         <Button
@@ -658,7 +728,7 @@ const ProductManagement = () => {
           disabled={page === totalPages}
           variant="outline"
           size="sm"
-          className="h-8 px-3"
+          className="h-8 w-8 p-0"
         >
           <FiChevronRight className="w-4 h-4" />
         </Button>
@@ -669,121 +739,161 @@ const ProductManagement = () => {
   return (
     <>
       <DashboardBreadcrumb text="Product Management" />
-      <div className="min-h-screen bg-gradient-to-br p-3 sm:p-4 md:p-6 lg:p-8">
+      <div className="min-h-screen bg-gradient-to-br p-3 sm:p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
-          {/* Header Section - Mobile Optimized */}
-          <div className="mb-6 sm:mb-8">
-            <div className="flex flex-col gap-4">
+          {/* Header Section */}
+          <div className="mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                   Product Management
                 </h1>
-                <p className="text-sm sm:text-base text-gray-600">
-                  Manage your products, inventory, pricing, and publishing schedule
+                <p className="text-sm text-gray-600 mt-1">
+                  Manage your products, inventory, and publishing schedule
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Category Selection Cards - Mobile Optimized */}
-          <div className="mb-6 sm:mb-8">
-            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">Add New Products</h2>
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
-              {productCategories.map((category) => {
-                const IconComponent = category.icon;
-                return (
-                  <button
-                    key={category.id}
-                    onClick={() => handleAddProduct(category)}
-                    className={`flex flex-col items-center justify-center p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-white/20 transition-all duration-200 active:scale-95 hover:shadow-lg text-white ${getColorClasses(category.color)}`}
+            {/* Category Selection Cards - Standardized Format */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Add New Product</h2>
+                <span className="text-sm text-gray-500">Select category</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                {productCategories.map((category) => {
+                  const IconComponent = category.icon;
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => handleAddProduct(category)}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98] text-white ${category.color}`}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-3">
+                        <IconComponent className="text-xl" />
+                      </div>
+                      <span className="font-semibold text-sm sm:text-base mb-1">{category.name}</span>
+                      <span className="text-xs text-white/80 text-center leading-tight">{category.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Stats Cards - Mobile Optimized */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <FiPackage className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Total Products</p>
+                    <p className="text-xl font-bold">{totalProducts}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <FiCalendar className="text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Published</p>
+                    <p className="text-xl font-bold">{publishedProductsCount}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                    <FiClock className="text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Scheduled</p>
+                    <p className="text-xl font-bold">{scheduledProductsCount}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                    <FiTrendingUp className="text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Low Stock</p>
+                    <p className="text-xl font-bold">{lowStockProductsCount}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Search Bar */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Search Field Selector */}
+                <div className="relative flex-shrink-0">
+                  <select
+                    value={searchField}
+                    onChange={(e) => setSearchField(e.target.value)}
+                    className="appearance-none w-full pl-10 pr-8 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
                   >
-                    <IconComponent className="text-xl sm:text-2xl mb-2 sm:mb-3" />
-                    <span className="font-semibold text-sm sm:text-base mb-1">{category.name}</span>
-                    <span className="text-xs sm:text-sm text-white/90 text-center leading-tight">{category.description}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                    {searchOptions.map((option) => {
+                      const Icon = option.icon;
+                      return (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    {(() => {
+                      const option = searchOptions.find(opt => opt.value === searchField);
+                      const Icon = option?.icon || FiGrid;
+                      return <Icon className="text-gray-400 text-sm" />;
+                    })()}
+                  </div>
+                  <FiArrowDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs" />
+                </div>
 
-          {/* Stats Cards - Mobile Optimized */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
-            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total</p>
-                  <p className="text-xl sm:text-2xl font-bold mt-1">{totalProducts}</p>
+                {/* Search Input */}
+                <div className="flex-1 relative">
+                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
+                  <input
+                    type="text"
+                    placeholder={`Search by ${searchOptions.find(opt => opt.value === searchField)?.label.toLowerCase()}...`}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <FiX className="text-sm" />
+                    </button>
+                  )}
                 </div>
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-                  <FiPlus className="text-blue-600 text-sm sm:text-base" />
-                </div>
-              </div>
-            </div>
 
-            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Published</p>
-                  <p className="text-xl sm:text-2xl font-bold mt-1">{publishedProductsCount}</p>
-                </div>
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-                  <FiCalendar className="text-green-600 text-sm sm:text-base" />
-                </div>
+                <button className="flex items-center justify-center px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                  <FiFilter className="mr-2" />
+                  Filter
+                </button>
               </div>
-            </div>
-
-            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Scheduled</p>
-                  <p className="text-xl sm:text-2xl font-bold mt-1">{scheduledProductsCount}</p>
-                </div>
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-                  <FiClock className="text-yellow-600 text-sm sm:text-base" />
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Recent</p>
-                  <p className="text-xl sm:text-2xl font-bold mt-1">{recentProductsCount}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Last 7 days</p>
-                </div>
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-                  <FiCalendar className="text-purple-600 text-sm sm:text-base" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Search and Filter Bar - Mobile Optimized */}
-          <div className="rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 mb-4 sm:mb-6">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <div className="flex-1 relative">
-                <FiSearch className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm sm:text-base" />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
-                />
-              </div>
-              <button className="flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl hover:bg-gray-50 transition-colors text-sm sm:text-base">
-                <FiFilter className="mr-2 text-sm sm:text-base" />
-                Filter
-              </button>
             </div>
           </div>
 
           {/* Modals */}
           {scheduleModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md mx-auto">
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl p-6 w-full max-w-sm sm:max-w-md mx-auto">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg sm:text-xl font-bold">Schedule Publishing</h3>
+                  <h3 className="text-lg font-bold">Schedule Publishing</h3>
                   <button
                     onClick={() => setScheduleModal(null)}
                     className="p-1 hover:bg-gray-100 rounded-full"
@@ -791,7 +901,7 @@ const ProductManagement = () => {
                     <FiX className="w-5 h-5" />
                   </button>
                 </div>
-                <p className="text-gray-600 text-sm sm:text-base mb-4">Set when this product should be published.</p>
+                <p className="text-gray-600 text-sm mb-4">Set when this product should be published.</p>
                 
                 <div className="space-y-4">
                   <div>
@@ -801,7 +911,7 @@ const ProductManagement = () => {
                       value={scheduleDate}
                       onChange={(e) => setScheduleDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full p-2.5 sm:p-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                   </div>
                   <div>
@@ -810,7 +920,7 @@ const ProductManagement = () => {
                       type="time"
                       value={scheduleTime}
                       onChange={(e) => setScheduleTime(e.target.value)}
-                      className="w-full p-2.5 sm:p-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     />
                   </div>
                 </div>
@@ -818,7 +928,7 @@ const ProductManagement = () => {
                 <div className="flex gap-3 mt-6">
                   <Button
                     onClick={() => handleSchedulePublish(scheduleModal)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm sm:text-base py-2"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm py-2"
                   >
                     <FiClock className="mr-2" />
                     Schedule
@@ -826,7 +936,7 @@ const ProductManagement = () => {
                   <Button
                     onClick={() => setScheduleModal(null)}
                     variant="outline"
-                    className="flex-1 text-sm sm:text-base py-2"
+                    className="flex-1 text-sm py-2"
                   >
                     Cancel
                   </Button>
@@ -836,10 +946,10 @@ const ProductManagement = () => {
           )}
 
           {dateDetailsModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl p-6 w-full max-w-sm sm:max-w-md mx-auto max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg sm:text-xl font-bold">Product Timeline</h3>
+                  <h3 className="text-lg font-bold">Product Timeline</h3>
                   <button
                     onClick={() => setDateDetailsModal(null)}
                     className="p-1 hover:bg-gray-100 rounded-full"
@@ -849,33 +959,33 @@ const ProductManagement = () => {
                 </div>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="font-medium text-sm sm:text-base">Product:</span>
-                    <span className="text-gray-900 text-sm sm:text-base">{dateDetailsModal.name}</span>
+                    <span className="font-medium text-sm">Product:</span>
+                    <span className="text-gray-900 text-sm">{dateDetailsModal.name}</span>
                   </div>
                   <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="font-medium text-sm sm:text-base">SKU:</span>
-                    <span className="text-gray-600 text-sm sm:text-base">{dateDetailsModal.sku}</span>
+                    <span className="font-medium text-sm">SKU:</span>
+                    <span className="text-gray-600 text-sm">{dateDetailsModal.sku}</span>
                   </div>
                   <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="font-medium text-sm sm:text-base">Created:</span>
+                    <span className="font-medium text-sm">Created:</span>
                     <div className="text-right">
-                      <div className="text-gray-900 text-sm sm:text-base">{formatDate(dateDetailsModal.createdAt)}</div>
-                      <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.createdAt)}</div>
+                      <div className="text-gray-900 text-sm">{formatDate(dateDetailsModal.createdAt)}</div>
+                      <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.createdAt)} ago</div>
                     </div>
                   </div>
                   <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="font-medium text-sm sm:text-base">Updated:</span>
+                    <span className="font-medium text-sm">Updated:</span>
                     <div className="text-right">
-                      <div className="text-gray-900 text-sm sm:text-base">{formatDate(dateDetailsModal.updatedAt)}</div>
-                      <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.updatedAt)}</div>
+                      <div className="text-gray-900 text-sm">{formatDate(dateDetailsModal.updatedAt)}</div>
+                      <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.updatedAt)} ago</div>
                     </div>
                   </div>
                   {dateDetailsModal.publishSchedule?.publishDate && (
                     <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="font-medium text-sm sm:text-base">Scheduled:</span>
+                      <span className="font-medium text-sm">Scheduled:</span>
                       <div className="text-right">
-                        <div className="text-gray-900 text-sm sm:text-base">{formatDate(dateDetailsModal.publishSchedule.publishDate)}</div>
-                        <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.publishSchedule.publishDate)}</div>
+                        <div className="text-gray-900 text-sm">{formatDate(dateDetailsModal.publishSchedule.publishDate)}</div>
+                        <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.publishSchedule.publishDate)} ago</div>
                       </div>
                     </div>
                   )}
@@ -883,7 +993,7 @@ const ProductManagement = () => {
                 <div className="flex gap-3 mt-6">
                   <Button
                     onClick={() => setDateDetailsModal(null)}
-                    className="flex-1 text-sm sm:text-base py-2"
+                    className="flex-1 text-sm py-2"
                   >
                     Close
                   </Button>
@@ -893,13 +1003,13 @@ const ProductManagement = () => {
           )}
 
           {/* Products Table/Cards */}
-          <div className="rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full min-w-[800px]">
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                       <button
                         onClick={() => handleSort('name')}
                         className="flex items-center gap-1 hover:text-blue-600 transition-colors"
@@ -908,16 +1018,22 @@ const ProductManagement = () => {
                         {getSortIcon('name')}
                       </button>
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                       Category
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
-                      Price
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                      <button
+                        onClick={() => handleSort('price')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Price
+                        {getSortIcon('price')}
+                      </button>
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                       Stock
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                       <button
                         onClick={() => handleSort('createdAt')}
                         className="flex items-center gap-1 hover:text-blue-600 transition-colors"
@@ -926,19 +1042,10 @@ const ProductManagement = () => {
                         {getSortIcon('createdAt')}
                       </button>
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
-                      <button
-                        onClick={() => handleSort('updatedAt')}
-                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-                      >
-                        Updated
-                        {getSortIcon('updatedAt')}
-                      </button>
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -951,25 +1058,30 @@ const ProductManagement = () => {
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
                             <Image
                               src={product.image || "/placeholder.png"}
                               alt={product.name || "Product image"}
-                              width={40}
-                              height={40}
+                              width={48}
+                              height={48}
                               className="w-full h-full object-cover"
                             />
                           </div>
                           <div className="min-w-0">
-                            <div className="font-medium text-gray-900 truncate max-w-[150px]">{product.name}</div>
+                            <div className="font-medium text-gray-900 truncate max-w-[200px]">{product.name}</div>
                             <div className="text-xs text-gray-500 truncate">
                               SKU: {product.sku}
                             </div>
+                            {product.brand && (
+                              <div className="text-xs text-gray-500 truncate">
+                                Brand: {product.brand}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                           {getCategoryName(product)}
                         </span>
                       </td>
@@ -1000,51 +1112,30 @@ const ProductManagement = () => {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`font-medium text-sm ${
-                          (product.stockQuantity || product.stock) < 10 ? 'text-red-600' : 'text-gray-900'
-                        }`}>
-                          {product.stockQuantity || product.stock || 0}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={`font-medium text-sm ${
+                            (product.stockQuantity || product.stock) < 10 ? 'text-red-600' : 'text-gray-900'
+                          }`}>
+                            {product.stockQuantity || product.stock || 0}
+                          </span>
+                          {getStockBadge(product)}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <button
                           onClick={() => handleViewDateDetails(product)}
                           className="text-left hover:text-blue-600 transition-colors group"
                         >
-                          <div className="text-xs text-gray-500">Created</div>
                           <div className="text-sm font-medium group-hover:text-blue-600">
                             {getTimeAgo(product.createdAt)}
                           </div>
-                        </button>
-                      </td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => handleViewDateDetails(product)}
-                          className="text-left hover:text-blue-600 transition-colors group"
-                        >
-                          <div className="text-xs text-gray-500">Updated</div>
-                          <div className="text-sm font-medium group-hover:text-blue-600">
-                            {getTimeAgo(product.updatedAt)}
+                          <div className="text-xs text-gray-500">
+                            {formatDate(product.createdAt)}
                           </div>
                         </button>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex flex-col gap-1 max-w-[120px]">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                              (product.stockQuantity || product.stock) > 15
-                                ? "bg-green-100 text-green-800"
-                                : (product.stockQuantity || product.stock) > 0
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {(product.stockQuantity || product.stock) > 15
-                              ? "In Stock"
-                              : (product.stockQuantity || product.stock) > 0
-                              ? "Low Stock"
-                              : "Out of Stock"}
-                          </span>
+                        <div className="flex flex-col gap-1">
                           {getScheduleBadge(product)}
                         </div>
                       </td>
@@ -1158,11 +1249,6 @@ const ProductManagement = () => {
               <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 py-3 border-t border-gray-200 bg-gray-50">
                 <div className="text-sm text-gray-600">
                   Showing {sortedProducts.length} of {totalProducts} products
-                  {sortConfig.key && (
-                    <span className="ml-2 text-blue-600 hidden sm:inline">
-                      (Sorted by {sortConfig.key} {sortConfig.direction})
-                    </span>
-                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -1192,36 +1278,43 @@ const ProductManagement = () => {
               </div>
             </div>
 
-            {/* Mobile Card View */}
-            <div className="md:hidden">
-              <div className="p-2 sm:p-3 space-y-3">
+            {/* Mobile Card View - Enhanced for better clarity */}
+            <div className="lg:hidden">
+              <div className="p-3 space-y-3">
                 {sortedProducts.map((product, i) => (
                   <div
                     key={product._id || i}
-                    className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm"
+                    className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm"
                   >
                     {/* Product Header */}
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
                           <Image
                             src={product.image || "/placeholder.png"}
                             alt={product.name || "Product image"}
-                            width={48}
-                            height={48}
+                            width={64}
+                            height={64}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-gray-900 text-sm truncate">
+                          <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1">
                             {product.name}
                           </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 truncate max-w-[100px]">
-                              {getCategoryName(product)}
-                            </span>
-                            <span className="text-xs text-gray-500 truncate">
+                          <div className="flex flex-wrap items-center gap-1 mb-2">
+                            <span className="text-xs text-gray-500">
                               SKU: {product.sku}
+                            </span>
+                            {product.brand && (
+                              <span className="text-xs text-gray-500">
+                                • Brand: {product.brand}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              {getCategoryName(product)}
                             </span>
                           </div>
                         </div>
@@ -1240,74 +1333,79 @@ const ProductManagement = () => {
                       </div>
                     </div>
 
-                    {/* Product Details Grid */}
-                    <div className="grid grid-cols-2 gap-3 text-sm mb-3">
-                      <div>
-                        <p className="text-gray-600 text-xs">Price</p>
-                        <p className="font-semibold text-gray-900 flex items-center text-sm">
-                          <Image 
-                            src={newCurrency} 
-                            alt="Currency" 
-                            width={14} 
-                            height={14}
-                            className="mr-1"
-                          />
-                          {product.salePrice || product.price || 0}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 text-xs">Stock</p>
-                        <p className="font-semibold text-gray-900 text-sm">
-                          {product.stockQuantity || product.stock || 0}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 text-xs">Created</p>
-                        <button
-                          onClick={() => handleViewDateDetails(product)}
-                          className="text-left hover:text-blue-600 transition-colors"
-                        >
-                          <p className="font-semibold text-gray-900 text-sm truncate">
-                            {getTimeAgo(product.createdAt)}
+                    {/* Product Details Grid - Better organized */}
+                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-gray-600 text-xs mb-1">Price</p>
+                          <p className="font-semibold text-gray-900 flex items-center">
+                            <Image 
+                              src={newCurrency} 
+                              alt="Currency" 
+                              width={14} 
+                              height={14}
+                              className="mr-1"
+                            />
+                            {product.salePrice || product.price || 0}
                           </p>
-                        </button>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 text-xs">Updated</p>
-                        <button
-                          onClick={() => handleViewDateDetails(product)}
-                          className="text-left hover:text-blue-600 transition-colors"
-                        >
-                          <p className="font-semibold text-gray-900 text-sm truncate">
-                            {getTimeAgo(product.updatedAt)}
+                          {product.salePrice && product.price && product.salePrice < product.price && (
+                            <p className="text-xs text-gray-500 line-through flex items-center mt-1">
+                              <Image 
+                                src={newCurrency} 
+                                alt="Currency" 
+                                width={12} 
+                                height={12}
+                                className="mr-1"
+                              />
+                              {product.price}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-gray-600 text-xs mb-1">Stock</p>
+                          <p className="font-semibold text-gray-900">
+                            {product.stockQuantity || product.stock || 0}
                           </p>
-                        </button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-gray-600 text-xs mb-1">Created</p>
+                          <button
+                            onClick={() => handleViewDateDetails(product)}
+                            className="text-left hover:text-blue-600 transition-colors"
+                          >
+                            <p className="font-semibold text-gray-900">
+                              {getTimeAgo(product.createdAt)}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {formatDate(product.createdAt)}
+                            </p>
+                          </button>
+                        </div>
+                        <div>
+                          <p className="text-gray-600 text-xs mb-1">Updated</p>
+                          <button
+                            onClick={() => handleViewDateDetails(product)}
+                            className="text-left hover:text-blue-600 transition-colors"
+                          >
+                            <p className="font-semibold text-gray-900">
+                              {getTimeAgo(product.updatedAt)}
+                            </p>
+                          </button>
+                        </div>
                       </div>
                     </div>
 
                     {/* Status Badges */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          (product.stockQuantity || product.stock) > 15
-                            ? "bg-green-100 text-green-800"
-                            : (product.stockQuantity || product.stock) > 0
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {(product.stockQuantity || product.stock) > 15
-                          ? "In Stock"
-                          : (product.stockQuantity || product.stock) > 0
-                          ? "Low Stock"
-                          : "Out of Stock"}
-                      </span>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {getStockBadge(product)}
                       {getScheduleBadge(product)}
                     </div>
 
                     {/* Dropdown Menu for Mobile */}
                     {dropdownOpen === product._id && (
-                      <div className="mt-3 border-t border-gray-200 pt-3 space-y-1">
+                      <div className="mt-4 border-t border-gray-200 pt-4 space-y-1">
                         <button
                           onClick={() => {
                             handleViewDateDetails(product);
@@ -1404,24 +1502,26 @@ const ProductManagement = () => {
 
             {/* Empty State */}
             {sortedProducts.length === 0 && !loading && (
-              <div className="py-12 sm:py-16 text-center px-4">
-                <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiSearch className="text-2xl sm:text-3xl text-gray-400" />
+              <div className="py-12 text-center px-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiSearch className="text-2xl text-gray-400" />
                 </div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-base font-semibold text-gray-900 mb-2">
                   No products found
                 </h3>
-                <p className="text-gray-600 text-sm sm:text-base mb-6 max-w-sm mx-auto">
-                  {searchTerm ? "Try adjusting your search terms." : "Get started by adding your first product."}
+                <p className="text-gray-600 text-sm mb-6 max-w-sm mx-auto">
+                  {searchTerm 
+                    ? `No products matching "${searchTerm}" in ${searchOptions.find(opt => opt.value === searchField)?.label.toLowerCase()}.` 
+                    : "Get started by adding your first product."}
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
-                  {productCategories.slice(0, 2).map((category) => {
+                  {productCategories.slice(0, 3).map((category) => {
                     const IconComponent = category.icon;
                     return (
                       <button
                         key={category.id}
                         onClick={() => handleAddProduct(category)}
-                        className={`flex items-center px-3 py-2 rounded-lg text-white text-sm ${getColorClasses(category.color)}`}
+                        className={`flex items-center px-3 py-2 rounded-lg text-white text-sm ${category.color}`}
                       >
                         <IconComponent className="mr-2" />
                         Add {category.name}
@@ -1434,14 +1534,14 @@ const ProductManagement = () => {
 
             {/* Loading State */}
             {loading && (
-              <div className="py-12 sm:py-16 text-center px-4">
-                <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600"></div>
+              <div className="py-12 text-center px-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 </div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-base font-semibold text-gray-900 mb-2">
                   Loading products...
                 </h3>
-                <p className="text-gray-600 text-sm sm:text-base">Please wait while we fetch your products.</p>
+                <p className="text-gray-600 text-sm">Please wait while we fetch your products.</p>
               </div>
             )}
           </div>
