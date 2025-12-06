@@ -1,22 +1,25 @@
-import StatsCard from '@/app/(dashboard)/(homes)/dashboard/component/stats-card';
-import GenerateContentChart from '@/components/charts/generate-content-chart';
-import CustomSelect from '@/components/shared/custom-select';
-import { Card, CardContent } from '@/components/ui/card';
+"use client"
+import StatsCard from "@/app/(dashboard)/(homes)/dashboard/component/stats-card";
+import GenerateContentChart from "@/components/charts/generate-content-chart";
+import CustomSelect from "@/components/shared/custom-select";
+import { Card, CardContent } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
 
 const RevenueReportCard = () => {
   // UAE Dirham currency configuration
   const currencyConfig = {
-    symbol: 'AED',
-    locale: 'ar-AE',
+    symbol: "AED",
+    locale: "ar-AE",
     startingBalance: 0,
     format: (amount) => {
-      return new Intl.NumberFormat('ar-AE', {
-        style: 'currency',
-        currency: 'AED',
+      return new Intl.NumberFormat("ar-AE", {
+        style: "currency",
+        currency: "AED",
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
       }).format(amount);
-    }
+    },
   };
 
   // Initial revenue data for Montres Trading L.L.C (starting from zero)
@@ -27,8 +30,8 @@ const RevenueReportCard = () => {
     growth: 0,
     previousPeriod: {
       earning: 0,
-      expense: 0
-    }
+      expense: 0,
+    },
   };
 
   // Stats data for the company
@@ -38,34 +41,60 @@ const RevenueReportCard = () => {
       value: currencyConfig.format(revenueData.earning),
       description: "Starting revenue",
       trend: 0,
-      icon: "💰"
+      icon: "💰",
     },
     {
       title: "Net Profit",
       value: currencyConfig.format(revenueData.netRevenue),
       description: "After expenses",
       trend: 0,
-      icon: "📈"
+      icon: "📈",
     },
     {
       title: "Operating Expenses",
       value: currencyConfig.format(revenueData.expense),
       description: "Monthly costs",
       trend: 0,
-      icon: "📊"
+      icon: "📊",
     },
     {
       title: "Growth Rate",
       value: `${revenueData.growth}%`,
       description: "Since inception",
       trend: 0,
-      icon: "🚀"
-    }
+      icon: "🚀",
+    },
   ];
+
+  const router = useRouter();
+
+  const [isAllowed, setIsAllowed] = useState(false);
+  const [checked, setChecked] = useState(false); // to prevent flash
+
+  useEffect(() => {
+    // Get adminData from localStorage
+    const adminDataJSON = localStorage.getItem("adminData");
+    const adminData = adminDataJSON ? JSON.parse(adminDataJSON) : null;
+
+    // Allowed roles
+    const allowedRoles = ["ceo", "sales", "developer"];
+
+    if (!adminData || !allowedRoles.includes(adminData.role)) {
+      router.replace("/admin/login"); // redirect unauthorized users
+    } else {
+      setIsAllowed(true); // user is allowed
+    }
+
+    setChecked(true); // check complete
+  }, [router]);
+
+  // Prevent page from rendering until check is done
+  if (!checked) return null;
+  if (!isAllowed) return null;
 
   return (
     <Card className="card rounded-lg border-0 !p-0">
-      <CardContent className='p-0'>
+      <CardContent className="p-0">
         <div className="grid grid-cols-1 2xl:grid-cols-12">
           <div className="xl:col-span-12 2xl:col-span-6">
             <div className="card-body p-6">
@@ -81,19 +110,25 @@ const RevenueReportCard = () => {
                   options={["Yearly", "Monthly", "Weekly", "Today"]}
                 />
               </div>
-              
+
               {/* Revenue Summary */}
               <div className="mt-6 p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">Starting Balance</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      Starting Balance
+                    </p>
                     <p className="text-xl font-bold text-green-600">
                       {currencyConfig.format(currencyConfig.startingBalance)}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">Currency</p>
-                    <p className="text-xl font-bold text-blue-600">AED - درهم</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      Currency
+                    </p>
+                    <p className="text-xl font-bold text-blue-600">
+                      AED - درهم
+                    </p>
                   </div>
                 </div>
               </div>
@@ -102,7 +137,7 @@ const RevenueReportCard = () => {
                 <li className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-xs bg-green-500"></span>
                   <span className="text-secondary-light text-sm font-semibold">
-                    Earning: 
+                    Earning:
                     <span className="text-neutral-600 dark:text-neutral-200 font-bold ml-1">
                       {currencyConfig.format(revenueData.earning)}
                     </span>
@@ -111,7 +146,7 @@ const RevenueReportCard = () => {
                 <li className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-xs bg-red-500"></span>
                   <span className="text-secondary-light text-sm font-semibold">
-                    Expense: 
+                    Expense:
                     <span className="text-neutral-600 dark:text-neutral-200 font-bold ml-1">
                       {currencyConfig.format(revenueData.expense)}
                     </span>
@@ -120,7 +155,7 @@ const RevenueReportCard = () => {
                 <li className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-xs bg-blue-500"></span>
                   <span className="text-secondary-light text-sm font-semibold">
-                    Net: 
+                    Net:
                     <span className="text-neutral-600 dark:text-neutral-200 font-bold ml-1">
                       {currencyConfig.format(revenueData.netRevenue)}
                     </span>
@@ -140,32 +175,37 @@ const RevenueReportCard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2">
               {/* Custom Stats Cards */}
               {companyStats.map((stat, index) => (
-                <div key={index} className="p-6 border-b border-r border-neutral-200 dark:border-neutral-600">
+                <div
+                  key={index}
+                  className="p-6 border-b border-r border-neutral-200 dark:border-neutral-600"
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
                         {stat.title}
                       </p>
-                      <p className="text-2xl font-bold mt-2">
-                        {stat.value}
-                      </p>
+                      <p className="text-2xl font-bold mt-2">{stat.value}</p>
                       <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                         {stat.description}
                       </p>
                     </div>
-                    <div className="text-2xl">
-                      {stat.icon}
-                    </div>
+                    <div className="text-2xl">{stat.icon}</div>
                   </div>
-                  <div className={`mt-3 text-sm font-medium ${
-                    stat.trend > 0 ? 'text-green-600' : 
-                    stat.trend < 0 ? 'text-red-600' : 'text-neutral-500'
-                  }`}>
-                    {stat.trend > 0 ? `+${stat.trend}%` : `${stat.trend}%`} from start
+                  <div
+                    className={`mt-3 text-sm font-medium ${
+                      stat.trend > 0
+                        ? "text-green-600"
+                        : stat.trend < 0
+                        ? "text-red-600"
+                        : "text-neutral-500"
+                    }`}
+                  >
+                    {stat.trend > 0 ? `+${stat.trend}%` : `${stat.trend}%`} from
+                    start
                   </div>
                 </div>
               ))}
-              
+
               {/* Company Info Card */}
               <div className="p-6 border-b border-r border-neutral-200 dark:border-neutral-600">
                 <div className="text-center">

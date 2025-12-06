@@ -11,6 +11,30 @@ import axios from "axios";
 const Page = () => {
   const router = useRouter();
 
+  const [isAllowed, setIsAllowed] = useState(false);
+  const [checked, setChecked] = useState(false); // to prevent flash
+
+  useEffect(() => {
+    // Get adminData from localStorage
+    const adminDataJSON = localStorage.getItem("adminData");
+    const adminData = adminDataJSON ? JSON.parse(adminDataJSON) : null;
+
+    // Allowed roles
+    const allowedRoles = ["ceo", "sales", "developer"];
+
+    if (!adminData || !allowedRoles.includes(adminData.role)) {
+      router.replace("/admin/login"); // redirect unauthorized users
+    } else {
+      setIsAllowed(true); // user is allowed
+    }
+
+    setChecked(true); // check complete
+  }, [router]);
+
+  // Prevent page from rendering until check is done
+  if (!checked) return null;
+  if (!isAllowed) return null;
+
   const categoryOptions = [
     "Writing Instruments",
     "Cufflinks",
@@ -509,286 +533,327 @@ const Page = () => {
   // Prepare data for API - UPDATED
   // -----------------------
   const prepareFormData = () => {
-  // Handle production year based on checkboxes
-  let productionYearValue = formData.productionYear || "";
-  let unknownYearValue = formData.unknownYear;
+    // Handle production year based on checkboxes
+    let productionYearValue = formData.productionYear || "";
+    let unknownYearValue = formData.unknownYear;
 
-  if (formData.unknownYear) {
-    productionYearValue = "Unknown";
-  } else if (formData.approximateYear && productionYearValue) {
-    productionYearValue = `Approx. ${productionYearValue}`;
-  }
+    if (formData.unknownYear) {
+      productionYearValue = "Unknown";
+    } else if (formData.approximateYear && productionYearValue) {
+      productionYearValue = `Approx. ${productionYearValue}`;
+    }
 
-  // Handle SEO keywords - convert string to array
-  let seoKeywordsArray = [];
-  if (formData.seoKeywords) {
-    seoKeywordsArray = formData.seoKeywords
-      .split(",")
-      .map((kw) => kw.trim())
-      .filter((kw) => kw.length > 0);
-  }
+    // Handle SEO keywords - convert string to array
+    let seoKeywordsArray = [];
+    if (formData.seoKeywords) {
+      seoKeywordsArray = formData.seoKeywords
+        .split(",")
+        .map((kw) => kw.trim())
+        .filter((kw) => kw.length > 0);
+    }
 
-  // Auto-generate name if not provided
-  const productName =
-    formData.name || `${formData.brand} ${formData.model}`.trim();
+    // Auto-generate name if not provided
+    const productName =
+      formData.name || `${formData.brand} ${formData.model}`.trim();
 
-  // Prepare the data object
-  return {
-    // Basic info
-    brand: formData.brand || "",
-    model: formData.model || "",
-    name: productName || "",
-    sku: formData.sku || "",
-    referenceNumber: formData.referenceNumber || "",
-    serialNumber: formData.serialNumber || "",
-    additionalTitle: formData.additionalTitle || "",
+    // Prepare the data object
+    return {
+      // Basic info
+      brand: formData.brand || "",
+      model: formData.model || "",
+      name: productName || "",
+      sku: formData.sku || "",
+      referenceNumber: formData.referenceNumber || "",
+      serialNumber: formData.serialNumber || "",
+      additionalTitle: formData.additionalTitle || "",
 
-    // Category info
-    accessoryCategory: formData.accessoryCategory || "",
-    accessorySubCategory: formData.accessorySubCategory || "",
+      // Category info
+      accessoryCategory: formData.accessoryCategory || "",
+      accessorySubCategory: formData.accessorySubCategory || "",
 
-    // Year info
-    productionYear: productionYearValue,
-    approximateYear: Boolean(formData.approximateYear),
-    unknownYear: Boolean(formData.unknownYear),
+      // Year info
+      productionYear: productionYearValue,
+      approximateYear: Boolean(formData.approximateYear),
+      unknownYear: Boolean(formData.unknownYear),
 
-    // Condition info
-    condition: formData.condition || "",
-    itemCondition: formData.itemCondition || "",
+      // Condition info
+      condition: formData.condition || "",
+      itemCondition: formData.itemCondition || "",
 
-    // Specifications
-    accessoryMaterial: formData.accessoryMaterial || [],
-    accessoryColor: formData.accessoryColor || [],
-    gender: formData.gender || "Men/Unisex",
+      // Specifications
+      accessoryMaterial: formData.accessoryMaterial || [],
+      accessoryColor: formData.accessoryColor || [],
+      gender: formData.gender || "Men/Unisex",
 
-    // Delivery & Accessories
-    accessoryDelivery: formData.accessoryDelivery || [],
-    accessoryScopeOfDelivery: formData.accessoryScopeOfDelivery || [],
+      // Delivery & Accessories
+      accessoryDelivery: formData.accessoryDelivery || [],
+      accessoryScopeOfDelivery: formData.accessoryScopeOfDelivery || [],
 
-    // Pricing
-    regularPrice: formData.regularPrice ? parseFloat(formData.regularPrice) : 0,
-    salePrice: formData.salePrice ? parseFloat(formData.salePrice) : 0,
-    taxStatus: formData.taxStatus || "taxable",
+      // Pricing
+      regularPrice: formData.regularPrice
+        ? parseFloat(formData.regularPrice)
+        : 0,
+      salePrice: formData.salePrice ? parseFloat(formData.salePrice) : 0,
+      taxStatus: formData.taxStatus || "taxable",
 
-    // Inventory
-    stockQuantity: parseInt(formData.stockQuantity) || 1,
-    inStock: Boolean(formData.inStock),
+      // Inventory
+      stockQuantity: parseInt(formData.stockQuantity) || 1,
+      inStock: Boolean(formData.inStock),
 
-    // Marketing
-    badges: formData.badges || [],
-    featured: Boolean(formData.featured),
+      // Marketing
+      badges: formData.badges || [],
+      featured: Boolean(formData.featured),
 
-    // SEO
-    seoTitle: formData.seoTitle || productName,
-    seoDescription: formData.seoDescription || `Buy ${productName} - Premium ${formData.accessoryCategory || "Accessory"}`,
-    seoKeywords: seoKeywordsArray,
+      // SEO
+      seoTitle: formData.seoTitle || productName,
+      seoDescription:
+        formData.seoDescription ||
+        `Buy ${productName} - Premium ${
+          formData.accessoryCategory || "Accessory"
+        }`,
+      seoKeywords: seoKeywordsArray,
 
-    // Content
-    description: formData.description || `Premium ${formData.accessoryCategory || "Accessory"}`,
+      // Content
+      description:
+        formData.description ||
+        `Premium ${formData.accessoryCategory || "Accessory"}`,
 
-    // Visibility
-    visibility: formData.visibility || "visible",
-    published: Boolean(formData.published),
+      // Visibility
+      visibility: formData.visibility || "visible",
+      published: Boolean(formData.published),
 
-    // Category for backend
-    category: "Accessories",
+      // Category for backend
+      category: "Accessories",
+    };
   };
-};
 
-// -----------------------
-// Handle form submission
-// -----------------------
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (loading) return;
-  if (!validate()) return;
+  // -----------------------
+  // Handle form submission
+  // -----------------------
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (loading) return;
+    if (!validate()) return;
 
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    // 1. Prepare the JSON payload
-    const payload = prepareFormData();
+    try {
+      // 1. Prepare the JSON payload
+      const payload = prepareFormData();
 
-    // 2. Create FormData for file uploads
-    const formDataToSubmit = new FormData();
+      // 2. Create FormData for file uploads
+      const formDataToSubmit = new FormData();
 
-    // Append each field individually (NOT as a single JSON string)
-    // Required fields
-    formDataToSubmit.append("brand", payload.brand || "");
-    formDataToSubmit.append("model", payload.model || "");
-    formDataToSubmit.append("name", payload.name || "");
-    
-    // Optional fields
-    formDataToSubmit.append("sku", payload.sku || "");
-    formDataToSubmit.append("referenceNumber", payload.referenceNumber || "");
-    formDataToSubmit.append("serialNumber", payload.serialNumber || "");
-    formDataToSubmit.append("additionalTitle", payload.additionalTitle || "");
-    
-    // Category fields
-    formDataToSubmit.append("accessoryCategory", payload.accessoryCategory || "");
-    formDataToSubmit.append("accessorySubCategory", payload.accessorySubCategory || "");
-    
-    // Year fields
-    formDataToSubmit.append("productionYear", payload.productionYear || "");
-    formDataToSubmit.append("approximateYear", payload.approximateYear.toString());
-    formDataToSubmit.append("unknownYear", payload.unknownYear.toString());
-    
-    // Condition fields
-    formDataToSubmit.append("condition", payload.condition || "");
-    formDataToSubmit.append("itemCondition", payload.itemCondition || "");
-    formDataToSubmit.append("gender", payload.gender || "");
-    
-    // Array fields - convert to JSON strings
-    formDataToSubmit.append("accessoryMaterial", JSON.stringify(payload.accessoryMaterial || []));
-    formDataToSubmit.append("accessoryColor", JSON.stringify(payload.accessoryColor || []));
-    formDataToSubmit.append("accessoryDelivery", JSON.stringify(payload.accessoryDelivery || []));
-    formDataToSubmit.append("accessoryScopeOfDelivery", JSON.stringify(payload.accessoryScopeOfDelivery || []));
-    formDataToSubmit.append("badges", JSON.stringify(payload.badges || []));
-    
-    // Pricing fields
-    formDataToSubmit.append("regularPrice", payload.regularPrice?.toString() || "0");
-    formDataToSubmit.append("salePrice", payload.salePrice?.toString() || "0");
-    formDataToSubmit.append("taxStatus", payload.taxStatus || "taxable");
-    
-    // Inventory fields
-    formDataToSubmit.append("stockQuantity", payload.stockQuantity?.toString() || "1");
-    formDataToSubmit.append("inStock", payload.inStock.toString());
-    
-    // SEO fields
-    formDataToSubmit.append("seoTitle", payload.seoTitle || "");
-    formDataToSubmit.append("seoDescription", payload.seoDescription || "");
-    formDataToSubmit.append("seoKeywords", JSON.stringify(payload.seoKeywords || []));
-    
-    // Content & visibility
-    formDataToSubmit.append("description", payload.description || "");
-    formDataToSubmit.append("visibility", payload.visibility || "visible");
-    formDataToSubmit.append("published", payload.published.toString());
-    formDataToSubmit.append("featured", payload.featured.toString());
-    
-    // Fixed category for backend
-    formDataToSubmit.append("category", "Accessories");
+      // Append each field individually (NOT as a single JSON string)
+      // Required fields
+      formDataToSubmit.append("brand", payload.brand || "");
+      formDataToSubmit.append("model", payload.model || "");
+      formDataToSubmit.append("name", payload.name || "");
 
-    // Append main image with field name 'main'
-    if (mainImage) {
-      formDataToSubmit.append("main", mainImage);
-    }
+      // Optional fields
+      formDataToSubmit.append("sku", payload.sku || "");
+      formDataToSubmit.append("referenceNumber", payload.referenceNumber || "");
+      formDataToSubmit.append("serialNumber", payload.serialNumber || "");
+      formDataToSubmit.append("additionalTitle", payload.additionalTitle || "");
 
-    // Append cover images with field name 'covers'
-    if (coverImages.length > 0) {
-      coverImages.forEach((file) => {
-        formDataToSubmit.append("covers", file);
-      });
-    }
+      // Category fields
+      formDataToSubmit.append(
+        "accessoryCategory",
+        payload.accessoryCategory || ""
+      );
+      formDataToSubmit.append(
+        "accessorySubCategory",
+        payload.accessorySubCategory || ""
+      );
 
-    // Debug: log FormData entries
-    console.log("FormData entries:");
-    for (let [key, value] of formDataToSubmit.entries()) {
-      console.log(`${key}:`, value);
-    }
+      // Year fields
+      formDataToSubmit.append("productionYear", payload.productionYear || "");
+      formDataToSubmit.append(
+        "approximateYear",
+        payload.approximateYear.toString()
+      );
+      formDataToSubmit.append("unknownYear", payload.unknownYear.toString());
 
-    // 3. Send to backend
-    const response = await axios.post(
-      "https://api.montres.ae/api/accessories/createAccessory",
-      formDataToSubmit,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        withCredentials: true,
+      // Condition fields
+      formDataToSubmit.append("condition", payload.condition || "");
+      formDataToSubmit.append("itemCondition", payload.itemCondition || "");
+      formDataToSubmit.append("gender", payload.gender || "");
+
+      // Array fields - convert to JSON strings
+      formDataToSubmit.append(
+        "accessoryMaterial",
+        JSON.stringify(payload.accessoryMaterial || [])
+      );
+      formDataToSubmit.append(
+        "accessoryColor",
+        JSON.stringify(payload.accessoryColor || [])
+      );
+      formDataToSubmit.append(
+        "accessoryDelivery",
+        JSON.stringify(payload.accessoryDelivery || [])
+      );
+      formDataToSubmit.append(
+        "accessoryScopeOfDelivery",
+        JSON.stringify(payload.accessoryScopeOfDelivery || [])
+      );
+      formDataToSubmit.append("badges", JSON.stringify(payload.badges || []));
+
+      // Pricing fields
+      formDataToSubmit.append(
+        "regularPrice",
+        payload.regularPrice?.toString() || "0"
+      );
+      formDataToSubmit.append(
+        "salePrice",
+        payload.salePrice?.toString() || "0"
+      );
+      formDataToSubmit.append("taxStatus", payload.taxStatus || "taxable");
+
+      // Inventory fields
+      formDataToSubmit.append(
+        "stockQuantity",
+        payload.stockQuantity?.toString() || "1"
+      );
+      formDataToSubmit.append("inStock", payload.inStock.toString());
+
+      // SEO fields
+      formDataToSubmit.append("seoTitle", payload.seoTitle || "");
+      formDataToSubmit.append("seoDescription", payload.seoDescription || "");
+      formDataToSubmit.append(
+        "seoKeywords",
+        JSON.stringify(payload.seoKeywords || [])
+      );
+
+      // Content & visibility
+      formDataToSubmit.append("description", payload.description || "");
+      formDataToSubmit.append("visibility", payload.visibility || "visible");
+      formDataToSubmit.append("published", payload.published.toString());
+      formDataToSubmit.append("featured", payload.featured.toString());
+
+      // Fixed category for backend
+      formDataToSubmit.append("category", "Accessories");
+
+      // Append main image with field name 'main'
+      if (mainImage) {
+        formDataToSubmit.append("main", mainImage);
       }
-    );
 
-    // 4. Handle success
-    if (response.data?.success) {
-      showToast("Accessory created successfully!");
+      // Append cover images with field name 'covers'
+      if (coverImages.length > 0) {
+        coverImages.forEach((file) => {
+          formDataToSubmit.append("covers", file);
+        });
+      }
 
-      // Clean up object URLs
-      if (mainPreview) URL.revokeObjectURL(mainPreview);
-      coverPreviews.forEach((url) => URL.revokeObjectURL(url));
+      // Debug: log FormData entries
+      console.log("FormData entries:");
+      for (let [key, value] of formDataToSubmit.entries()) {
+        console.log(`${key}:`, value);
+      }
 
-      // Reset form
-      setFormData({
-        brand: "",
-        model: "",
-        name: "",
-        sku: "",
-        referenceNumber: "",
-        serialNumber: "",
-        additionalTitle: "",
-        accessoryCategory: "",
-        accessorySubCategory: "",
-        productionYear: "",
-        approximateYear: false,
-        unknownYear: false,
-        condition: "",
-        itemCondition: "",
-        gender: "Men/Unisex",
-        accessoryMaterial: [],
-        accessoryColor: [],
-        accessoryDelivery: [],
-        accessoryScopeOfDelivery: [],
-        regularPrice: "",
-        salePrice: "",
-        taxStatus: "taxable",
-        stockQuantity: 1,
-        inStock: true,
-        badges: [],
-        seoTitle: "",
-        seoDescription: "",
-        seoKeywords: "",
-        description: "",
-        visibility: "visible",
-        published: true,
-        featured: false,
-      });
+      // 3. Send to backend
+      const response = await axios.post(
+        "https://api.montres.ae/api/accessories/createAccessory",
+        formDataToSubmit,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        }
+      );
 
-      setMainImage(null);
-      setMainPreview("");
-      setCoverImages([]);
-      setCoverPreviews([]);
-      setAvailableSubCategories([]);
+      // 4. Handle success
+      if (response.data?.success) {
+        showToast("Accessory created successfully!");
 
-      setTimeout(() => {
-        router.push("/productmanage");
-      }, 1200);
+        // Clean up object URLs
+        if (mainPreview) URL.revokeObjectURL(mainPreview);
+        coverPreviews.forEach((url) => URL.revokeObjectURL(url));
 
-      return;
-    }
+        // Reset form
+        setFormData({
+          brand: "",
+          model: "",
+          name: "",
+          sku: "",
+          referenceNumber: "",
+          serialNumber: "",
+          additionalTitle: "",
+          accessoryCategory: "",
+          accessorySubCategory: "",
+          productionYear: "",
+          approximateYear: false,
+          unknownYear: false,
+          condition: "",
+          itemCondition: "",
+          gender: "Men/Unisex",
+          accessoryMaterial: [],
+          accessoryColor: [],
+          accessoryDelivery: [],
+          accessoryScopeOfDelivery: [],
+          regularPrice: "",
+          salePrice: "",
+          taxStatus: "taxable",
+          stockQuantity: 1,
+          inStock: true,
+          badges: [],
+          seoTitle: "",
+          seoDescription: "",
+          seoKeywords: "",
+          description: "",
+          visibility: "visible",
+          published: true,
+          featured: false,
+        });
 
-    throw new Error(response.data?.message || "Failed to create accessory");
-  } catch (error) {
-    console.error("Create Accessory Error:", error);
+        setMainImage(null);
+        setMainPreview("");
+        setCoverImages([]);
+        setCoverPreviews([]);
+        setAvailableSubCategories([]);
 
-    // Better error handling
-    let errorMessage = "Something went wrong.";
+        setTimeout(() => {
+          router.push("/productmanage");
+        }, 1200);
 
-    if (error.response) {
-      // Server responded with error
-      if (error.response.data?.errors) {
-        // Validation errors from backend
-        errorMessage = error.response.data.errors.join(", ");
-      } else if (error.response.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response.data?.error) {
-        errorMessage = error.response.data.error;
+        return;
+      }
+
+      throw new Error(response.data?.message || "Failed to create accessory");
+    } catch (error) {
+      console.error("Create Accessory Error:", error);
+
+      // Better error handling
+      let errorMessage = "Something went wrong.";
+
+      if (error.response) {
+        // Server responded with error
+        if (error.response.data?.errors) {
+          // Validation errors from backend
+          errorMessage = error.response.data.errors.join(", ");
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.data?.error) {
+          errorMessage = error.response.data.error;
+        } else {
+          errorMessage = `Server error: ${error.response.status}`;
+        }
+      } else if (error.request) {
+        // Request made but no response
+        errorMessage = "Network error. Please check your connection.";
       } else {
-        errorMessage = `Server error: ${error.response.status}`;
+        // Other errors
+        errorMessage = error.message;
       }
-    } else if (error.request) {
-      // Request made but no response
-      errorMessage = "Network error. Please check your connection.";
-    } else {
-      // Other errors
-      errorMessage = error.message;
-    }
 
-    showError(errorMessage);
-    setError(errorMessage);
-  } finally {
-    setLoading(false);
-  }
-};
+      showError(errorMessage);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
   // -----------------------
   // Auto-generate SEO fields
   // -----------------------
@@ -1823,12 +1888,8 @@ const handleSubmit = async (e) => {
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
               <button
                 type="submit"
-              
                 className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl ${
-                
-                  !mainImage
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
+                  !mainImage ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
