@@ -1,211 +1,227 @@
-"use client"
-import React, { useState } from 'react';
-import Image from 'next/image';
-import DashboardBreadcrumb from '../../../../components/layout/dashboard-breadcrumb';
-import newcurrencysymbol from '../../../../public/assets/newSymbole.png';
+"use client";
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import DashboardBreadcrumb from "../../../../components/layout/dashboard-breadcrumb";
+import newcurrencysymbol from "../../../../public/assets/newSymbole.png";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
+  const router = useRouter();
+  const [isAllowed, setIsAllowed] = useState(false);
+  const [checked, setChecked] = useState(false); // to prevent flash
+
+  useEffect(() => {
+    // Get adminData from localStorage
+    const adminDataJSON = localStorage.getItem("adminData");
+    const adminData = adminDataJSON ? JSON.parse(adminDataJSON) : null;
+
+    // Allowed roles
+    const allowedRoles = ["ceo", "sales", "developer"];
+
+    if (!adminData || !allowedRoles.includes(adminData.role)) {
+      router.replace("/admin/login"); // redirect unauthorized users
+    } else {
+      setIsAllowed(true); // user is allowed
+    }
+
+    setChecked(true); // check complete
+  }, [router]);
+
+  // Prevent page from rendering until check is done
+  if (!checked) return null;
+  if (!isAllowed) return null;
+
   // Static data options
-  const mainCategoryOptions = [
-    'Gold Bars',
-    'Gold Coins'
-  ];
+  const mainCategoryOptions = ["Gold Bars", "Gold Coins"];
 
   const subCategoryOptions = {
-    'Gold Bars': [
-      '1g Gold Bar',
-      '5g Gold Bar', 
-      '10g Gold Bar',
-      '20g Gold Bar',
-      '50g Gold Bar',
-      '100g Gold Bar',
-      '1oz Gold Bar',
-      '250g Gold Bar',
-      '500g Gold Bar',
-      '1kg Gold Bar'
+    "Gold Bars": [
+      "1g Gold Bar",
+      "5g Gold Bar",
+      "10g Gold Bar",
+      "20g Gold Bar",
+      "50g Gold Bar",
+      "100g Gold Bar",
+      "1oz Gold Bar",
+      "250g Gold Bar",
+      "500g Gold Bar",
+      "1kg Gold Bar",
     ],
-    'Gold Coins': [
-      '1g Gold Coin',
-      '2.5g Gold Coin',
-      '5g Gold Coin',
-      '8g Gold Coin',
-      '10g Gold Coin',
-      '20g Gold Coin',
-      '1oz Gold Coin',
-      '50g Gold Coin',
-      '100g Gold Coin',
-      'Commemorative Coins',
-      'Bullion Coins',
-      'Collector Coins'
-    ]
+    "Gold Coins": [
+      "1g Gold Coin",
+      "2.5g Gold Coin",
+      "5g Gold Coin",
+      "8g Gold Coin",
+      "10g Gold Coin",
+      "20g Gold Coin",
+      "1oz Gold Coin",
+      "50g Gold Coin",
+      "100g Gold Coin",
+      "Commemorative Coins",
+      "Bullion Coins",
+      "Collector Coins",
+    ],
   };
 
   const conditionOptions = [
-    'New',
-    'Pre-owned',
-    'Mint Condition',
-    'Excellent',
-    'Very Good',
-    'Good',
-    'Fair'
+    "New",
+    "Pre-owned",
+    "Mint Condition",
+    "Excellent",
+    "Very Good",
+    "Good",
+    "Fair",
   ];
 
   const itemConditionOptions = [
-    'Grade A+',
-    'Grade A',
-    'Grade B+', 
-    'Grade B',
-    'Grade C',
-    'Uncirculated',
-    'Brilliant Uncirculated',
-    'Proof Quality'
+    "Grade A+",
+    "Grade A",
+    "Grade B+",
+    "Grade B",
+    "Grade C",
+    "Uncirculated",
+    "Brilliant Uncirculated",
+    "Proof Quality",
   ];
 
-  const purityOptions = [
-    '24K',
-    '22K', 
-    '21K',
-    '18K',
-    '14K',
-    '10K'
-  ];
+  const purityOptions = ["24K", "22K", "21K", "18K", "14K", "10K"];
 
   const weightOptions = [
-    '1g',
-    '2.5g',
-    '5g',
-    '8g',
-    '10g',
-    '20g',
-    '50g',
-    '100g',
-    '1oz',
-    '250g',
-    '500g',
-    '1kg',
-    'Custom weight'
+    "1g",
+    "2.5g",
+    "5g",
+    "8g",
+    "10g",
+    "20g",
+    "50g",
+    "100g",
+    "1oz",
+    "250g",
+    "500g",
+    "1kg",
+    "Custom weight",
   ];
 
   const certificationOptions = [
-    'LBMA',
-    'DMCC Certified',
-    'ISO Certified',
-    'Hallmark Certified',
-    'None',
-    'Others'
+    "LBMA",
+    "DMCC Certified",
+    "ISO Certified",
+    "Hallmark Certified",
+    "None",
+    "Others",
   ];
 
   const originOptions = [
-    'Switzerland',
-    'UAE',
-    'USA',
-    'Canada',
-    'Australia',
-    'UK',
-    'Germany',
-    'South Africa',
-    'China',
-    'India',
-    'Singapore',
-    'Others'
+    "Switzerland",
+    "UAE",
+    "USA",
+    "Canada",
+    "Australia",
+    "UK",
+    "Germany",
+    "South Africa",
+    "China",
+    "India",
+    "Singapore",
+    "Others",
   ];
 
   const colorOptions = [
-    'Yellow Gold',
-    'White Gold',
-    'Rose Gold',
-    'Green Gold',
-    'Black Gold'
+    "Yellow Gold",
+    "White Gold",
+    "Rose Gold",
+    "Green Gold",
+    "Black Gold",
   ];
 
   const taxStatusOptions = [
-    { value: 'taxable', label: 'Taxable' },
-    { value: 'non-taxable', label: 'Non-Taxable' },
-    { value: 'vat_exempt', label: 'VAT Exempt' }
+    { value: "taxable", label: "Taxable" },
+    { value: "non-taxable", label: "Non-Taxable" },
+    { value: "vat_exempt", label: "VAT Exempt" },
   ];
 
   // Form state
   const [formData, setFormData] = useState({
     // Core Product Info
-    mainCategory: '',
-    subCategory: '',
-    brand: '',
-    model: '',
-    additionalTitle: '',
-    productName: '',
-    condition: '',
-    itemCondition: '',
-    description: '',
+    mainCategory: "",
+    subCategory: "",
+    brand: "",
+    model: "",
+    additionalTitle: "",
+    productName: "",
+    condition: "",
+    itemCondition: "",
+    description: "",
 
     // Pricing & Inventory
-    retailPrice: '',
-    sellingPrice: '',
+    retailPrice: "",
+    sellingPrice: "",
     stockQuantity: 1,
-    pricePerGram: '',
-    taxStatus: 'taxable',
-    sku: '',
-    referenceNumber: '',
+    pricePerGram: "",
+    taxStatus: "taxable",
+    sku: "",
+    referenceNumber: "",
 
     // Gold Specifications
-    purity: '',
-    weight: '',
-    customWeight: '',
-    certification: '',
-    origin: '',
-    color: '',
+    purity: "",
+    weight: "",
+    customWeight: "",
+    certification: "",
+    origin: "",
+    color: "",
 
     // SEO Fields
-    seoTitle: '',
-    seoDescription: '',
-    seoKeywords: '',
+    seoTitle: "",
+    seoDescription: "",
+    seoKeywords: "",
 
     // System / Auto Fields
-    uploadDate: new Date().toISOString().split('T')[0],
-    createdBy: '',
-    updatedDate: new Date().toISOString()
+    uploadDate: new Date().toISOString().split("T")[0],
+    createdBy: "",
+    updatedDate: new Date().toISOString(),
   });
 
   const [mainImage, setMainImage] = useState(null);
-  const [mainImagePreview, setMainImagePreview] = useState('');
+  const [mainImagePreview, setMainImagePreview] = useState("");
   const [coverImage, setCoverImage] = useState(null);
-  const [coverImagePreview, setCoverImagePreview] = useState('');
+  const [coverImagePreview, setCoverImagePreview] = useState("");
   const [galleryImages, setGalleryImages] = useState([]);
   const [galleryImagePreviews, setGalleryImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Handle input changes
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
-    
-    if (type === 'file') {
-      if (name === 'mainImage' && files.length > 0) {
+
+    if (type === "file") {
+      if (name === "mainImage" && files.length > 0) {
         const file = files[0];
         setMainImage(file);
         setMainImagePreview(URL.createObjectURL(file));
-      } else if (name === 'coverImage' && files.length > 0) {
+      } else if (name === "coverImage" && files.length > 0) {
         const file = files[0];
         setCoverImage(file);
         setCoverImagePreview(URL.createObjectURL(file));
-      } else if (name === 'galleryImages' && files.length > 0) {
+      } else if (name === "galleryImages" && files.length > 0) {
         const newFiles = Array.from(files);
-        const newPreviews = newFiles.map(file => URL.createObjectURL(file));
-        
+        const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+
         // Limit to 15 images maximum
         const totalFiles = [...galleryImages, ...newFiles];
         const totalPreviews = [...galleryImagePreviews, ...newPreviews];
-        
+
         if (totalFiles.length <= 15) {
           setGalleryImages(totalFiles);
           setGalleryImagePreviews(totalPreviews);
         } else {
-          setError('Maximum 15 gallery images allowed');
+          setError("Maximum 15 gallery images allowed");
         }
       }
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -214,51 +230,52 @@ const Page = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       // Validation
       if (!mainImage) {
-        throw new Error('Main image is required');
+        throw new Error("Main image is required");
       }
 
       if (galleryImages.length < 5 || galleryImages.length > 15) {
-        throw new Error('Please upload between 5 and 15 gallery images');
+        throw new Error("Please upload between 5 and 15 gallery images");
       }
 
       if (!formData.mainCategory || !formData.productName || !formData.purity) {
-        throw new Error('Main Category, Product Name, and Purity are required fields');
+        throw new Error(
+          "Main Category, Product Name, and Purity are required fields"
+        );
       }
 
       // Prepare form data for submission
       const submitData = new FormData();
-      
+
       // Append form data
-      Object.keys(formData).forEach(key => {
+      Object.keys(formData).forEach((key) => {
         submitData.append(key, formData[key]);
       });
 
       // Append images
-      submitData.append('mainImage', mainImage);
+      submitData.append("mainImage", mainImage);
       if (coverImage) {
-        submitData.append('coverImage', coverImage);
+        submitData.append("coverImage", coverImage);
       }
       galleryImages.forEach((image) => {
         submitData.append(`galleryImages`, image);
       });
 
       // Here you would typically send to your API
-      console.log('Form data:', formData);
-      console.log('Main image:', mainImage);
-      console.log('Cover image:', coverImage);
-      console.log('Gallery images:', galleryImages);
+      console.log("Form data:", formData);
+      console.log("Main image:", mainImage);
+      console.log("Cover image:", coverImage);
+      console.log("Gallery images:", galleryImages);
 
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      alert('Gold product added successfully!');
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      alert("Gold product added successfully!");
       // Reset form or redirect
-      
     } catch (err) {
       setError(err.message);
     } finally {
@@ -269,33 +286,39 @@ const Page = () => {
   // Remove main image
   const removeMainImage = () => {
     setMainImage(null);
-    setMainImagePreview('');
+    setMainImagePreview("");
   };
 
   // Remove cover image
   const removeCoverImage = () => {
     setCoverImage(null);
-    setCoverImagePreview('');
+    setCoverImagePreview("");
   };
 
   // Remove gallery image
   const removeGalleryImage = (index) => {
-    setGalleryImages(prev => prev.filter((_, i) => i !== index));
-    setGalleryImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setGalleryImages((prev) => prev.filter((_, i) => i !== index));
+    setGalleryImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Handle cancel
   const handleCancel = () => {
-    if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
+    if (
+      confirm(
+        "Are you sure you want to cancel? All unsaved changes will be lost."
+      )
+    ) {
       window.history.back();
     }
   };
 
   // Get available subcategories based on selected main category
-  const availableSubCategories = formData.mainCategory ? subCategoryOptions[formData.mainCategory] || [] : [];
+  const availableSubCategories = formData.mainCategory
+    ? subCategoryOptions[formData.mainCategory] || []
+    : [];
 
   // Check if custom weight input should be shown
-  const showCustomWeight = formData.weight === 'Custom weight';
+  const showCustomWeight = formData.weight === "Custom weight";
 
   return (
     <div className="min-h-screen bg-gray-50/30">
@@ -309,7 +332,8 @@ const Page = () => {
                 Add Gold (Gold Products Items)
               </h1>
               <p className="mt-1 text-sm text-gray-600">
-                Add a new gold product to your inventory with detailed specifications and pricing
+                Add a new gold product to your inventory with detailed
+                specifications and pricing
               </p>
             </div>
           </div>
@@ -747,7 +771,9 @@ const Page = () => {
                       step="0.01"
                     />
                   </div>
-                  <p className="text-xs text-gray-500">Real-time market-linked price</p>
+                  <p className="text-xs text-gray-500">
+                    Real-time market-linked price
+                  </p>
                 </div>
 
                 {/* Stock Quantity - Optional (has default) */}
@@ -991,11 +1017,13 @@ const Page = () => {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm text-gray-600">
-                          {galleryImagePreviews.length} images selected (min: 5, max: 15)
+                          {galleryImagePreviews.length} images selected (min: 5,
+                          max: 15)
                         </p>
                         {galleryImagePreviews.length < 5 && (
                           <p className="text-sm text-red-600 font-medium">
-                            Please add {5 - galleryImagePreviews.length} more images
+                            Please add {5 - galleryImagePreviews.length} more
+                            images
                           </p>
                         )}
                       </div>
@@ -1087,7 +1115,8 @@ const Page = () => {
                                 : "text-red-600"
                             }`}
                           >
-                            {galleryImagePreviews.length} gallery image(s) selected
+                            {galleryImagePreviews.length} gallery image(s)
+                            selected
                             {galleryImagePreviews.length < 5 &&
                               ` - Need ${5 - galleryImagePreviews.length} more`}
                             {galleryImagePreviews.length > 15 &&
@@ -1223,18 +1252,18 @@ const Page = () => {
               <button
                 type="submit"
                 disabled={
-                  loading || 
-                  !mainImage || 
-                  galleryImages.length < 5 || 
+                  loading ||
+                  !mainImage ||
+                  galleryImages.length < 5 ||
                   galleryImages.length > 15 ||
                   !formData.mainCategory ||
                   !formData.productName ||
                   !formData.purity
                 }
                 className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl ${
-                  loading || 
-                  !mainImage || 
-                  galleryImages.length < 5 || 
+                  loading ||
+                  !mainImage ||
+                  galleryImages.length < 5 ||
                   galleryImages.length > 15 ||
                   !formData.mainCategory ||
                   !formData.productName ||

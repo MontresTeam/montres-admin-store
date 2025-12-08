@@ -111,7 +111,7 @@ const ForgotPasswordComponent = () => {
         <p>
           Forget it. Send me back to{' '}
           <Link
-            href="/auth/login"
+            href="/admin/login"
             className="text-primary font-semibold hover:underline"
           >
             Sign In

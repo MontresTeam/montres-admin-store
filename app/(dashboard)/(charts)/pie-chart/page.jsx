@@ -1,3 +1,5 @@
+"use client"
+import React,{useState,useEffect} from 'react';
 import DefaultCardComponent from "@/app/(dashboard)/components/default-card-component";
 import BasicPieChart from "@/components/charts/basic-pie-chart";
 import DonutChart from "@/components/charts/donut-chart";
@@ -7,6 +9,7 @@ import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
 import LoadingSkeleton from "@/components/loading-skeleton";
 import { Metadata } from "next";
 import { Suspense } from "react";
+import { useRouter } from "next/navigation";
 
 const metadata = {
     title: "Pie Charts & Data Visualization | Monters Admin Dashboard",
@@ -15,6 +18,32 @@ const metadata = {
 };
 
 const PieChartPage = () => {
+  const router = useRouter();
+
+        const [isAllowed, setIsAllowed] = useState(false);
+      const [checked, setChecked] = useState(false); // to prevent flash
+    
+      useEffect(() => {
+        // Get adminData from localStorage
+        const adminDataJSON = localStorage.getItem("adminData");
+        const adminData = adminDataJSON ? JSON.parse(adminDataJSON) : null;
+    
+        // Allowed roles
+        const allowedRoles = ["ceo", "sales", "developer"];
+    
+        if (!adminData || !allowedRoles.includes(adminData.role)) {
+          router.replace("/admin/login"); // redirect unauthorized users
+        } else {
+          setIsAllowed(true); // user is allowed
+        }
+    
+        setChecked(true); // check complete
+      }, [router]);
+    
+      // Prevent page from rendering until check is done
+      if (!checked) return null;
+      if (!isAllowed) return null;
+    
     return (
         <>
             <DashboardBreadcrumb title="Pie Chart" text="Pie Chart" />
