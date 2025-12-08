@@ -372,7 +372,7 @@ const Page = () => {
       }
 
       // API call with Axios
-      const response = await axios.post('http://localhost:9000/api/leather/Add', submitData, {
+      const response = await axios.post('https://api.montres.ae/api/leather/Add', submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
