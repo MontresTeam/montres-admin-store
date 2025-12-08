@@ -3,7 +3,6 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   FiEdit,
   FiTrash2,
-  FiPlus,
   FiMoreVertical,
   FiSearch,
   FiFilter,
@@ -22,7 +21,6 @@ import {
   FiPackage,
   FiGrid,
   FiTag,
-  FiDollarSign,
   FiTrendingUp,
   FiLayers,
   FiBox
@@ -47,11 +45,9 @@ const ProductManagement = () => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileView, setMobileView] = useState(false);
-  const [searchField, setSearchField] = useState("all"); // "all", "name", "sku", "brand", "model", "ref"
-  
-
-    const [isAllowed, setIsAllowed] = useState(false);
-  const [checked, setChecked] = useState(false); // to prevent flash
+  const [searchField, setSearchField] = useState("all"); 
+  const [isAllowed, setIsAllowed] = useState(false);
+  const [checked, setChecked] = useState(false); 
 
   useEffect(() => {
     // Get adminData from localStorage
@@ -70,9 +66,10 @@ const ProductManagement = () => {
     setChecked(true); // check complete
   }, [router]);
 
-  // Prevent page from rendering until check is done
-  if (!checked) return null;
-  if (!isAllowed) return null;
+
+  
+
+
 
   // Timeline sorting states
   const [sortConfig, setSortConfig] = useState({
