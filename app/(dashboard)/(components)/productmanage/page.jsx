@@ -376,7 +376,7 @@ const ProductManagement = () => {
     }
 
     // Accessories SKUs
-    const accessoriesSKUs = ["MON0056", "MON0270"];
+    const accessoriesSKUs = ["MON0056", "MON0270"," MON0416","MON0475","MON0480"];
     
     // Forced Leather SKUs
     const forcedLeatherSKUs = ["MON0044", "MON0042", "MON0295", "MON0300"];
