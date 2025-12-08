@@ -33,9 +33,7 @@ const EditAccessories = () => {
     setChecked(true); // check complete
   }, [router]);
 
-  // Prevent page from rendering until check is done
-  if (!checked) return null;
-  if (!isAllowed) return null;
+
 
 
   // Static data options
