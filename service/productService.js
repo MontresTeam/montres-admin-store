@@ -42,8 +42,37 @@ export async function fetchProduct({
     return { data: null, error, isLoading: false };
   }
 }
+// ✅ Fetch Inventory
+export async function fetchInventory({ id } = {}) {
+  try {
+    let endpoint = `/invontry/${id}`; // Add /api/ prefix if using Next.js API routes
+    const params = new URLSearchParams();
 
+    if (id) {
+      params.append("id", id);  
+    }
 
+    const url = `${endpoint}${params.toString() ? `?${params.toString()}` : ""}`;
+    const response = await api.get(url);
+
+    // Return the data directly or as array
+    return response.data;
+  } catch (error) {
+    console.error("❌ fetchInventory Error:", error);
+    throw error; // Re-throw to handle in component
+  }
+}
+
+// ✅ Update Inventory
+export async function updateInventory(id, data) {
+  try {
+    const response = await api.put(`/api/inventory/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ updateInventory Error:", error);
+    throw error;
+  }
+}
 
 // ✅ Add Product
 
