@@ -54,7 +54,7 @@ const InventoryStockManagement = () => {
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:9000/api/invontry/');
+      const response = await axios.get('https://api.montres.ae/api/invontry/');
       setInventory(response.data);
       setError(null);
     } catch (err) {
@@ -260,7 +260,7 @@ const InventoryStockManagement = () => {
         lastUpdated: new Date().toISOString().split('T')[0]
       };
       
-      const response = await axios.post('http://localhost:9000/api/invontry/', newItem);
+      const response = await axios.post('https://api.montres.ae/api/invontry/', newItem);
       setInventory(prev => [...prev, response.data]);
       setShowAddModal(false);
       showNotification('Item added successfully!', 'success');
