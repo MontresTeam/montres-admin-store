@@ -35,7 +35,8 @@ const ProductEditPage = () => {
     includedAccessories: "",
     badges: "", // FIXED: Changed from array to string
     category: "",
-
+        // ⭐ NEW: Limited Edition Field
+    limitedEdition: false,
     // Item Features
     productionYear: "",
     approximateYear: false,
@@ -360,6 +361,8 @@ const ProductEditPage = () => {
             : product.badges || "",
 
           // Item Features
+              // ⭐ NEW: Limited Edition Field
+          limitedEdition: product.limitedEdition|| false,
           productionYear: product.productionYear || "",
           approximateYear: product.approximateYear || false,
           unknownYear: product.unknownYear || false,
@@ -477,6 +480,15 @@ const ProductEditPage = () => {
           replacementParts: checked
             ? [...prev.replacementParts, value]
             : prev.replacementParts.filter((item) => item !== value),
+        }));
+      }else if (name === "limitedEdition") {
+        setFormData((prev) => ({
+          ...prev,
+          limitedEdition: checked,
+          ...(!checked && {
+            limitedEditionNumber: "",
+            limitedEditionTotal: "",
+          }),
         }));
       }
       // REMOVED: badges checkbox logic since it's now a single select
@@ -988,6 +1000,37 @@ const ProductEditPage = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                          {/* ⭐ LIMITED EDITION SECTION - Added to Basic Info */}
+                <div className="lg:col-span-2 space-y-4 p-4 border border-gray-200 rounded-lg bg-gradient-to-r from-gray-50 to-white">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                      Limited Edition
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Limited Edition Checkbox */}
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        name="limitedEdition"
+                        checked={formData.limitedEdition}
+                        onChange={handleChange}
+                        className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      />
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">
+                          This is a Limited Edition item
+                        </label>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Check if this product is part of a limited production run
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

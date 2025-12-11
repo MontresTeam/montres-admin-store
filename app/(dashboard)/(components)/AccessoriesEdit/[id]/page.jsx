@@ -1,19 +1,18 @@
-"use client"
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import axios from 'axios';
-import Image from 'next/image';
+"use client";
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import axios from "axios";
+import Image from "next/image";
 
-import DashboardBreadcrumb from '../../../../../components/layout/dashboard-breadcrumb';
-import newcurrencysymbol from '../../../../../public/assets/newSymbole.png';
-import { fetchProduct } from '@/service/productService';
+import DashboardBreadcrumb from "../../../../../components/layout/dashboard-breadcrumb";
+import newcurrencysymbol from "../../../../../public/assets/newSymbole.png";
+import { fetchProduct } from "@/service/productService";
 
 const EditAccessories = () => {
   const { id } = useParams();
   const router = useRouter();
 
-
-      const [isAllowed, setIsAllowed] = useState(false);
+  const [isAllowed, setIsAllowed] = useState(false);
   const [checked, setChecked] = useState(false); // to prevent flash
 
   useEffect(() => {
@@ -32,11 +31,6 @@ const EditAccessories = () => {
 
     setChecked(true); // check complete
   }, [router]);
-
-  // Prevent page from rendering until check is done
-  if (!checked) return null;
-  if (!isAllowed) return null;
-
 
   // Static data options
   const categoryOptions = [
@@ -57,8 +51,8 @@ const EditAccessories = () => {
       "Mechanical Pencils",
       "Pen Sets",
     ],
-    "Cufflinks": ["Metal Cufflinks", "Enamel Cufflinks"],
-    "Bracelets": [
+    Cufflinks: ["Metal Cufflinks", "Enamel Cufflinks"],
+    Bracelets: [
       "Leather Bracelets",
       "Metal Bracelets",
       "Beaded Bracelets",
@@ -173,87 +167,84 @@ const EditAccessories = () => {
   ];
 
   const taxStatusOptions = [
-    { value: 'taxable', label: 'Taxable' },
-    { value: 'shipping', label: 'Shipping only' },
-    { value: 'none', label: 'None' }
+    { value: "taxable", label: "Taxable" },
+    { value: "shipping", label: "Shipping only" },
+    { value: "none", label: "None" },
   ];
 
-  const badgesOptions = [
-    "Popular",
-    "New Arrivals"
-  ];
+  const badgesOptions = ["Popular", "New Arrivals"];
 
   // Form state
   const [formData, setFormData] = useState({
     // Basic Information - REQUIRED FIELDS
-    brand: '',
-    model: '',
-    
+    brand: "",
+    model: "",
+
     // Optional Basic Information
-    name: '',
-    sku: '',
-    referenceNumber: '',
-    serialNumber: '',
-    additionalTitle: '',
-    
+    name: "",
+    sku: "",
+    referenceNumber: "",
+    serialNumber: "",
+    additionalTitle: "",
+
     // Category
-    accessoryCategory: '',
-    accessorySubCategory: '',
+    accessoryCategory: "",
+    accessorySubCategory: "",
     availableSubCategories: [],
-    
+
     // Production Year
-    productionYear: '',
+    productionYear: "",
     approximateYear: false,
     unknownYear: false,
-    
+
     // Condition
-    condition: '',
-    itemCondition: '',
-    
+    condition: "",
+    itemCondition: "",
+
     // Gender
-    gender: 'Men/Unisex',
-    
+    gender: "Men/Unisex",
+
     // Materials and Colors
     accessoryMaterial: [],
     accessoryColor: [],
-    
+
     // Accessories & Delivery
     accessoryDelivery: [],
     accessoryScopeOfDelivery: [],
-    
+
     // Pricing & Inventory
-    taxStatus: 'taxable',
+    taxStatus: "taxable",
     stockQuantity: "",
     inStock: true,
-    regularPrice: '',
-    salePrice: '',
-    
+    regularPrice: "",
+    salePrice: "",
+
     // Badges
     badges: [],
-    
+
     // SEO
-    seoTitle: '',
-    seoDescription: '',
-    seoKeywords: '',
-    
+    seoTitle: "",
+    seoDescription: "",
+    seoKeywords: "",
+
     // Description
-    description: '',
-    
+    description: "",
+
     // Visibility
-    visibility: 'visible',
+    visibility: "visible",
     published: true,
     featured: false,
   });
 
   const [mainImage, setMainImage] = useState(null);
-  const [mainImagePreview, setMainImagePreview] = useState('');
+  const [mainImagePreview, setMainImagePreview] = useState("");
   const [coverImages, setCoverImages] = useState([]);
   const [coverImagePreviews, setCoverImagePreviews] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   // Fetch product data on component mount
   const loadProducts = async () => {
@@ -265,45 +256,47 @@ const EditAccessories = () => {
       if (!error && data) {
         console.log("Product data:", data);
         const productData = data.product || data;
-          console.log("Product data:", productData);
+        console.log("Product data:", productData);
 
         // Set available subcategories based on category
         const subCats = subCategoryMapping[productData.accessoryCategory] || [];
-        
+
         // Set form data with fetched product data
         setFormData({
-          brand: productData.brand || '',
-          model: productData.model || '',
-          name: productData.name || '',
-          sku: productData.sku || '',
-          referenceNumber: productData.referenceNumber || '',
-          serialNumber: productData.serialNumber || '',
-          additionalTitle: productData.additionalTitle || '',
-          accessoryCategory: productData.accessoryCategory || '',
-          accessorySubCategory: productData.accessorySubCategory || '',
+          brand: productData.brand || "",
+          model: productData.model || "",
+          name: productData.name || "",
+          sku: productData.sku || "",
+          referenceNumber: productData.referenceNumber || "",
+          serialNumber: productData.serialNumber || "",
+          additionalTitle: productData.additionalTitle || "",
+          accessoryCategory: productData.accessoryCategory || "",
+          accessorySubCategory: productData.accessorySubCategory || "",
           availableSubCategories: subCats,
-          productionYear: productData.productionYear || '',
+          productionYear: productData.productionYear || "",
           approximateYear: productData.approximateYear || false,
           unknownYear: productData.unknownYear || false,
-          condition: productData.condition || '',
-          itemCondition: productData.itemCondition || '',
-          gender: productData.gender || 'Men/Unisex',
+          condition: productData.condition || "",
+          itemCondition: productData.itemCondition || "",
+          gender: productData.gender || "Men/Unisex",
           accessoryMaterial: productData.accessoryMaterial || [],
           accessoryColor: productData.accessoryColor || [],
           accessoryDelivery: productData.accessoryDelivery || [],
           accessoryScopeOfDelivery: productData.accessoryScopeOfDelivery || [],
-          taxStatus: productData.taxStatus || 'taxable',
+          taxStatus: productData.taxStatus || "taxable",
           stockQuantity: productData.stockQuantity || "",
-          inStock: productData.inStock !== undefined ? productData.inStock : true,
-          regularPrice: productData.regularPrice || '',
-          salePrice: productData.salePrice || '',
+          inStock:
+            productData.inStock !== undefined ? productData.inStock : true,
+          regularPrice: productData.regularPrice || "",
+          salePrice: productData.salePrice || "",
           badges: productData.badges || [],
-          seoTitle: productData.seoTitle || '',
-          seoDescription: productData.seoDescription || '',
-          seoKeywords: productData.seoKeywords || '',
-          description: productData.description || '',
-          visibility: productData.visibility || 'visible',
-          published: productData.published !== undefined ? productData.published : true,
+          seoTitle: productData.seoTitle || "",
+          seoDescription: productData.seoDescription || "",
+          seoKeywords: productData.seoKeywords || "",
+          description: productData.description || "",
+          visibility: productData.visibility || "visible",
+          published:
+            productData.published !== undefined ? productData.published : true,
           featured: productData.featured || false,
         });
 
@@ -328,79 +321,90 @@ const EditAccessories = () => {
   // Handle input changes
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    
-    if (type === 'checkbox') {
-      if (name === 'approximateYear' || name === 'unknownYear') {
-        setFormData(prev => ({
+
+    if (type === "checkbox") {
+      if (name === "approximateYear" || name === "unknownYear") {
+        setFormData((prev) => ({
           ...prev,
           [name]: checked,
-          ...(name === 'unknownYear' && checked && { productionYear: '' })
+          ...(name === "unknownYear" && checked && { productionYear: "" }),
         }));
-      } else if (name === 'inStock' || name === 'published' || name === 'featured') {
-        setFormData(prev => ({
+      } else if (
+        name === "inStock" ||
+        name === "published" ||
+        name === "featured"
+      ) {
+        setFormData((prev) => ({
           ...prev,
-          [name]: checked
+          [name]: checked,
         }));
-      } else if (['accessoryMaterial', 'accessoryColor', 'accessoryDelivery', 
-                  'accessoryScopeOfDelivery', 'badges'].includes(name)) {
+      } else if (
+        [
+          "accessoryMaterial",
+          "accessoryColor",
+          "accessoryDelivery",
+          "accessoryScopeOfDelivery",
+          "badges",
+        ].includes(name)
+      ) {
         // Handle checkbox arrays
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           [name]: checked
             ? [...prev[name], value]
-            : prev[name].filter(item => item !== value)
+            : prev[name].filter((item) => item !== value),
         }));
       }
-    } else if (type === 'file') {
-      if (name === 'mainImage' && files.length > 0) {
+    } else if (type === "file") {
+      if (name === "mainImage" && files.length > 0) {
         const file = files[0];
         setMainImage(file);
         setMainImagePreview(URL.createObjectURL(file));
-      } else if (name === 'coverImages' && files.length > 0) {
+      } else if (name === "coverImages" && files.length > 0) {
         const newFiles = Array.from(files);
-        const newPreviews = newFiles.map(file => URL.createObjectURL(file));
-        
+        const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+
         const totalFiles = [...coverImages, ...newFiles];
         const totalPreviews = [...coverImagePreviews, ...newPreviews];
-        
+
         if (totalFiles.length <= 15) {
           setCoverImages(totalFiles);
           setCoverImagePreviews(totalPreviews);
         } else {
-          setError('Maximum 15 images allowed');
+          setError("Maximum 15 images allowed");
         }
       }
-    } else if (name === 'accessoryCategory') {
+    } else if (name === "accessoryCategory") {
       // Handle category change
       const subCats = subCategoryMapping[value] || [];
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         accessoryCategory: value,
-        accessorySubCategory: '',
-        availableSubCategories: subCats
+        accessorySubCategory: "",
+        availableSubCategories: subCats,
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
 
   // Handle multi-select changes for array fields
   const handleMultiSelectChange = (name, value, isChecked) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const currentArray = prev[name] || [];
-      
+
       if (isChecked) {
         return {
           ...prev,
-          [name]: [...currentArray, value]
+          [name]: [...currentArray, value],
         };
       } else {
         return {
           ...prev,
-          [name]: currentArray.filter(item => item !== value)
+          [name]: currentArray.filter((item) => item !== value),
         };
       }
     });
@@ -408,213 +412,237 @@ const EditAccessories = () => {
 
   // Prepare FormData for submission
   const prepareFormData = () => {
-  // Handle production year based on checkboxes
-  let productionYearValue = formData.productionYear || "";
-  let unknownYearValue = formData.unknownYear;
+    // Handle production year based on checkboxes
+    let productionYearValue = formData.productionYear || "";
+    let unknownYearValue = formData.unknownYear;
 
-  if (formData.unknownYear) {
-    productionYearValue = "Unknown";
-  } else if (formData.approximateYear && productionYearValue) {
-    productionYearValue = `Approx. ${productionYearValue}`;
-  }
-
-  // Handle SEO keywords
-  let seoKeywordsArray = [];
-  if (formData.seoKeywords) {
-    if (typeof formData.seoKeywords === "string") {
-      seoKeywordsArray = formData.seoKeywords
-        .split(",")
-        .map(kw => kw.trim())
-        .filter(kw => kw.length > 0);
-    } else if (Array.isArray(formData.seoKeywords)) {
-      seoKeywordsArray = formData.seoKeywords;
-    }
-  }
-
-  // Auto-generate name if not provided
-  const productName = formData.name || `${formData.brand} ${formData.model}`.trim();
-
-  return {
-    // Basic info
-    brand: formData.brand || "",
-    model: formData.model || "",
-    name: productName || "",
-    sku: formData.sku || "",
-    referenceNumber: formData.referenceNumber || "",
-    serialNumber: formData.serialNumber || "",
-    additionalTitle: formData.additionalTitle || "",
-
-    // Category info
-    accessoryCategory: formData.accessoryCategory || "",
-    accessorySubCategory: formData.accessorySubCategory || "",
-
-    // Year info
-    productionYear: productionYearValue,
-    approximateYear: Boolean(formData.approximateYear),
-    unknownYear: Boolean(formData.unknownYear),
-
-    // Condition info
-    condition: formData.condition || "",
-    itemCondition: formData.itemCondition || "",
-
-    // Specifications
-    accessoryMaterial: Array.isArray(formData.accessoryMaterial) ? formData.accessoryMaterial : [],
-    accessoryColor: Array.isArray(formData.accessoryColor) ? formData.accessoryColor : [],
-    gender: formData.gender || "Men/Unisex",
-
-    // Delivery & Accessories
-    accessoryDelivery: Array.isArray(formData.accessoryDelivery) ? formData.accessoryDelivery : [],
-    accessoryScopeOfDelivery: Array.isArray(formData.accessoryScopeOfDelivery) ? formData.accessoryScopeOfDelivery : [],
-
-    // Pricing
-    regularPrice: formData.regularPrice ? parseFloat(formData.regularPrice) : 0,
-    salePrice: formData.salePrice ? parseFloat(formData.salePrice) : 0,
-    taxStatus: formData.taxStatus || "taxable",
-
-    // Inventory
-    stockQuantity: parseInt(formData.stockQuantity) || 1,
-    inStock: Boolean(formData.inStock),
-
-    // Marketing
-    badges: Array.isArray(formData.badges) ? formData.badges : [],
-
-    // Featured
-    featured: Boolean(formData.featured),
-
-    // SEO
-    seoTitle: formData.seoTitle || productName,
-    seoDescription: formData.seoDescription || `Buy ${productName} - Premium ${formData.accessoryCategory || "Accessory"}`,
-    seoKeywords: seoKeywordsArray,
-
-    // Content
-    description: formData.description || `Premium ${formData.accessoryCategory || "Accessory"}`,
-
-    // Visibility
-    visibility: formData.visibility || "visible",
-    published: Boolean(formData.published),
-
-    // Category for backend
-    category: "Accessories",
-  };
-};
-
-
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
-  setSuccess('');
-
-  try {
-    // Validation - REQUIRED FIELDS
-    if (!formData.brand || !formData.model) {
-      throw new Error('Brand and Model are required fields');
+    if (formData.unknownYear) {
+      productionYearValue = "Unknown";
+    } else if (formData.approximateYear && productionYearValue) {
+      productionYearValue = `Approx. ${productionYearValue}`;
     }
 
-    if (!formData.accessoryCategory) {
-      throw new Error('Category is required');
-    }
-
-    // 1. Prepare the JSON payload
-    const payload = prepareFormData();
-
-    // 2. Create FormData for file uploads and JSON payload
-    const formDataToSubmit = new FormData();
-
-    // Append JSON payload as a string
-    formDataToSubmit.append("data", JSON.stringify(payload));
-
-    // Append main image with field name 'main'
-    if (mainImage) {
-      formDataToSubmit.append("main", mainImage);
-    }
-
-    // Append cover images with field name 'covers'
-    if (coverImages.length > 0) {
-      coverImages.forEach((file) => {
-        formDataToSubmit.append("covers", file);
-      });
-    }
-
-    // Debug: log the payload
-    console.log("Update payload:", payload);
-
-    // API call to update accessory
-    const response = await axios.put(
-      `https://api.montres.ae/api/accessories/UpdatedAccessories/${id}`,
-      formDataToSubmit,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        withCredentials: true,
+    // Handle SEO keywords
+    let seoKeywordsArray = [];
+    if (formData.seoKeywords) {
+      if (typeof formData.seoKeywords === "string") {
+        seoKeywordsArray = formData.seoKeywords
+          .split(",")
+          .map((kw) => kw.trim())
+          .filter((kw) => kw.length > 0);
+      } else if (Array.isArray(formData.seoKeywords)) {
+        seoKeywordsArray = formData.seoKeywords;
       }
-    );
+    }
 
-    if (response.data?.success) {
-      setSuccess('Accessory updated successfully!');
-      
-      // Show success toast
-      if (typeof window !== 'undefined') {
-        const Toastify = require('toastify-js');
+    // Auto-generate name if not provided
+    const productName =
+      formData.name || `${formData.brand} ${formData.model}`.trim();
+
+    return {
+      // Basic info
+      brand: formData.brand || "",
+      model: formData.model || "",
+      name: productName || "",
+      sku: formData.sku || "",
+      referenceNumber: formData.referenceNumber || "",
+      serialNumber: formData.serialNumber || "",
+      additionalTitle: formData.additionalTitle || "",
+
+      // Category info
+      accessoryCategory: formData.accessoryCategory || "",
+      accessorySubCategory: formData.accessorySubCategory || "",
+
+      // Year info
+      productionYear: productionYearValue,
+      approximateYear: Boolean(formData.approximateYear),
+      unknownYear: Boolean(formData.unknownYear),
+
+      // Condition info
+      condition: formData.condition || "",
+      itemCondition: formData.itemCondition || "",
+
+      // Specifications
+      accessoryMaterial: Array.isArray(formData.accessoryMaterial)
+        ? formData.accessoryMaterial
+        : [],
+      accessoryColor: Array.isArray(formData.accessoryColor)
+        ? formData.accessoryColor
+        : [],
+      gender: formData.gender || "Men/Unisex",
+
+      // Delivery & Accessories
+      accessoryDelivery: Array.isArray(formData.accessoryDelivery)
+        ? formData.accessoryDelivery
+        : [],
+      accessoryScopeOfDelivery: Array.isArray(formData.accessoryScopeOfDelivery)
+        ? formData.accessoryScopeOfDelivery
+        : [],
+
+      // Pricing
+      regularPrice: formData.regularPrice
+        ? parseFloat(formData.regularPrice)
+        : 0,
+      salePrice: formData.salePrice ? parseFloat(formData.salePrice) : 0,
+      taxStatus: formData.taxStatus || "taxable",
+
+      // Inventory
+      stockQuantity: parseInt(formData.stockQuantity) || 1,
+      inStock: Boolean(formData.inStock),
+
+      // Marketing
+      badges: Array.isArray(formData.badges) ? formData.badges : [],
+
+      // Featured
+      featured: Boolean(formData.featured),
+
+      // SEO
+      seoTitle: formData.seoTitle || productName,
+      seoDescription:
+        formData.seoDescription ||
+        `Buy ${productName} - Premium ${
+          formData.accessoryCategory || "Accessory"
+        }`,
+      seoKeywords: seoKeywordsArray,
+
+      // Content
+      description:
+        formData.description ||
+        `Premium ${formData.accessoryCategory || "Accessory"}`,
+
+      // Visibility
+      visibility: formData.visibility || "visible",
+      published: Boolean(formData.published),
+
+      // Category for backend
+      category: "Accessories",
+    };
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      // Validation - REQUIRED FIELDS
+      if (!formData.brand || !formData.model) {
+        throw new Error("Brand and Model are required fields");
+      }
+
+      if (!formData.accessoryCategory) {
+        throw new Error("Category is required");
+      }
+
+      // 1. Prepare the JSON payload
+      const payload = prepareFormData();
+
+      // 2. Create FormData for file uploads and JSON payload
+      const formDataToSubmit = new FormData();
+
+      // Append JSON payload as a string
+      formDataToSubmit.append("data", JSON.stringify(payload));
+
+      // Append main image with field name 'main'
+      if (mainImage) {
+        formDataToSubmit.append("main", mainImage);
+      }
+
+      // Append cover images with field name 'covers'
+      if (coverImages.length > 0) {
+        coverImages.forEach((file) => {
+          formDataToSubmit.append("covers", file);
+        });
+      }
+
+      // Debug: log the payload
+      console.log("Update payload:", payload);
+
+      // API call to update accessory
+      const response = await axios.put(
+        `http://localhost:9000/api/accessories/UpdatedAccessories/${id}`,
+        formDataToSubmit,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data?.success) {
+        setSuccess("Accessory updated successfully!");
+
+        // Show success toast
+        if (typeof window !== "undefined") {
+          const Toastify = require("toastify-js");
+          Toastify({
+            text: "Accessory updated successfully!",
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            style: {
+              background: "linear-gradient(to right, #00b09b, #96c93d)",
+            },
+          }).showToast();
+        }
+
+        // Redirect after success
+        setTimeout(() => {
+          router.push("/productmanage");
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("Error updating accessory:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.errors?.[0] ||
+        "Failed to update accessory";
+      setError(errorMessage);
+
+      // Show error toast
+      if (typeof window !== "undefined") {
+        const Toastify = require("toastify-js");
         Toastify({
-          text: 'Accessory updated successfully!',
+          text: errorMessage,
           duration: 3000,
           close: true,
           gravity: "top",
           position: "right",
-          style: { background: "linear-gradient(to right, #00b09b, #96c93d)" },
+          style: { background: "linear-gradient(to right, #ff5f6d, #ffc371)" },
         }).showToast();
       }
-
-      // Redirect after success
-      setTimeout(() => {
-        router.push('/productmanage');
-      }, 2000);
+    } finally {
+      setLoading(false);
     }
-    
-  } catch (err) {
-    console.error('Error updating accessory:', err);
-    const errorMessage = err.response?.data?.message || err.response?.data?.errors?.[0] || 'Failed to update accessory';
-    setError(errorMessage);
-    
-    // Show error toast
-    if (typeof window !== 'undefined') {
-      const Toastify = require('toastify-js');
-      Toastify({
-        text: errorMessage,
-        duration: 3000,
-        close: true,
-        gravity: "top",
-        position: "right",
-        style: { background: "linear-gradient(to right, #ff5f6d, #ffc371)" },
-      }).showToast();
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Remove main image
   const removeMainImage = () => {
     setMainImage(null);
-    setMainImagePreview('');
+    setMainImagePreview("");
   };
 
   // Remove cover image
   const removeCoverImage = (index) => {
-    setCoverImages(prev => prev.filter((_, i) => i !== index));
-    setCoverImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setCoverImages((prev) => prev.filter((_, i) => i !== index));
+    setCoverImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Remove existing image
   const removeExistingImage = (index) => {
-    setExistingImages(prev => prev.filter((_, i) => i !== index));
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Handle cancel
   const handleCancel = () => {
-    if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
+    if (
+      confirm(
+        "Are you sure you want to cancel? All unsaved changes will be lost."
+      )
+    ) {
       router.back();
     }
   };
@@ -622,19 +650,25 @@ const EditAccessories = () => {
   // Auto-generate SEO fields
   useEffect(() => {
     // Auto-generate SEO title if not manually set
-    if (!formData.seoTitle && (formData.brand || formData.name || formData.model)) {
+    if (
+      !formData.seoTitle &&
+      (formData.brand || formData.name || formData.model)
+    ) {
       const titleParts = [];
       if (formData.brand) titleParts.push(formData.brand);
       if (formData.model) titleParts.push(formData.model);
       if (formData.name) titleParts.push(formData.name);
       if (titleParts.length > 0) {
         const generatedTitle = `${titleParts.join(" ")} | Luxury Accessories`;
-        setFormData(prev => ({ ...prev, seoTitle: generatedTitle }));
+        setFormData((prev) => ({ ...prev, seoTitle: generatedTitle }));
       }
     }
 
     // Auto-generate SEO description if not manually set
-    if (!formData.seoDescription && (formData.brand || formData.name || formData.description)) {
+    if (
+      !formData.seoDescription &&
+      (formData.brand || formData.name || formData.description)
+    ) {
       let description = "";
       if (formData.brand && formData.model) {
         description = `${formData.brand} ${formData.model} - `;
@@ -647,19 +681,20 @@ const EditAccessories = () => {
       if (formData.description) {
         description += formData.description.substring(0, 140);
       } else {
-        description += "Premium luxury accessory. High quality materials and craftsmanship.";
+        description +=
+          "Premium luxury accessory. High quality materials and craftsmanship.";
       }
 
       if (description.length > 160) {
         description = description.substring(0, 157) + "...";
       }
 
-      setFormData(prev => ({ ...prev, seoDescription: description }));
+      setFormData((prev) => ({ ...prev, seoDescription: description }));
     }
 
     // Auto-generate name from brand and model
     if (!formData.name && formData.brand && formData.model) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         name: `${formData.brand} ${formData.model}`.trim(),
       }));
@@ -692,7 +727,6 @@ const EditAccessories = () => {
                 Update fashion accessory details
               </p>
             </div>
-            
           </div>
         </div>
 
@@ -700,8 +734,18 @@ const EditAccessories = () => {
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center gap-2 text-green-700">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span className="font-medium">Success:</span>
               <span>{success}</span>
@@ -713,8 +757,18 @@ const EditAccessories = () => {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-center gap-2 text-red-700">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span className="font-medium">Error:</span>
               <span>{error}</span>
@@ -772,7 +826,9 @@ const EditAccessories = () => {
 
                 {/* Name - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Product Name</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Product Name
+                  </label>
                   <input
                     type="text"
                     name="name"
@@ -790,7 +846,9 @@ const EditAccessories = () => {
 
                 {/* SKU - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">SKU</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    SKU
+                  </label>
                   <input
                     type="text"
                     name="sku"
@@ -803,7 +861,9 @@ const EditAccessories = () => {
 
                 {/* Reference Number - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Reference Number</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Reference Number
+                  </label>
                   <input
                     type="text"
                     name="referenceNumber"
@@ -816,7 +876,9 @@ const EditAccessories = () => {
 
                 {/* Serial Number - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Serial Number</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Serial Number
+                  </label>
                   <input
                     type="text"
                     name="serialNumber"
@@ -829,7 +891,9 @@ const EditAccessories = () => {
 
                 {/* Additional Title - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Additional Title</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Additional Title
+                  </label>
                   <input
                     type="text"
                     name="additionalTitle"
@@ -854,14 +918,18 @@ const EditAccessories = () => {
                   >
                     <option value="">Select Category</option>
                     {categoryOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Accessory Sub Category - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Sub Category</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Sub Category
+                  </label>
                   <select
                     name="accessorySubCategory"
                     value={formData.accessorySubCategory}
@@ -871,14 +939,18 @@ const EditAccessories = () => {
                   >
                     <option value="">Select Sub Category</option>
                     {formData.availableSubCategories.map((option) => (
-                      <option key={option} value={option}>{option}</option>
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Gender - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Gender</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Gender
+                  </label>
                   <select
                     name="gender"
                     value={formData.gender}
@@ -886,7 +958,9 @@ const EditAccessories = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
                     {genderOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -900,7 +974,9 @@ const EditAccessories = () => {
                     onChange={handleChange}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <label className="text-sm font-medium text-gray-700">In Stock</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    In Stock
+                  </label>
                 </div>
 
                 {/* Featured Checkbox */}
@@ -912,7 +988,9 @@ const EditAccessories = () => {
                     onChange={handleChange}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <label className="text-sm font-medium text-gray-700">Featured</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Featured
+                  </label>
                 </div>
               </div>
             </div>
@@ -932,7 +1010,9 @@ const EditAccessories = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Production Year - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Production Year</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Production Year
+                  </label>
                   <div className="relative">
                     <input
                       type="number"
@@ -940,9 +1020,13 @@ const EditAccessories = () => {
                       value={formData.productionYear}
                       onChange={handleChange}
                       className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
-                        formData.unknownYear ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+                        formData.unknownYear
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                          : ""
                       }`}
-                      placeholder={formData.unknownYear ? "Unknown" : "e.g., 2023"}
+                      placeholder={
+                        formData.unknownYear ? "Unknown" : "e.g., 2023"
+                      }
                       min="1900"
                       max="2030"
                       disabled={formData.unknownYear}
@@ -966,7 +1050,11 @@ const EditAccessories = () => {
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       disabled={formData.unknownYear}
                     />
-                    <label className={`text-sm font-medium ${formData.unknownYear ? "text-gray-400" : "text-gray-700"}`}>
+                    <label
+                      className={`text-sm font-medium ${
+                        formData.unknownYear ? "text-gray-400" : "text-gray-700"
+                      }`}
+                    >
                       Approximate Year
                     </label>
                   </div>
@@ -993,10 +1081,21 @@ const EditAccessories = () => {
               {formData.unknownYear && (
                 <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-700 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
-                    Production year is set to "Unknown". The year field will be disabled.
+                    Production year is set to "Unknown". The year field will be
+                    disabled.
                   </p>
                 </div>
               )}
@@ -1017,7 +1116,9 @@ const EditAccessories = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Condition - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Condition</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Condition
+                  </label>
                   <select
                     name="condition"
                     value={formData.condition}
@@ -1026,14 +1127,18 @@ const EditAccessories = () => {
                   >
                     <option value="">Select Condition</option>
                     {conditionOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Item Condition - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Item Condition</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Item Condition
+                  </label>
                   <select
                     name="itemCondition"
                     value={formData.itemCondition}
@@ -1042,7 +1147,9 @@ const EditAccessories = () => {
                   >
                     <option value="">Select Item Condition</option>
                     {itemConditionOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -1050,7 +1157,9 @@ const EditAccessories = () => {
 
               {/* Description */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
                 <textarea
                   name="description"
                   value={formData.description}
@@ -1063,7 +1172,9 @@ const EditAccessories = () => {
 
               {/* Materials - Optional (multiple select) */}
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">Materials</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Materials
+                </label>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
                   {materialOptions.map((option) => (
                     <div key={option} className="flex items-center space-x-2">
@@ -1083,7 +1194,9 @@ const EditAccessories = () => {
 
               {/* Colors - Optional (multiple select) */}
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">Colors</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Colors
+                </label>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
                   {colorOptions.map((option) => (
                     <div key={option} className="flex items-center space-x-2">
@@ -1117,7 +1230,9 @@ const EditAccessories = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Included Accessories - Optional */}
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">Included Accessories</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Included Accessories
+                  </label>
                   <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg">
                     {accessoriesAndDeliveryOptions.map((option) => (
                       <div key={option} className="flex items-center space-x-2">
@@ -1129,7 +1244,9 @@ const EditAccessories = () => {
                           onChange={handleChange}
                           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
-                        <label className="text-sm text-gray-700">{option}</label>
+                        <label className="text-sm text-gray-700">
+                          {option}
+                        </label>
                       </div>
                     ))}
                   </div>
@@ -1137,7 +1254,9 @@ const EditAccessories = () => {
 
                 {/* Scope of Delivery - Optional */}
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">Scope of Delivery</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Scope of Delivery
+                  </label>
                   <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg">
                     {scopeOfDeliveryOptions.map((option) => (
                       <div key={option} className="flex items-center space-x-2">
@@ -1145,11 +1264,15 @@ const EditAccessories = () => {
                           type="checkbox"
                           name="accessoryScopeOfDelivery"
                           value={option}
-                          checked={formData.accessoryScopeOfDelivery.includes(option)}
+                          checked={formData.accessoryScopeOfDelivery.includes(
+                            option
+                          )}
                           onChange={handleChange}
                           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
-                        <label className="text-sm text-gray-700">{option}</label>
+                        <label className="text-sm text-gray-700">
+                          {option}
+                        </label>
                       </div>
                     ))}
                   </div>
@@ -1172,10 +1295,18 @@ const EditAccessories = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Retail Price - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Retail Price</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Retail Price
+                  </label>
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                      <Image src={newcurrencysymbol} alt="Currency" width={16} height={16} className="w-4 h-4" />
+                      <Image
+                        src={newcurrencysymbol}
+                        alt="Currency"
+                        width={16}
+                        height={16}
+                        className="w-4 h-4"
+                      />
                     </div>
                     <input
                       type="number"
@@ -1192,10 +1323,18 @@ const EditAccessories = () => {
 
                 {/* Selling Price - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Selling Price</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Selling Price
+                  </label>
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                      <Image src={newcurrencysymbol} alt="Currency" width={16} height={16} className="w-4 h-4" />
+                      <Image
+                        src={newcurrencysymbol}
+                        alt="Currency"
+                        width={16}
+                        height={16}
+                        className="w-4 h-4"
+                      />
                     </div>
                     <input
                       type="number"
@@ -1212,7 +1351,9 @@ const EditAccessories = () => {
 
                 {/* Tax Status - Optional (has default) */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Tax Status</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Tax Status
+                  </label>
                   <select
                     name="taxStatus"
                     value={formData.taxStatus}
@@ -1220,14 +1361,18 @@ const EditAccessories = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   >
                     {taxStatusOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Stock Quantity - Optional (has default) */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Stock Quantity</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Stock Quantity
+                  </label>
                   <input
                     type="number"
                     name="stockQuantity"
@@ -1242,7 +1387,9 @@ const EditAccessories = () => {
 
               {/* Badges - Optional */}
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">Badges</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Badges
+                </label>
                 <div className="flex flex-wrap gap-4">
                   {badgesOptions.map((option) => (
                     <div key={option} className="flex items-center space-x-2">
@@ -1297,8 +1444,18 @@ const EditAccessories = () => {
                             onClick={() => removeExistingImage(index)}
                             className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
                           >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
                             </svg>
                           </button>
                         </div>
@@ -1328,8 +1485,18 @@ const EditAccessories = () => {
                         onClick={removeMainImage}
                         className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200"
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -1346,12 +1513,26 @@ const EditAccessories = () => {
                       <label htmlFor="mainImage" className="cursor-pointer">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <svg
+                              className="w-6 h-6 text-blue-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
                             </svg>
                           </div>
-                          <span className="text-sm font-medium text-gray-700">Update Main Image</span>
-                          <p className="text-xs text-gray-500">Optional - upload new main image</p>
+                          <span className="text-sm font-medium text-gray-700">
+                            Update Main Image
+                          </span>
+                          <p className="text-xs text-gray-500">
+                            Optional - upload new main image
+                          </p>
                         </div>
                       </label>
                     </div>
@@ -1389,8 +1570,18 @@ const EditAccessories = () => {
                               onClick={() => removeCoverImage(index)}
                               className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
                             >
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
                               </svg>
                             </button>
                           </div>
@@ -1413,14 +1604,30 @@ const EditAccessories = () => {
                     <label htmlFor="coverImages" className="cursor-pointer">
                       <div className="flex flex-col items-center justify-center gap-4">
                         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                          <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          <svg
+                            className="w-8 h-8 text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
                           </svg>
                         </div>
                         <div>
-                          <span className="text-lg font-medium text-gray-700">Click to add more images</span>
-                          <p className="text-sm text-gray-500 mt-2">Upload additional product gallery images</p>
-                          <p className="text-sm text-gray-500">PNG, JPG, WEBP up to 5MB each</p>
+                          <span className="text-lg font-medium text-gray-700">
+                            Click to add more images
+                          </span>
+                          <p className="text-sm text-gray-500 mt-2">
+                            Upload additional product gallery images
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            PNG, JPG, WEBP up to 5MB each
+                          </p>
                         </div>
                       </div>
                     </label>
@@ -1444,7 +1651,9 @@ const EditAccessories = () => {
               <div className="space-y-6">
                 {/* SEO Title - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">SEO Title</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    SEO Title
+                  </label>
                   <input
                     type="text"
                     name="seoTitle"
@@ -1455,13 +1664,16 @@ const EditAccessories = () => {
                     maxLength="60"
                   />
                   <p className="text-xs text-gray-500">
-                    Recommended: 50-60 characters. Current: {formData.seoTitle.length}
+                    Recommended: 50-60 characters. Current:{" "}
+                    {formData.seoTitle.length}
                   </p>
                 </div>
 
                 {/* SEO Description - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">SEO Description</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    SEO Description
+                  </label>
                   <textarea
                     name="seoDescription"
                     value={formData.seoDescription}
@@ -1472,13 +1684,16 @@ const EditAccessories = () => {
                     maxLength="160"
                   />
                   <p className="text-xs text-gray-500">
-                    Recommended: 150-160 characters. Current: {formData.seoDescription.length}
+                    Recommended: 150-160 characters. Current:{" "}
+                    {formData.seoDescription.length}
                   </p>
                 </div>
 
                 {/* SEO Keywords - Optional */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">SEO Keywords</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    SEO Keywords
+                  </label>
                   <input
                     type="text"
                     name="seoKeywords"
@@ -1487,7 +1702,9 @@ const EditAccessories = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="Comma-separated keywords (e.g., luxury accessories, fashion, gift)"
                   />
-                  <p className="text-xs text-gray-500">Separate keywords with commas</p>
+                  <p className="text-xs text-gray-500">
+                    Separate keywords with commas
+                  </p>
                 </div>
               </div>
             </div>
@@ -1496,9 +1713,17 @@ const EditAccessories = () => {
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
               <button
                 type="submit"
-                disabled={loading || !formData.brand || !formData.model || !formData.accessoryCategory}
+                disabled={
+                  loading ||
+                  !formData.brand ||
+                  !formData.model ||
+                  !formData.accessoryCategory
+                }
                 className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl ${
-                  loading || !formData.brand || !formData.model || !formData.accessoryCategory
+                  loading ||
+                  !formData.brand ||
+                  !formData.model ||
+                  !formData.accessoryCategory
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
@@ -1506,16 +1731,42 @@ const EditAccessories = () => {
                 <div className="flex items-center justify-center gap-2">
                   {loading ? (
                     <>
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="animate-spin h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Updating Accessory...
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                       Update Accessory
                     </>
