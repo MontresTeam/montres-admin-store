@@ -20,8 +20,13 @@ const AddProduct = () => {
     watchStyle: "",
     scopeOfDelivery: "",
     includedAccessories: "",
-    badges:"",
+    badges: "",
     category: "",
+    
+    // ⭐ NEW: Limited Edition Field
+    limitedEdition: false,
+    limitedEditionNumber: "",
+    limitedEditionTotal: "",
 
     // Item Features
     productionYear: "",
@@ -231,10 +236,7 @@ const AddProduct = () => {
     "Not Working / For Parts",
   ];
 
-  const Badges = [
-    "Popular", 
-    "New Arrivals"
-  ]
+  const Badges = ["Popular", "New Arrivals"];
 
   const taxStatusOptions = [
     { value: "taxable", label: "Taxable" },
@@ -334,12 +336,21 @@ const AddProduct = () => {
             ? [...prev.replacementParts, value]
             : prev.replacementParts.filter((item) => item !== value),
         }));
-      }else if(name === "badges"){
+      } else if (name === "badges") {
         setFormData((prev) => ({
           ...prev,
           badges: checked
             ? [...prev.badges, value]
             : prev.badges.filter((item) => item !== value),
+        }));
+      } else if (name === "limitedEdition") {
+        setFormData((prev) => ({
+          ...prev,
+          limitedEdition: checked,
+          ...(!checked && {
+            limitedEditionNumber: "",
+            limitedEditionTotal: "",
+          }),
         }));
       }
     } else if (name === "mainImage" && files && files.length > 0) {
@@ -430,6 +441,8 @@ const AddProduct = () => {
               "jewels",
               "strapSize",
               "caseSize",
+              "limitedEditionNumber",
+              "limitedEditionTotal",
             ].includes(key)
           ) {
             const numValue = parseFloat(value) || 0;
@@ -521,7 +534,10 @@ const AddProduct = () => {
       watchStyle: "",
       scopeOfDelivery: "",
       includedAccessories: "",
-      badges:"",
+      badges: "",
+      limitedEdition: false,
+      limitedEditionNumber: "",
+      limitedEditionTotal: "",
       productionYear: "",
       approximateYear: false,
       unknownYear: false,
@@ -571,7 +587,7 @@ const AddProduct = () => {
         {/* Header */}
         <div className="mb-8">
           <DashboardBreadcrumb text="Add new product to your store" />
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 Add New Product
@@ -587,9 +603,9 @@ const AddProduct = () => {
         {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2 text-red-700">
+            <div className="flex items-start sm:items-center gap-2 text-red-700">
               <svg
-                className="w-5 h-5"
+                className="w-5 h-5 flex-shrink-0 mt-0.5 sm:mt-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -601,15 +617,17 @@ const AddProduct = () => {
                   d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span className="font-medium">Error:</span>
-              <span>{error}</span>
+              <div className="flex-1">
+                <span className="font-medium">Error:</span>
+                <span className="ml-1">{error}</span>
+              </div>
             </div>
           </div>
         )}
 
         {/* Form Container */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <form onSubmit={handleSubmit} className="p-6 space-y-8">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-8">
             {/* Basic Information Section */}
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-4">
@@ -622,7 +640,7 @@ const AddProduct = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Brand - Required */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -633,7 +651,7 @@ const AddProduct = () => {
                     name="brand"
                     value={formData.brand}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     placeholder="Enter brand name"
                     required
                   />
@@ -649,7 +667,7 @@ const AddProduct = () => {
                     name="model"
                     value={formData.model}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     placeholder="Enter model name"
                     required
                   />
@@ -664,7 +682,7 @@ const AddProduct = () => {
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     required
                   >
                     <option value="">Select Category</option>
@@ -685,7 +703,7 @@ const AddProduct = () => {
                     name="watchType"
                     value={formData.watchType}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     required
                   >
                     <option value="">Select Watch Type</option>
@@ -707,7 +725,7 @@ const AddProduct = () => {
                     name="referenceNumber"
                     value={formData.referenceNumber}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     placeholder="Reference number"
                   />
                 </div>
@@ -722,7 +740,7 @@ const AddProduct = () => {
                     name="sku"
                     value={formData.sku}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     placeholder="Unique code"
                   />
                 </div>
@@ -737,7 +755,7 @@ const AddProduct = () => {
                     name="serialNumber"
                     value={formData.serialNumber}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     placeholder="Serial number"
                   />
                 </div>
@@ -752,7 +770,7 @@ const AddProduct = () => {
                     name="additionalTitle"
                     value={formData.additionalTitle}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     placeholder="Additional title or description"
                   />
                 </div>
@@ -766,7 +784,7 @@ const AddProduct = () => {
                     name="watchStyle"
                     value={formData.watchStyle}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     <option value="">Select Watch Style</option>
                     {watchStyles.map((style) => (
@@ -786,7 +804,7 @@ const AddProduct = () => {
                     name="scopeOfDelivery"
                     value={formData.scopeOfDelivery}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     <option value="">Select Scope of Delivery</option>
                     {scopeOfDeliveryOptions.map((option) => (
@@ -806,7 +824,7 @@ const AddProduct = () => {
                     name="includedAccessories"
                     value={formData.includedAccessories}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     <option value="">Select Included Accessories</option>
                     {includedAccessoriesOptions.map((option) => (
@@ -817,16 +835,16 @@ const AddProduct = () => {
                   </select>
                 </div>
 
-                  {/* Included Accessories - Optional */}
+                {/* Badges - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                 Badges
+                    Badges
                   </label>
                   <select
                     name="badges"
                     value={formData.badges}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     <option value="">Select Badges</option>
                     {Badges.map((option) => (
@@ -835,6 +853,37 @@ const AddProduct = () => {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                {/* ⭐ LIMITED EDITION SECTION - Added to Basic Info */}
+                <div className="lg:col-span-2 space-y-4 p-4 border border-gray-200 rounded-lg bg-gradient-to-r from-gray-50 to-white">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                      Limited Edition
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Limited Edition Checkbox */}
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        name="limitedEdition"
+                        checked={formData.limitedEdition}
+                        onChange={handleChange}
+                        className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      />
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">
+                          This is a Limited Edition item
+                        </label>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Check if this product is part of a limited production run
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -851,7 +900,7 @@ const AddProduct = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {/* Production Year - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -863,7 +912,7 @@ const AddProduct = () => {
                     value={formData.productionYear}
                     onChange={handleChange}
                     disabled={formData.unknownYear}
-                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 ${
+                    className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base ${
                       formData.unknownYear
                         ? "bg-gray-100 cursor-not-allowed"
                         : ""
@@ -913,7 +962,7 @@ const AddProduct = () => {
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     {genders.map((gender) => (
                       <option key={gender} value={gender}>
@@ -932,7 +981,7 @@ const AddProduct = () => {
                     name="movement"
                     value={formData.movement}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     <option value="">Select Movement</option>
                     {movements.map((movement) => (
@@ -952,7 +1001,7 @@ const AddProduct = () => {
                     name="dialColor"
                     value={formData.dialColor}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     <option value="">Select Dial Color</option>
                     {colors.map((color) => (
@@ -972,7 +1021,7 @@ const AddProduct = () => {
                     name="caseMaterial"
                     value={formData.caseMaterial}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     <option value="">Select Case Material</option>
                     {materials.map((material) => (
@@ -992,7 +1041,7 @@ const AddProduct = () => {
                     name="strapMaterial"
                     value={formData.strapMaterial}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     <option value="">Select Strap Material</option>
                     {strapMaterials.map((material) => (
@@ -1017,7 +1066,7 @@ const AddProduct = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {/* Strap Information */}
                 <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
                   <h3 className="text-sm font-semibold text-gray-900">
@@ -1032,7 +1081,7 @@ const AddProduct = () => {
                       name="strapColor"
                       value={formData.strapColor}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     >
                       <option value="">Select Color</option>
                       {colors.map((color) => (
@@ -1052,7 +1101,7 @@ const AddProduct = () => {
                       name="strapSize"
                       value={formData.strapSize}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                       placeholder="e.g., 20"
                       min="0"
                       step="0.1"
@@ -1075,7 +1124,7 @@ const AddProduct = () => {
                       name="caseSize"
                       value={formData.caseSize}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                       placeholder="e.g., 42"
                       min="0"
                       step="0.1"
@@ -1090,7 +1139,7 @@ const AddProduct = () => {
                       name="caseColor"
                       value={formData.caseColor}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     >
                       <option value="">Select Color</option>
                       {colors.map((color) => (
@@ -1109,7 +1158,7 @@ const AddProduct = () => {
                       name="crystal"
                       value={formData.crystal}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     >
                       <option value="">Select Crystal</option>
                       {crystals.map((crystal) => (
@@ -1128,7 +1177,7 @@ const AddProduct = () => {
                       name="bezelMaterial"
                       value={formData.bezelMaterial}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     >
                       <option value="">Select Material</option>
                       {bezelMaterials.map((material) => (
@@ -1147,7 +1196,7 @@ const AddProduct = () => {
                       name="dialNumerals"
                       value={formData.dialNumerals}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                     >
                       <option value="">Select Dial Numerals</option>
                       {DIALNUMERALS.map((numeral) => (
@@ -1174,7 +1223,7 @@ const AddProduct = () => {
                       name="caliber"
                       value={formData.caliber}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                       placeholder="e.g., ETA 2824-2"
                     />
                   </div>
@@ -1188,7 +1237,7 @@ const AddProduct = () => {
                       name="powerReserve"
                       value={formData.powerReserve}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                       placeholder="e.g., 48"
                       min="0"
                     />
@@ -1203,7 +1252,7 @@ const AddProduct = () => {
                       name="jewels"
                       value={formData.jewels}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                       placeholder="e.g., 25"
                       min="0"
                     />
@@ -1224,7 +1273,7 @@ const AddProduct = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {Object.entries(functionCategories).map(
                   ([category, functions]) => (
                     <div key={category} className="space-y-3">
@@ -1269,7 +1318,7 @@ const AddProduct = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Condition - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -1279,7 +1328,7 @@ const AddProduct = () => {
                     name="condition"
                     value={formData.condition}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     <option value="">Select Condition</option>
                     {conditions.map((condition) => (
@@ -1299,7 +1348,7 @@ const AddProduct = () => {
                     name="itemCondition"
                     value={formData.itemCondition}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     <option value="">Select Item Condition</option>
                     {itemConditions.map((condition) => (
@@ -1320,7 +1369,7 @@ const AddProduct = () => {
                     customized. Replacement parts cannot bear any original
                     manufacturer trademarks or logos.
                   </p>
-                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-gray-200 rounded-lg">
                     {replacementParts.map((part) => (
                       <div key={part} className="flex items-center space-x-2">
                         <input
@@ -1351,7 +1400,7 @@ const AddProduct = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {/* Regular Price - Optional */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -1372,7 +1421,7 @@ const AddProduct = () => {
                       name="regularPrice"
                       value={formData.regularPrice}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                      className="w-full pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                       placeholder="0.00"
                       min="0"
                       step="0.01"
@@ -1401,7 +1450,7 @@ const AddProduct = () => {
                       name="salePrice"
                       value={formData.salePrice}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                      className="w-full pl-10 pr-3 sm:pr-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                       placeholder="0.00"
                       min="0"
                       step="0.01"
@@ -1418,7 +1467,7 @@ const AddProduct = () => {
                     name="taxStatus"
                     value={formData.taxStatus}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                   >
                     {taxStatusOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -1438,7 +1487,7 @@ const AddProduct = () => {
                     name="stockQuantity"
                     value={formData.stockQuantity}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     placeholder="0"
                     min="0"
                   />
@@ -1467,7 +1516,7 @@ const AddProduct = () => {
                   </label>
                   {mainImagePreview ? (
                     <div className="relative inline-block">
-                      <div className="w-48 h-48 rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
+                      <div className="w-32 h-32 sm:w-48 sm:h-48 rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
                         <Image
                           src={mainImagePreview}
                           alt="Main product image"
@@ -1498,7 +1547,7 @@ const AddProduct = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200 max-w-md">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-400 transition-colors duration-200 max-w-md">
                       <input
                         type="file"
                         name="mainImage"
@@ -1509,9 +1558,9 @@ const AddProduct = () => {
                       />
                       <label htmlFor="mainImage" className="cursor-pointer">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg
-                              className="w-6 h-6 text-blue-600"
+                              className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -1524,7 +1573,7 @@ const AddProduct = () => {
                               />
                             </svg>
                           </div>
-                          <span className="text-sm font-medium text-gray-700">
+                          <span className="text-sm sm:text-base font-medium text-gray-700">
                             Upload Main Image
                           </span>
                           <p className="text-xs text-gray-500">
@@ -1545,7 +1594,7 @@ const AddProduct = () => {
                   {/* Cover Image Previews */}
                   {coverImagePreviews.length > 0 && (
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <p className="text-sm text-gray-600">
                           {coverImagePreviews.length} images selected (min: 5,
                           max: 10)
@@ -1557,7 +1606,7 @@ const AddProduct = () => {
                           </p>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                         {coverImagePreviews.map((preview, index) => (
                           <div key={index} className="relative group">
                             <div className="aspect-square rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
@@ -1596,7 +1645,7 @@ const AddProduct = () => {
                   )}
 
                   {/* Cover Images File Upload */}
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-blue-400 transition-colors duration-200">
                     <input
                       type="file"
                       name="coverImages"
@@ -1607,10 +1656,10 @@ const AddProduct = () => {
                       accept="image/*"
                     />
                     <label htmlFor="coverImages" className="cursor-pointer">
-                      <div className="flex flex-col items-center justify-center gap-4">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                      <div className="flex flex-col items-center justify-center gap-3 sm:gap-4">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center">
                           <svg
-                            className="w-8 h-8 text-blue-600"
+                            className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -1624,16 +1673,16 @@ const AddProduct = () => {
                           </svg>
                         </div>
                         <div>
-                          <span className="text-lg font-medium text-gray-700">
+                          <span className="text-base sm:text-lg font-medium text-gray-700">
                             Click to upload additional images
                           </span>
-                          <p className="text-sm text-gray-500 mt-2">
+                          <p className="text-xs sm:text-sm text-gray-500 mt-2">
                             Upload 5-10 product gallery images
                           </p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-xs sm:text-sm text-gray-500">
                             PNG, JPG, WEBP up to 5MB each
                           </p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-xs sm:text-sm text-gray-500">
                             Multiple files allowed (5-10 required)
                           </p>
                         </div>
@@ -1684,7 +1733,7 @@ const AddProduct = () => {
                     name="seoTitle"
                     value={formData.seoTitle}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     placeholder="SEO title for search engines"
                     maxLength="60"
                   />
@@ -1703,7 +1752,7 @@ const AddProduct = () => {
                     name="seoDescription"
                     value={formData.seoDescription}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none text-sm sm:text-base"
                     placeholder="SEO description for search engines"
                     rows="3"
                     maxLength="160"
@@ -1724,7 +1773,7 @@ const AddProduct = () => {
                     name="seoKeywords"
                     value={formData.seoKeywords}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-sm sm:text-base"
                     placeholder="Comma-separated keywords (e.g., luxury watch, automatic, men's watch)"
                   />
                   <p className="text-xs text-gray-500">
@@ -1756,7 +1805,7 @@ const AddProduct = () => {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none text-sm sm:text-base"
                     placeholder="Detailed product description..."
                     rows={6}
                   />
@@ -1765,13 +1814,13 @@ const AddProduct = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-6 border-t border-gray-200">
               <button
                 type="submit"
                 disabled={
                   loading || coverImages.length < 5 || coverImages.length > 10
                 }
-                className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl ${
+                className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 sm:py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl ${
                   loading || coverImages.length < 5 || coverImages.length > 10
                     ? "opacity-50 cursor-not-allowed"
                     : ""
@@ -1800,7 +1849,9 @@ const AddProduct = () => {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      Adding Product...
+                      <span className="text-sm sm:text-base">
+                        Adding Product...
+                      </span>
                     </>
                   ) : (
                     <>
@@ -1817,7 +1868,9 @@ const AddProduct = () => {
                           d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                         />
                       </svg>
-                      Add New Product
+                      <span className="text-sm sm:text-base">
+                        Add New Product
+                      </span>
                     </>
                   )}
                 </div>
@@ -1826,7 +1879,7 @@ const AddProduct = () => {
                 type="button"
                 onClick={handleCancel}
                 disabled={loading}
-                className={`px-6 py-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200 ${
+                className={`px-6 py-3 sm:py-4 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200 text-sm sm:text-base ${
                   loading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >

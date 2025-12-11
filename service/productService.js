@@ -1,4 +1,5 @@
 import api from "@/api/axiosIntespter";
+import axios from "axios";
 
 // ✅ Fetch Products
 export async function fetchProduct({
@@ -42,10 +43,27 @@ export async function fetchProduct({
     return { data: null, error, isLoading: false };
   }
 }
+// ✅ Fetch Inventory
+export async function fetchInventory({ id } = {}) {
+  try {
+    let endpoint = `/invontry/${id}`; // Add /api/ prefix if using Next.js API routes
+    const params = new URLSearchParams();
 
+    if (id) {
+      params.append("id", id);  
+    }
 
+    const url = `${endpoint}${params.toString() ? `?${params.toString()}` : ""}`;
+    const response = await api.get(url);
 
-// ✅ Add Product
+    // Return the data directly or as array
+    return response.data;
+  } catch (error) {
+    console.error("❌ fetchInventory Error:", error);
+    throw error; // Re-throw to handle in component
+  }
+}
+
 
 export async function addProduct(formData) {
   try {

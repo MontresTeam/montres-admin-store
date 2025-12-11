@@ -31,9 +31,7 @@ const Page = () => {
     setChecked(true); // check complete
   }, [router]);
 
-  // Prevent page from rendering until check is done
-  if (!checked) return null;
-  if (!isAllowed) return null;
+
 
   const categoryOptions = [
     "Writing Instruments",
