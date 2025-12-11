@@ -8,7 +8,10 @@ import {
 } from "@heroicons/react/24/outline";
 import newCurrency from "../../../../../public/assets/newSymbole.png";
 import { useRouter, useParams } from "next/navigation";
-import { fetchInventory, updateInventory } from '../../../../../service/productService.js';
+import { fetchInventory } from '../../../../../service/productService.js';
+import Toastify from "toastify-js";
+import "toastify-js/src/toastify.css";
+import axios from "axios";
 
 const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
   const router = useRouter();
@@ -30,17 +33,54 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
     cost: 0,
     sellingPrice: 0,
     soldPrice: 0,
-    paymentMethod: "",
+    paymentMethod: "cash",
     receivingAmount: 0,
-    notes: "",
   });
 
-  // Brand list (keep your existing brand list)
+  // Brand list
   const brandList = [
-    "Aigner",
-    "Akribos Xxiv",
-    // ... rest of your brands
+    "Aigner", "Akribos Xxiv", "Apogsum", "AquaMarin", "Aquaswiss", "Armin Strom",
+    "Audemars Piguet", "Balenciaga", "Ball", "Bernhard H. Mayer", "Bertolucci",
+    "Blancpain", "Borja", "Boss By Hugo Boss", "Boucheron", "Breguet",
+    "Carl F. Bucherer", "Cartier", "Celine", "Chanel", "Charriol", "Chaumet",
+    "Chopard", "Chronoswiss", "Citizen", "Concord", "Corum", "CT Scuderia",
+    "De Grisogno", "Dior", "Dolce & Gabbana", "Dubey & Schaldenbrand", "Ebel",
+    "Edox", "Elini", "Emporio Armani", "Erhard Junghans", "Favre Leuba", "Fendi",
+    "Ferre Milano", "Franck Muller", "Frederique Constant", "Gerald Genta",
+    "Gianfranco Ferre", "Giorgio Armani", "Girard Perregaux", "Giuseppe Zanotti",
+    "Givenchy", "Glam Rock", "Goyard", "Graham", "Grimoldi Milano", "Gucci",
+    "Harry Winston", "Hermes", "Hublot", "Hysek", "Jacob & Co.", "Jacques Lemans",
+    "Jaeger LeCoultre", "Jean Marcel", "JeanRichard", "Jorg Hysek", "Joseph",
+    "Junghans", "Just Cavalli", "Karl Lagerfeld", "KC", "Korloff", "Lancaster",
+    "Locman", "Longines", "Louis Frard", "Louis Moine", "Louis Vuitton",
+    "Marc by Marc Jacobs", "Marc Jacobs", "Martin Braun", "Mauboussin",
+    "Maurice Lacroix", "Meyers", "Michael Kors", "MICHAEL Michael Kors", "Mido",
+    "Montblanc", "Montega", "Montegrappa", "Movado", "Navitec", "NB Yaeger",
+    "Nina Ricci", "Nubeo", "Officina Del Tempo", "Omega", "Oris", "Panerai",
+    "Parmigiani", "Patek Philippe", "Paul Picot", "Perrelet", "Philip Stein",
+    "Piaget", "Pierre Balmain", "Porsche Design", "Prada", "Quinting", "Rado",
+    "Rolex", "Rama Swiss Watch", "Raymond Weil", "Richard Mille", "Robergé",
+    "Roberto Cavalli", "Rochas", "Roger Dubuis", "S.T. Dupont", "Saint Laurent Paris",
+    "Salvatore Ferragamo", "Seiko", "Swarovski", "Swatch", "Tag Heuer", "Techno Com",
+    "Technomarine", "Tiffany & Co.", "Tissot", "Tonino Lamborghini", "Trussardi",
+    "Tudor", "Vacheron Constantin", "Valentino", "Van Cleef & Arpels", "Versace",
+    "Yves Saint Laurent", "Zenith", "Ingersoll", "IWC", "U-Boat", "Ulysse Nardin"
   ];
+
+  // Show Toastify notification
+  const showToast = (message, type = "success") => {
+    Toastify({
+      text: message,
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: type === "success" ? "#10B981" : 
+                      type === "error" ? "#EF4444" : 
+                      type === "warning" ? "#F59E0B" : "#3B82F6",
+      stopOnFocus: true,
+      className: "toastify-custom",
+    }).showToast();
+  };
 
   useEffect(() => {
     if (itemId) {
@@ -48,55 +88,9 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
     } else {
       setLoading(false);
       setErrors({ fetch: "No item ID provided" });
+      showToast("No item ID provided", "error");
     }
   }, [itemId]);
-
-  const splitBrandAndProductName = (combinedString) => {
-    if (!combinedString) return { brand: "", productName: "" };
-    
-    for (const brand of brandList) {
-      if (combinedString.toLowerCase().startsWith(brand.toLowerCase())) {
-        const brandMatch = combinedString.substring(0, brand.length);
-        const productName = combinedString.substring(brand.length).trim();
-        
-        const exactBrand = brandList.find(b => 
-          b.toLowerCase() === brandMatch.toLowerCase()
-        );
-        
-        return {
-          brand: exactBrand || brandMatch,
-          productName: productName || ""
-        };
-      }
-    }
-    
-    const words = combinedString.trim().split(" ");
-    if (words.length > 1) {
-      const firstWord = words[0];
-      const restOfString = words.slice(1).join(" ");
-      
-      const foundBrand = brandList.find(b => 
-        b.toLowerCase() === firstWord.toLowerCase()
-      );
-      
-      if (foundBrand) {
-        return {
-          brand: foundBrand,
-          productName: restOfString
-        };
-      }
-      
-      return {
-        brand: "other",
-        productName: combinedString
-      };
-    }
-    
-    return {
-      brand: "",
-      productName: combinedString
-    };
-  };
 
   const fetchItem = async () => {
     try {
@@ -107,12 +101,8 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
         throw new Error("No item ID provided");
       }
       
-      console.log("Fetching item with ID:", itemId);
-      
       // Fetch single item by ID
       const result = await fetchInventory({ id: itemId });
-      
-      console.log("Fetch result:", result);
       
       let itemData = result;
       
@@ -129,32 +119,28 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
         itemData = itemData[0];
       }
       
-      console.log("Fetched item data:", itemData);
-      
       setItem(itemData);
       
-      // Split brand and product name
-      const { brand, productName } = splitBrandAndProductName(itemData.brand || "");
-      
-      // Initialize form data with fetched data
+      // Directly use the data from backend
       setFormData({
-        brand: brand || "",
-        productName: productName || "",
+        brand: itemData.brand || "",
+        productName: itemData.productName || "",
         internalCode: itemData.internalCode || "",
         quantity: itemData.quantity || 0,
         status: itemData.status || "AVAILABLE",
         cost: itemData.cost || 0,
         sellingPrice: itemData.sellingPrice || 0,
         soldPrice: itemData.soldPrice || 0,
-        paymentMethod: itemData.paymentMethod || "",
+        paymentMethod: itemData.paymentMethod || "cash",
         receivingAmount: itemData.receivingAmount || 0,
-        notes: itemData.notes || "",
       });
+      
+      showToast("Item loaded successfully", "success");
     } catch (error) {
       console.error("Error fetching item:", error);
-      setErrors({ 
-        fetch: error.response?.data?.message || error.message || "Failed to load item. Please try again." 
-      });
+      const errorMessage = error.response?.data?.message || error.message || "Failed to load item. Please try again.";
+      setErrors({ fetch: errorMessage });
+      showToast(errorMessage, "error");
     } finally {
       setLoading(false);
     }
@@ -163,7 +149,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.brand.trim() && formData.brand !== "other") {
+    if (!formData.brand.trim()) {
       newErrors.brand = "Brand is required";
     }
     
@@ -193,6 +179,11 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
     }
 
     setErrors(newErrors);
+    
+    if (Object.keys(newErrors).length > 0) {
+      showToast("Please fix validation errors before saving", "warning");
+    }
+    
     return Object.keys(newErrors).length === 0;
   };
 
@@ -221,26 +212,19 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
     const newStatus = e.target.value;
     setFormData(prev => ({
       ...prev,
-      status: newStatus
+      status: newStatus,
+      soldPrice: newStatus === "AVAILABLE" ? 0 : prev.soldPrice,
+      receivingAmount: newStatus === "AVAILABLE" ? 0 : prev.receivingAmount,
     }));
-
-    if (newStatus === "AVAILABLE") {
-      setFormData(prev => ({
-        ...prev,
-        soldPrice: 0,
-        paymentMethod: "",
-        receivingAmount: 0,
-      }));
-    }
   };
 
   const clearSaleInformation = () => {
     setFormData(prev => ({
       ...prev,
       soldPrice: 0,
-      paymentMethod: "",
       receivingAmount: 0,
     }));
+    showToast("Sale information cleared", "info");
   };
 
   const handleSubmit = async (e) => {
@@ -253,56 +237,70 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
       return;
     }
 
-    // Combine brand and product name for API
-    let combinedBrand = "";
-    if (formData.brand === "other") {
-      combinedBrand = formData.productName;
-    } else if (formData.brand) {
-      combinedBrand = `${formData.brand} ${formData.productName}`.trim();
-    } else {
-      combinedBrand = formData.productName;
-    }
-
-    // Prepare data for submission
+    // Prepare data for submission - match backend schema exactly
     const dataToSubmit = {
-      brand: combinedBrand,
+      brand: formData.brand,
+      productName: formData.productName,
       internalCode: formData.internalCode,
-      quantity: formData.quantity,
+      quantity: Number(formData.quantity),
       status: formData.status,
-      cost: formData.cost,
-      sellingPrice: formData.sellingPrice,
-      notes: formData.notes,
+      cost: Number(formData.cost),
+      sellingPrice: Number(formData.sellingPrice),
+      paymentMethod: formData.paymentMethod,
     };
 
     // Only include sale-related fields if status is SOLD or AUCTION
     if (formData.status === "SOLD" || formData.status === "AUCTION") {
-      dataToSubmit.soldPrice = formData.soldPrice;
-      dataToSubmit.paymentMethod = formData.paymentMethod;
-      dataToSubmit.receivingAmount = formData.receivingAmount;
+      dataToSubmit.soldPrice = Number(formData.soldPrice);
+      dataToSubmit.receivingAmount = Number(formData.receivingAmount);
     } else {
+      // Clear sale-related fields when status is AVAILABLE
       dataToSubmit.soldPrice = 0;
-      dataToSubmit.paymentMethod = "";
       dataToSubmit.receivingAmount = 0;
     }
 
     setSaving(true);
     try {
-      console.log("Submitting data for ID:", itemId, "Data:", dataToSubmit);
+      console.log("Submitting data:", dataToSubmit);
       
-      const response = await updateInventory(itemId, dataToSubmit);
+      const response = await axios.put(`https://api.montres.ae/api/invontry/updated/${itemId}`, dataToSubmit, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
       
       console.log("Update successful:", response);
       
+      showToast("Item updated successfully!", "success");
+      
       if (onSave) {
-        onSave(response);
+        onSave(response.data);
       } else {
-        router.push("/InventoryStock");
+        setTimeout(() => {
+          router.push("/InventoryStock");
+        }, 1500);
       }
     } catch (error) {
       console.error("Error updating item:", error);
-      setErrors({ 
-        submit: error.response?.data?.message || error.message || "Failed to update item. Please try again." 
-      });
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Failed to update item. Please try again.";
+      
+      // Handle specific validation errors
+      if (errorMessage.includes('not a valid enum value')) {
+        if (errorMessage.includes('brand')) {
+          setErrors({ 
+            brand: `"${formData.brand}" is not a valid brand. Please select from the list.` 
+          });
+          showToast("Please select a valid brand from the list", "error");
+        } else if (errorMessage.includes('paymentMethod')) {
+          setErrors({ 
+            paymentMethod: `"${formData.paymentMethod}" is not a valid payment method. Please select from the list.` 
+          });
+          showToast("Please select a valid payment method", "error");
+        }
+      } else {
+        setErrors({ submit: errorMessage });
+        showToast(errorMessage, "error");
+      }
     } finally {
       setSaving(false);
     }
@@ -320,16 +318,6 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
   const handleBackToInventory = () => {
     router.push("/InventoryStock");
   };
-
-  const FormSection = ({ title, children, icon }) => (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-        {icon}
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-      </div>
-      {children}
-    </div>
-  );
 
   // Loading state
   if (loading) {
@@ -354,7 +342,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
           </div>
           <button
             onClick={handleBackToInventory}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Back to Inventory
           </button>
@@ -376,7 +364,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
           </div>
           <button
             onClick={handleBackToInventory}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Back to Inventory
           </button>
@@ -393,6 +381,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={handleBackToInventory}
                 className="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
                 disabled={saving}
@@ -406,7 +395,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                 <p className="text-gray-600 text-sm md:text-base mt-1">
                   Update product information for{" "}
                   <span className="font-semibold text-blue-600">
-                    {item?.brand ? item.brand.split(' ')[0] : "Item"}
+                    {item?.brand || "Item"}
                   </span>
                 </p>
               </div>
@@ -423,6 +412,14 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
           {/* Item Summary Card */}
           <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 uppercase font-medium">
+                  Brand
+                </div>
+                <div className="text-lg font-semibold text-gray-900">
+                  {item?.brand || "N/A"}
+                </div>
+              </div>
               <div className="space-y-1">
                 <div className="text-xs text-gray-500 uppercase font-medium">
                   Product Code
@@ -463,30 +460,14 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                   {item?.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : "Unknown"}
                 </div>
               </div>
-              <div className="space-y-1">
-                <div className="text-xs text-gray-500 uppercase font-medium">
-                  Last Updated
-                </div>
-                <div className="text-sm font-medium text-gray-900">
-                  {item?.updatedAt
-                    ? new Date(item.updatedAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "N/A"}
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Main Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit}>
           {errors.submit && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
               {errors.submit}
             </div>
           )}
@@ -494,9 +475,15 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
             {/* Left Column - Product Details */}
             <div className="space-y-6 md:space-y-8">
-              <FormSection title="Product Information">
+              {/* Product Information Section */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                  <InformationCircleIcon className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Product Information</h3>
+                </div>
+                
                 <div className="space-y-4">
-                  <div className="mb-4">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Brand <span className="text-red-500">*</span>
                     </label>
@@ -516,13 +503,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                           {brand}
                         </option>
                       ))}
-                      <option value="other">Other</option>
                     </select>
-                    {formData.brand === "other" && (
-                      <p className="mt-2 text-sm text-amber-600">
-                        Please specify the brand name in the product name field.
-                      </p>
-                    )}
                     {errors.brand && (
                       <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
                         <InformationCircleIcon className="w-4 h-4" />
@@ -531,7 +512,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                     )}
                   </div>
 
-                  <div className="mb-4">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Product Name <span className="text-red-500">*</span>
                     </label>
@@ -556,7 +537,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="mb-4">
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Internal Code
                       </label>
@@ -570,7 +551,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                       />
                     </div>
 
-                    <div className="mb-4">
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Quantity <span className="text-red-500">*</span>
                       </label>
@@ -596,19 +577,22 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                     </div>
                   </div>
                 </div>
-              </FormSection>
+              </div>
 
-              <FormSection title="Pricing Details">
+              {/* Pricing Details Section */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                  <InformationCircleIcon className="w-5 h-5 text-green-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Pricing Details</h3>
+                </div>
+                
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="mb-4">
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Cost Price <span className="text-red-500">*</span>
+                        Cost Price
                       </label>
                       <div className="relative">
-                        <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                          {formatCurrency(formData.cost)}
-                        </div>
                         <input
                           type="number"
                           name="cost"
@@ -616,7 +600,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                           onChange={handleChange}
                           step="0.01"
                           min="0"
-                          className={`w-full px-4 py-3 pl-20 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                             errors.cost
                               ? "border-red-300 bg-red-50"
                               : "border-gray-300"
@@ -631,14 +615,11 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                       )}
                     </div>
 
-                    <div className="mb-4">
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Selling Price <span className="text-red-500">*</span>
+                        Selling Price
                       </label>
                       <div className="relative">
-                        <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                          {formatCurrency(formData.sellingPrice)}
-                        </div>
                         <input
                           type="number"
                           name="sellingPrice"
@@ -646,7 +627,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                           onChange={handleChange}
                           step="0.01"
                           min="0"
-                          className={`w-full px-4 py-3 pl-20 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                             errors.sellingPrice
                               ? "border-red-300 bg-red-50"
                               : "border-gray-300"
@@ -661,43 +642,21 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                       )}
                     </div>
                   </div>
-
-                  {formData.cost > 0 && formData.sellingPrice > 0 && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">
-                          Expected Profit:
-                        </span>
-                        <span
-                          className={`text-sm font-semibold ${
-                            formData.sellingPrice - formData.cost >= 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {formatCurrency(formData.sellingPrice - formData.cost)}
-                          <span className="ml-2 text-xs">
-                            (
-                            {(
-                              ((formData.sellingPrice - formData.cost) /
-                                formData.cost) *
-                              100
-                            ).toFixed(1)}
-                            %)
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </FormSection>
+              </div>
             </div>
 
             {/* Right Column - Status & Additional Info */}
             <div className="space-y-6 md:space-y-8">
-              <FormSection title="Item Status & Sales">
+              {/* Item Status & Sales Section */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                  <InformationCircleIcon className="w-5 h-5 text-purple-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Item Status & Sales</h3>
+                </div>
+                
                 <div className="space-y-4">
-                  <div className="mb-4">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Current Status
                     </label>
@@ -710,6 +669,26 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                       <option value="AVAILABLE">🟢 Available</option>
                       <option value="SOLD">🟡 Sold</option>
                       <option value="AUCTION">🟣 Auction</option>
+                    </select>
+                  </div>
+
+                  {/* Payment Method */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Payment Method
+                    </label>
+                    <select
+                      name="paymentMethod"
+                      value={formData.paymentMethod}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="cash">💵 Cash</option>
+                      <option value="stripe">💳 Stripe</option>
+                      <option value="tabby">🏦 Tabby</option>
+                      <option value="chrono">⌚ Chrono</option>
+                      <option value="bank_transfer">🏛️ Bank Transfer</option>
+                      <option value="other">📄 Other</option>
                     </select>
                   </div>
 
@@ -729,14 +708,11 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                         </button>
                       </div>
 
-                      <div className="mb-4">
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Sold Price
                         </label>
                         <div className="relative">
-                          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                            {formatCurrency(formData.soldPrice)}
-                          </div>
                           <input
                             type="number"
                             name="soldPrice"
@@ -744,7 +720,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                             onChange={handleChange}
                             step="0.01"
                             min="0"
-                            className={`w-full px-4 py-3 pl-20 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                               errors.soldPrice
                                 ? "border-red-300 bg-red-50"
                                 : "border-gray-300"
@@ -759,35 +735,11 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                         )}
                       </div>
 
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Payment Method
-                        </label>
-                        <select
-                          name="paymentMethod"
-                          value={formData.paymentMethod}
-                          onChange={handleChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          <option value="">Select payment method</option>
-                          <option value="cash">💵 Cash</option>
-                          <option value="stripe">💳 Stripe</option>
-                          <option value="tabby">🏦 Tabby</option>
-                          <option value="chrono">⌚ Chrono</option>
-                          <option value="mamo">📱 Mamo Pay</option>
-                          <option value="bank_transfer">🏛️ Bank Transfer</option>
-                          <option value="other">📄 Other</option>
-                        </select>
-                      </div>
-
-                      <div className="mb-4">
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Amount Received
                         </label>
                         <div className="relative">
-                          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                            {formatCurrency(formData.receivingAmount)}
-                          </div>
                           <input
                             type="number"
                             name="receivingAmount"
@@ -795,7 +747,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                             onChange={handleChange}
                             step="0.01"
                             min="0"
-                            className={`w-full px-4 py-3 pl-20 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                               errors.receivingAmount
                                 ? "border-red-300 bg-red-50"
                                 : "border-gray-300"
@@ -809,68 +761,10 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                           </p>
                         )}
                       </div>
-
-                      {formData.soldPrice > 0 && formData.receivingAmount > 0 && (
-                        <div className="p-3 bg-white rounded border border-amber-100">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-amber-700">
-                              Pending Amount:
-                            </span>
-                            <span
-                              className={`font-semibold ${
-                                formData.soldPrice - formData.receivingAmount === 0
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }`}
-                            >
-                              {formatCurrency(formData.soldPrice - formData.receivingAmount)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
-              </FormSection>
-
-              <FormSection title="Additional Information">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Notes & Comments
-                    </label>
-                    <textarea
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleChange}
-                      rows="5"
-                      maxLength="500"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Add any additional notes, product condition, special instructions, or comments..."
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Character count: {formData.notes.length}/500
-                    </p>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="text-sm text-gray-500 space-y-1">
-                      <div>
-                        Created:{" "}
-                        {item?.createdAt
-                          ? new Date(item.createdAt).toLocaleDateString()
-                          : "N/A"}
-                      </div>
-                      <div>
-                        Last modified:{" "}
-                        {item?.updatedAt
-                          ? new Date(item.updatedAt).toLocaleDateString()
-                          : "N/A"}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </FormSection>
+              </div>
             </div>
           </div>
 
@@ -880,9 +774,6 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
               <div className="text-sm text-gray-600">
                 <p>
                   Make sure all required fields (*) are completed before saving.
-                </p>
-                <p className="text-xs mt-1">
-                  All changes will be saved to the database immediately.
                 </p>
               </div>
 
@@ -943,6 +834,17 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
           </div>
         </form>
       </div>
+
+      {/* Add custom styles for Toastify */}
+      <style jsx global>{`
+        .toastify-custom {
+          font-family: system-ui, -apple-system, sans-serif;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          padding: 12px 20px;
+          font-weight: 500;
+        }
+      `}</style>
     </div>
   );
 };

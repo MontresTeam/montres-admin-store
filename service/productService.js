@@ -1,4 +1,5 @@
 import api from "@/api/axiosIntespter";
+import axios from "axios";
 
 // ✅ Fetch Products
 export async function fetchProduct({
@@ -63,18 +64,6 @@ export async function fetchInventory({ id } = {}) {
   }
 }
 
-// ✅ Update Inventory
-export async function updateInventory(id, data) {
-  try {
-    const response = await api.put(`/api/inventory/${id}`, data);
-    return response.data;
-  } catch (error) {
-    console.error("❌ updateInventory Error:", error);
-    throw error;
-  }
-}
-
-// ✅ Add Product
 
 export async function addProduct(formData) {
   try {
