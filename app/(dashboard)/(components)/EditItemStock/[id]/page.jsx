@@ -5,10 +5,16 @@ import {
   CheckIcon,
   ArrowPathIcon,
   InformationCircleIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon,
+  ClockIcon,
+  UserCircleIcon,
+  DevicePhoneMobileIcon,
+  ComputerDesktopIcon,
 } from "@heroicons/react/24/outline";
 import newCurrency from "../../../../../public/assets/newSymbole.png";
 import { useRouter, useParams } from "next/navigation";
-import { fetchInventory } from '../../../../../service/productService.js';
+import { fetchInventory } from "../../../../../service/productService.js";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
 import axios from "axios";
@@ -20,10 +26,15 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
-  
+  const [brandSearch, setBrandSearch] = useState("");
+  const [showBrandDropdown, setShowBrandDropdown] = useState(false);
+  const [currentAdmin, setCurrentAdmin] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
   // Get item ID from props or URL params
   const itemId = propItemId || params.id;
-  
+
+  // Initialize form data
   const [formData, setFormData] = useState({
     brand: "",
     productName: "",
@@ -35,37 +46,83 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
     soldPrice: 0,
     paymentMethod: "cash",
     receivingAmount: 0,
+    lastEditedBy: "",
+    lastEditedAt: "",
   });
 
   // Brand list
   const brandList = [
-    "Aigner", "Akribos Xxiv", "Apogsum", "AquaMarin", "Aquaswiss", "Armin Strom",
-    "Audemars Piguet", "Balenciaga", "Ball", "Bernhard H. Mayer", "Bertolucci",
-    "Blancpain", "Borja", "Boss By Hugo Boss", "Boucheron", "Breguet",
-    "Carl F. Bucherer", "Cartier", "Celine", "Chanel", "Charriol", "Chaumet",
-    "Chopard", "Chronoswiss", "Citizen", "Concord", "Corum", "CT Scuderia",
-    "De Grisogno", "Dior", "Dolce & Gabbana", "Dubey & Schaldenbrand", "Ebel",
-    "Edox", "Elini", "Emporio Armani", "Erhard Junghans", "Favre Leuba", "Fendi",
-    "Ferre Milano", "Franck Muller", "Frederique Constant", "Gerald Genta",
-    "Gianfranco Ferre", "Giorgio Armani", "Girard Perregaux", "Giuseppe Zanotti",
-    "Givenchy", "Glam Rock", "Goyard", "Graham", "Grimoldi Milano", "Gucci",
-    "Harry Winston", "Hermes", "Hublot", "Hysek", "Jacob & Co.", "Jacques Lemans",
-    "Jaeger LeCoultre", "Jean Marcel", "JeanRichard", "Jorg Hysek", "Joseph",
-    "Junghans", "Just Cavalli", "Karl Lagerfeld", "KC", "Korloff", "Lancaster",
-    "Locman", "Longines", "Louis Frard", "Louis Moine", "Louis Vuitton",
-    "Marc by Marc Jacobs", "Marc Jacobs", "Martin Braun", "Mauboussin",
-    "Maurice Lacroix", "Meyers", "Michael Kors", "MICHAEL Michael Kors", "Mido",
-    "Montblanc", "Montega", "Montegrappa", "Movado", "Navitec", "NB Yaeger",
-    "Nina Ricci", "Nubeo", "Officina Del Tempo", "Omega", "Oris", "Panerai",
-    "Parmigiani", "Patek Philippe", "Paul Picot", "Perrelet", "Philip Stein",
-    "Piaget", "Pierre Balmain", "Porsche Design", "Prada", "Quinting", "Rado",
-    "Rolex", "Rama Swiss Watch", "Raymond Weil", "Richard Mille", "Robergé",
-    "Roberto Cavalli", "Rochas", "Roger Dubuis", "S.T. Dupont", "Saint Laurent Paris",
-    "Salvatore Ferragamo", "Seiko", "Swarovski", "Swatch", "Tag Heuer", "Techno Com",
-    "Technomarine", "Tiffany & Co.", "Tissot", "Tonino Lamborghini", "Trussardi",
-    "Tudor", "Vacheron Constantin", "Valentino", "Van Cleef & Arpels", "Versace",
-    "Yves Saint Laurent", "Zenith", "Ingersoll", "IWC", "U-Boat", "Ulysse Nardin"
+    "Aigner", "Akribos Xxiv", "Alfred Dunhill", "Alviero Martini", "Apogsum",
+    "AquaMarin", "Aquaswiss", "Armin Strom", "Audemars Piguet", "Balenciaga",
+    "Ball", "Bernhard H. Mayer", "Bertolucci", "Blancpain", "Borja",
+    "Boss By Hugo Boss", "Boucheron", "Breitling", "Breguet", "Burberry",
+    "Bvlgari", "Carl F. Bucherer", "Cartier", "Celine", "Chanel",
+    "Charriol", "Chaumet", "Chopard", "Chronoswiss", "Citizen",
+    "Concord", "Corum", "CT Scuderia", "De Grisogno", "Dior",
+    "Dolce & Gabbana", "Dubey & Schaldenbrand", "Ebel", "Edox", "Elini",
+    "Emporio Armani", "Erhard Junghans", "Favre Leuba", "Fendi", "Ferre Milano",
+    "Franck Muller", "Frederique Constant", "Gerald Genta", "Gianfranco Ferre",
+    "Giorgio Armani", "Girard Perregaux", "Giuseppe Zanotti", "Givenchy",
+    "Glam Rock", "Goyard", "Graham", "Grimoldi Milano", "Gucci", "Harry Winston",
+    "Hermes", "Hublot", "Hysek", "Ingersoll", "IWC", "Jacob & Co.",
+    "Jacques Lemans", "Jaeger LeCoultre", "Jean Marcel", "JeanRichard",
+    "Jorg Hysek", "Joseph", "Junghans", "Just Cavalli", "Karl Lagerfeld",
+    "KC", "Kenzo", "Korloff", "Lancaster", "Locman", "Longines", "Lord King",
+    "Louis Frard", "Louis Moine", "Louis Vuitton", "Marc by Marc Jacobs",
+    "Marc Jacobs", "Martin Braun", "Mauboussin", "Maurice Lacroix", "Meyers",
+    "Michael Kors", "MICHAEL Michael Kors", "Mido", "Montblanc", "Montega",
+    "Montegrappa", "Movado", "Navitec", "NB Yaeger", "Nina Ricci", "Nubeo",
+    "Officina Del Tempo", "Omega", "Oris", "Panerai", "Parmigiani",
+    "Patek Philippe", "Paul Picot", "Perrelet", "Philip Stein", "Piaget",
+    "Pierre Balmain", "Porsche Design", "Prada", "Principessa", "Quinting",
+    "Rado", "Rama Swiss Watch", "Raymond Weil", "Richard Mille", "Robergé",
+    "Roberto Cavalli", "Rochas", "Roger Dubuis", "Rolex", "S.T. Dupont",
+    "Saint Laurent Paris", "Salvatore Ferragamo", "Seiko", "Swarovski",
+    "Swatch", "Tag Heuer", "Techno Com", "Technomarine", "Tiffany & Co.",
+    "Tissot", "Tonino Lamborghini", "Trussardi", "Tudor", "U-Boat",
+    "Ulysse Nardin", "Vacheron Constantin", "Valentino", "Van Cleef & Arpels",
+    "Versace", "Yves Saint Laurent", "Zenith", "Other",
   ];
+
+  // Filtered brands based on search
+  const filteredBrands = brandSearch
+    ? brandList.filter((brand) =>
+        brand.toLowerCase().includes(brandSearch.toLowerCase())
+      )
+    : brandList;
+
+  // Check device type for responsive design
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Load current admin from localStorage
+  useEffect(() => {
+    const loadAdminData = () => {
+      try {
+        const adminDataStr = localStorage.getItem("adminData");
+        if (adminDataStr) {
+          const adminData = JSON.parse(adminDataStr);
+          setCurrentAdmin({
+            username: adminData.username || "Unknown",
+            role: adminData.role || "admin",
+            loginTime: adminData.loginTime || new Date().toISOString(),
+          });
+        }
+      } catch (error) {
+        console.error("Error loading admin data:", error);
+      }
+    };
+
+    loadAdminData();
+  }, []);
 
   // Show Toastify notification
   const showToast = (message, type = "success") => {
@@ -73,15 +130,21 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
       text: message,
       duration: 3000,
       gravity: "top",
-      position: "right",
-      backgroundColor: type === "success" ? "#10B981" : 
-                      type === "error" ? "#EF4444" : 
-                      type === "warning" ? "#F59E0B" : "#3B82F6",
+      position: isMobile ? "center" : "right",
+      backgroundColor:
+        type === "success"
+          ? "#10B981"
+          : type === "error"
+          ? "#EF4444"
+          : type === "warning"
+          ? "#F59E0B"
+          : "#3B82F6",
       stopOnFocus: true,
       className: "toastify-custom",
     }).showToast();
   };
 
+  // Fetch item data
   useEffect(() => {
     if (itemId) {
       fetchItem();
@@ -96,32 +159,27 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
     try {
       setLoading(true);
       setErrors({});
-      
+
       if (!itemId) {
         throw new Error("No item ID provided");
       }
-      
-      // Fetch single item by ID
+
       const result = await fetchInventory({ id: itemId });
-      
       let itemData = result;
-      
-      // Handle different response structures
+
       if (!itemData) {
         throw new Error("No data received from server");
       }
-      
-      // If result is an array (multiple items), take the first one
+
       if (Array.isArray(itemData)) {
         if (itemData.length === 0) {
           throw new Error("Item not found");
         }
         itemData = itemData[0];
       }
-      
+
       setItem(itemData);
-      
-      // Directly use the data from backend
+
       setFormData({
         brand: itemData.brand || "",
         productName: itemData.productName || "",
@@ -133,16 +191,56 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
         soldPrice: itemData.soldPrice || 0,
         paymentMethod: itemData.paymentMethod || "cash",
         receivingAmount: itemData.receivingAmount || 0,
+        lastEditedBy: itemData.lastEditedBy || "",
+        lastEditedAt: itemData.lastEditedAt || "",
       });
-      
+
       showToast("Item loaded successfully", "success");
     } catch (error) {
       console.error("Error fetching item:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to load item. Please try again.";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to load item. Please try again.";
       setErrors({ fetch: errorMessage });
       showToast(errorMessage, "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Format date function
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "Not edited yet";
+    
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }).format(date);
+  };
+
+  // Format relative time
+  const formatRelativeTime = (dateString) => {
+    if (!dateString) return "";
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffMins < 60) {
+      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    } else {
+      return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
     }
   };
 
@@ -152,19 +250,19 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
     if (!formData.brand.trim()) {
       newErrors.brand = "Brand is required";
     }
-    
+
     if (!formData.productName.trim()) {
       newErrors.productName = "Product name is required";
     }
-    
+
     if (formData.quantity < 0) {
       newErrors.quantity = "Quantity cannot be negative";
     }
-    
+
     if (formData.cost < 0) {
       newErrors.cost = "Cost cannot be negative";
     }
-    
+
     if (formData.sellingPrice < 0) {
       newErrors.sellingPrice = "Selling price cannot be negative";
     }
@@ -179,47 +277,54 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
     }
 
     setErrors(newErrors);
-    
+
     if (Object.keys(newErrors).length > 0) {
       showToast("Please fix validation errors before saving", "warning");
     }
-    
+
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    
-    if (type === 'number') {
-      const numValue = value === '' ? 0 : parseFloat(value);
-      setFormData(prev => ({
+
+    if (type === "number") {
+      const numValue = value === "" ? 0 : parseFloat(value);
+      setFormData((prev) => ({
         ...prev,
-        [name]: isNaN(numValue) ? 0 : numValue
+        [name]: isNaN(numValue) ? 0 : numValue,
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
 
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+  };
+
+  const handleBrandSelect = (brand) => {
+    setFormData((prev) => ({ ...prev, brand }));
+    setBrandSearch("");
+    setShowBrandDropdown(false);
   };
 
   const handleStatusChange = (e) => {
     const newStatus = e.target.value;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       status: newStatus,
       soldPrice: newStatus === "AVAILABLE" ? 0 : prev.soldPrice,
       receivingAmount: newStatus === "AVAILABLE" ? 0 : prev.receivingAmount,
+      paymentMethod: newStatus === "AVAILABLE" ? "cash" : prev.paymentMethod,
     }));
   };
 
   const clearSaleInformation = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       soldPrice: 0,
       receivingAmount: 0,
@@ -237,7 +342,20 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
       return;
     }
 
-    // Prepare data for submission - match backend schema exactly
+    // Prepare data with editor information
+    const currentTime = new Date().toISOString();
+    const editorInfo = currentAdmin ? {
+      editorId: currentAdmin.username,
+      editorName: currentAdmin.username,
+      editorRole: currentAdmin.role,
+      editedAt: currentTime
+    } : {
+      editorId: "unknown",
+      editorName: "Unknown",
+      editorRole: "admin",
+      editedAt: currentTime
+    };
+
     const dataToSubmit = {
       brand: formData.brand,
       productName: formData.productName,
@@ -247,14 +365,15 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
       cost: Number(formData.cost),
       sellingPrice: Number(formData.sellingPrice),
       paymentMethod: formData.paymentMethod,
+      lastEditedBy: editorInfo,
+      lastEditedAt: currentTime,
     };
 
-    // Only include sale-related fields if status is SOLD or AUCTION
+    // Include sale-related fields if needed
     if (formData.status === "SOLD" || formData.status === "AUCTION") {
       dataToSubmit.soldPrice = Number(formData.soldPrice);
       dataToSubmit.receivingAmount = Number(formData.receivingAmount);
     } else {
-      // Clear sale-related fields when status is AVAILABLE
       dataToSubmit.soldPrice = 0;
       dataToSubmit.receivingAmount = 0;
     }
@@ -262,17 +381,21 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
     setSaving(true);
     try {
       console.log("Submitting data:", dataToSubmit);
-      
-      const response = await axios.put(`https://api.montres.ae/api/invontry/updated/${itemId}`, dataToSubmit, {
-        headers: {
-          'Content-Type': 'application/json',
+
+      const response = await axios.put(
+        `https://api.montres.ae/api/invontry/updated/${itemId}`,
+        dataToSubmit,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      });
-      
+      );
+
       console.log("Update successful:", response);
-      
+
       showToast("Item updated successfully!", "success");
-      
+
       if (onSave) {
         onSave(response.data);
       } else {
@@ -282,18 +405,21 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
       }
     } catch (error) {
       console.error("Error updating item:", error);
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Failed to update item. Please try again.";
-      
-      // Handle specific validation errors
-      if (errorMessage.includes('not a valid enum value')) {
-        if (errorMessage.includes('brand')) {
-          setErrors({ 
-            brand: `"${formData.brand}" is not a valid brand. Please select from the list.` 
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to update item. Please try again.";
+
+      if (errorMessage.includes("not a valid enum value")) {
+        if (errorMessage.includes("brand")) {
+          setErrors({
+            brand: `"${formData.brand}" is not a valid brand. Please select from the list.`,
           });
           showToast("Please select a valid brand from the list", "error");
-        } else if (errorMessage.includes('paymentMethod')) {
-          setErrors({ 
-            paymentMethod: `"${formData.paymentMethod}" is not a valid payment method. Please select from the list.` 
+        } else if (errorMessage.includes("paymentMethod")) {
+          setErrors({
+            paymentMethod: `"${formData.paymentMethod}" is not a valid payment method. Please select from the list.`,
           });
           showToast("Please select a valid payment method", "error");
         }
@@ -310,7 +436,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
     return (
       <div className="flex items-center gap-1">
         <img src={newCurrency.src} alt="Currency" className="w-3 h-3" />
-        {typeof amount === 'number' ? amount.toLocaleString() : "0"}
+        {typeof amount === "number" ? amount.toLocaleString() : "0"}
       </div>
     );
   };
@@ -322,7 +448,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <ArrowPathIcon className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Loading item details...</p>
@@ -334,15 +460,15 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
   // Error state
   if (errors.fetch) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-md w-full">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-4">
             <p className="text-red-600 font-medium mb-2">Error loading item</p>
             <p className="text-red-500 text-sm">{errors.fetch}</p>
           </div>
           <button
             onClick={handleBackToInventory}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
           >
             Back to Inventory
           </button>
@@ -354,8 +480,8 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
   // No item found state
   if (!item && !loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-md w-full">
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-4">
             <p className="text-yellow-700 font-medium mb-2">Item not found</p>
             <p className="text-yellow-600 text-sm">
@@ -364,7 +490,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
           </div>
           <button
             onClick={handleBackToInventory}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
           >
             Back to Inventory
           </button>
@@ -374,12 +500,12 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="mb-6 md:mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3">
+        {/* Header with back button and device indicator */}
+        <div className="mb-4 md:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleBackToInventory}
@@ -389,76 +515,115 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                 <ArrowLeftIcon className="w-5 h-5 text-gray-700" />
               </button>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                  Edit Item Details
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
+                  Edit Inventory Item
                 </h1>
-                <p className="text-gray-600 text-sm md:text-base mt-1">
-                  Update product information for{" "}
-                  <span className="font-semibold text-blue-600">
-                    {item?.brand || "Item"}
-                  </span>
+                <p className="text-gray-600 text-xs sm:text-sm mt-1">
+                  Update stock, cost, and brand details
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-4 py-2">
-              <div className="text-sm text-blue-700">Item ID:</div>
-              <div className="font-mono text-sm font-semibold text-blue-900 bg-white px-2 py-1 rounded">
-                {item?._id?.slice(-6) || itemId?.slice(-6) || "N/A"}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+                {isMobile ? (
+                  <DevicePhoneMobileIcon className="w-4 h-4" />
+                ) : (
+                  <ComputerDesktopIcon className="w-4 h-4" />
+                )}
+                <span>{isMobile ? "Mobile View" : "Desktop View"}</span>
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-100 rounded-lg px-2 py-1.5">
+                <div className="text-xs text-blue-700">Item ID:</div>
+                <div className="font-mono text-xs sm:text-sm font-semibold text-blue-900">
+                  {item?._id?.slice(-6) || itemId?.slice(-6) || "N/A"}
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Item Summary Card */}
-          <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              <div className="space-y-1">
-                <div className="text-xs text-gray-500 uppercase font-medium">
-                  Brand
-                </div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {item?.brand || "N/A"}
-                </div>
-              </div>
-              <div className="space-y-1">
-                <div className="text-xs text-gray-500 uppercase font-medium">
-                  Product Code
-                </div>
-                <div className="text-lg font-semibold text-gray-900 font-mono">
-                  {item?.internalCode || "N/A"}
-                </div>
-              </div>
-              <div className="space-y-1">
-                <div className="text-xs text-gray-500 uppercase font-medium">
-                  Current Stock
-                </div>
-                <div className="text-lg font-semibold text-gray-900">
-                  <span
-                    className={`px-2 py-1 rounded ${
-                      (item?.quantity || 0) > 0
+        {/* Enhanced Status & Editor Information Section */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4 md:mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Item Status & Stock Info */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <InformationCircleIcon className="w-4 h-4" />
+                Item Status
+              </h3>
+              <div className="flex flex-wrap items-center gap-4">
+                <div>
+                  <span className="text-xs text-gray-500">Current Status:</span>
+                  <div
+                    className={`text-xs sm:text-sm font-semibold px-2 py-1 rounded-full ${
+                      item?.status === "AVAILABLE"
                         ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
+                        : item?.status === "SOLD"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-purple-100 text-purple-800"
                     }`}
                   >
+                    {item?.status
+                      ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase()
+                      : "Unknown"}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-xs text-gray-500">Stock Level:</span>
+                  <div className="text-sm font-semibold text-gray-900">
                     {item?.quantity || 0} units
-                  </span>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-1">
-                <div className="text-xs text-gray-500 uppercase font-medium">
-                  Status
+            </div>
+
+            {/* Editor Tracking Information */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <UserCircleIcon className="w-4 h-4" />
+                Editor Information
+              </h3>
+              
+              <div className="space-y-2">
+                {/* Current Editor (You) */}
+                <div className="flex items-center justify-between bg-blue-50 p-2 rounded-md">
+                  <div>
+                    <div className="text-xs text-blue-700">Current Editor:</div>
+                    <div className="text-sm font-semibold text-blue-900">
+                      {currentAdmin?.username || "Unknown"} ({currentAdmin?.role || "Admin"})
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {currentAdmin?.loginTime ? `Logged in at ${formatDateTime(currentAdmin.loginTime)}` : "Online"}
+                  </div>
                 </div>
-                <div
-                  className={`text-lg font-semibold ${
-                    item?.status === "AVAILABLE"
-                      ? "text-green-600"
-                      : item?.status === "SOLD"
-                      ? "text-yellow-600"
-                      : "text-purple-600"
-                  }`}
-                >
-                  {item?.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase() : "Unknown"}
-                </div>
+
+                {/* Last Editor */}
+                {item?.lastEditedBy && (
+                  <div className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
+                    <div>
+                      <div className="text-xs text-gray-600">Last Edited by:</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {item.lastEditedBy.username || "Unknown"} 
+                        <span className="text-gray-600 text-xs ml-2">
+                          ({item.lastEditedBy.role || "N/A"})
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-gray-500 flex items-center gap-1">
+                        <ClockIcon className="w-3 h-3" />
+                        {formatRelativeTime(item.lastEditedAt)}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {formatDateTime(item.lastEditedAt)}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -467,76 +632,109 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
         {/* Main Form */}
         <form onSubmit={handleSubmit}>
           {errors.submit && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
               {errors.submit}
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-            {/* Left Column - Product Details */}
-            <div className="space-y-6 md:space-y-8">
-              {/* Product Information Section */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-                  <InformationCircleIcon className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Product Information</h3>
-                </div>
-                
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            {/* Form Sections */}
+            <div className="p-4 md:p-6 space-y-6">
+              {/* Product Details */}
+              <div className="space-y-4">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 border-b pb-2">
+                  Product Information
+                </h3>
+
                 <div className="space-y-4">
+                  {/* Brand with Search - Mobile Optimized */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Brand <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      name="brand"
-                      value={formData.brand}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.brand
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      <option value="">Select a brand</option>
-                      {brandList.map((brand) => (
-                        <option key={brand} value={brand}>
-                          {brand}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <div className="relative">
+                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="text"
+                          value={brandSearch || formData.brand}
+                          onChange={(e) => {
+                            setBrandSearch(e.target.value);
+                            setShowBrandDropdown(true);
+                          }}
+                          onFocus={() => setShowBrandDropdown(true)}
+                          placeholder="Search or select brand..."
+                          className={`w-full pl-10 pr-10 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base ${
+                            errors.brand
+                              ? "border-red-300 bg-red-50"
+                              : "border-gray-300"
+                          }`}
+                        />
+                        {formData.brand && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({ ...prev, brand: "" }));
+                              setBrandSearch("");
+                            }}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                          >
+                            <XMarkIcon className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                          </button>
+                        )}
+                      </div>
+
+                      {showBrandDropdown && filteredBrands.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 md:max-h-60 overflow-y-auto">
+                          {filteredBrands.map((brand) => (
+                            <div
+                              key={brand}
+                              onClick={() => handleBrandSelect(brand)}
+                              className={`px-3 py-2 md:px-4 md:py-3 cursor-pointer hover:bg-blue-50 text-sm md:text-base ${
+                                formData.brand === brand
+                                  ? "bg-blue-50 text-blue-600"
+                                  : ""
+                              }`}
+                            >
+                              {brand}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     {errors.brand && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <InformationCircleIcon className="w-4 h-4" />
+                      <p className="mt-1 text-xs md:text-sm text-red-600 flex items-center gap-1">
+                        <InformationCircleIcon className="w-3 h-3 md:w-4 md:h-4" />
                         {errors.brand}
                       </p>
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Product Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="productName"
-                      value={formData.productName}
-                      onChange={handleChange}
-                      placeholder="Enter product name or description"
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.productName
-                          ? "border-red-300 bg-red-50"
-                          : "border-gray-300"
-                      }`}
-                    />
-                    {errors.productName && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <InformationCircleIcon className="w-4 h-4" />
-                        {errors.productName}
-                      </p>
-                    )}
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Product Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="productName"
+                        value={formData.productName}
+                        onChange={handleChange}
+                        placeholder="Enter product name"
+                        className={`w-full px-3 md:px-4 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base ${
+                          errors.productName
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-300"
+                        }`}
+                      />
+                      {errors.productName && (
+                        <p className="mt-1 text-xs md:text-sm text-red-600 flex items-center gap-1">
+                          <InformationCircleIcon className="w-3 h-3 md:w-4 md:h-4" />
+                          {errors.productName}
+                        </p>
+                      )}
+                    </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Internal Code
@@ -547,10 +745,12 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                         value={formData.internalCode}
                         onChange={handleChange}
                         placeholder="e.g., WATCH-001"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                       />
                     </div>
+                  </div>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Quantity <span className="text-red-500">*</span>
@@ -562,157 +762,168 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                         onChange={handleChange}
                         min="0"
                         step="1"
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        className={`w-full px-3 md:px-4 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base ${
                           errors.quantity
                             ? "border-red-300 bg-red-50"
                             : "border-gray-300"
                         }`}
                       />
                       {errors.quantity && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                          <InformationCircleIcon className="w-4 h-4" />
+                        <p className="mt-1 text-xs md:text-sm text-red-600 flex items-center gap-1">
+                          <InformationCircleIcon className="w-3 h-3 md:w-4 md:h-4" />
                           {errors.quantity}
                         </p>
                       )}
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pricing Details Section */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-                  <InformationCircleIcon className="w-5 h-5 text-green-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Pricing Details</h3>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Cost Price
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          name="cost"
-                          value={formData.cost}
-                          onChange={handleChange}
-                          step="0.01"
-                          min="0"
-                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                            errors.cost
-                              ? "border-red-300 bg-red-50"
-                              : "border-gray-300"
-                          }`}
-                        />
-                      </div>
-                      {errors.cost && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                          <InformationCircleIcon className="w-4 h-4" />
-                          {errors.cost}
-                        </p>
-                      )}
-                    </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Selling Price
+                        Status
                       </label>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          name="sellingPrice"
-                          value={formData.sellingPrice}
-                          onChange={handleChange}
-                          step="0.01"
-                          min="0"
-                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                            errors.sellingPrice
-                              ? "border-red-300 bg-red-50"
-                              : "border-gray-300"
-                          }`}
-                        />
-                      </div>
-                      {errors.sellingPrice && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                          <InformationCircleIcon className="w-4 h-4" />
-                          {errors.sellingPrice}
-                        </p>
-                      )}
+                      <select
+                        name="status"
+                        value={formData.status}
+                        onChange={handleStatusChange}
+                        className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                      >
+                        <option value="AVAILABLE">🟢 Available</option>
+                        <option value="SOLD">🟡 Sold</option>
+                        <option value="AUCTION">🟣 Auction</option>
+                      </select>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right Column - Status & Additional Info */}
-            <div className="space-y-6 md:space-y-8">
-              {/* Item Status & Sales Section */}
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-                  <InformationCircleIcon className="w-5 h-5 text-purple-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Item Status & Sales</h3>
-                </div>
-                
-                <div className="space-y-4">
+              {/* Pricing Section */}
+              <div className="space-y-4">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 border-b pb-2">
+                  Pricing Information
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Current Status
+                      Cost Price
                     </label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleStatusChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="AVAILABLE">🟢 Available</option>
-                      <option value="SOLD">🟡 Sold</option>
-                      <option value="AUCTION">🟣 Auction</option>
-                    </select>
-                  </div>
-
-                  {/* Payment Method */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Payment Method
-                    </label>
-                    <select
-                      name="paymentMethod"
-                      value={formData.paymentMethod}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="cash">💵 Cash</option>
-                      <option value="stripe">💳 Stripe</option>
-                      <option value="tabby">🏦 Tabby</option>
-                      <option value="chrono">⌚ Chrono</option>
-                      <option value="bank_transfer">🏛️ Bank Transfer</option>
-                      <option value="other">📄 Other</option>
-                    </select>
-                  </div>
-
-                  {(formData.status === "SOLD" || formData.status === "AUCTION") && (
-                    <div className="space-y-4 bg-amber-50 p-4 rounded-lg border border-amber-200">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="text-sm font-semibold text-amber-900 flex items-center gap-2">
-                          <InformationCircleIcon className="w-4 h-4" />
-                          Sale Information
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={clearSaleInformation}
-                          className="text-xs text-amber-700 hover:text-amber-900 px-2 py-1 bg-amber-100 hover:bg-amber-200 rounded transition-colors"
-                        >
-                          Clear All
-                        </button>
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                        <img
+                          src={newCurrency.src}
+                          alt="Currency"
+                          className="w-3 h-3 md:w-4 md:h-4"
+                        />
                       </div>
+                      <input
+                        type="number"
+                        name="cost"
+                        value={formData.cost}
+                        onChange={handleChange}
+                        step="0.01"
+                        min="0"
+                        className={`w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base ${
+                          errors.cost
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-300"
+                        }`}
+                      />
+                    </div>
+                    {errors.cost && (
+                      <p className="mt-1 text-xs md:text-sm text-red-600 flex items-center gap-1">
+                        <InformationCircleIcon className="w-3 h-3 md:w-4 md:h-4" />
+                        {errors.cost}
+                      </p>
+                    )}
+                  </div>
 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Selling Price
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                        <img
+                          src={newCurrency.src}
+                          alt="Currency"
+                          className="w-3 h-3 md:w-4 md:h-4"
+                        />
+                      </div>
+                      <input
+                        type="number"
+                        name="sellingPrice"
+                        value={formData.sellingPrice}
+                        onChange={handleChange}
+                        step="0.01"
+                        min="0"
+                        className={`w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base ${
+                          errors.sellingPrice
+                            ? "border-red-300 bg-red-50"
+                            : "border-gray-300"
+                        }`}
+                      />
+                    </div>
+                    {errors.sellingPrice && (
+                      <p className="mt-1 text-xs md:text-sm text-red-600 flex items-center gap-1">
+                        <InformationCircleIcon className="w-3 h-3 md:w-4 md:h-4" />
+                        {errors.sellingPrice}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Profit Margin
+                    </label>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 md:px-4 py-2 md:py-3">
+                      <div className="text-sm md:text-base text-gray-900 font-medium">
+                        {formData.cost > 0 && formData.sellingPrice > 0
+                          ? `${(
+                              ((formData.sellingPrice - formData.cost) /
+                                formData.cost) *
+                              100
+                            ).toFixed(2)}%`
+                          : "0%"}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Profit:{" "}
+                        {formatCurrency(formData.sellingPrice - formData.cost)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sale Information (Only for SOLD/AUCTION) */}
+              {(formData.status === "SOLD" ||
+                formData.status === "AUCTION") && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h3 className="text-base md:text-lg font-semibold text-gray-900">
+                      Sale Information
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={clearSaleInformation}
+                      className="text-xs md:text-sm text-gray-600 hover:text-gray-900"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 md:p-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Sold Price
                         </label>
                         <div className="relative">
+                          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                            <img
+                              src={newCurrency.src}
+                              alt="Currency"
+                              className="w-3 h-3 md:w-4 md:h-4"
+                            />
+                          </div>
                           <input
                             type="number"
                             name="soldPrice"
@@ -720,7 +931,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                             onChange={handleChange}
                             step="0.01"
                             min="0"
-                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            className={`w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base ${
                               errors.soldPrice
                                 ? "border-red-300 bg-red-50"
                                 : "border-gray-300"
@@ -728,8 +939,8 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                           />
                         </div>
                         {errors.soldPrice && (
-                          <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                            <InformationCircleIcon className="w-4 h-4" />
+                          <p className="mt-1 text-xs md:text-sm text-red-600 flex items-center gap-1">
+                            <InformationCircleIcon className="w-3 h-3 md:w-4 md:h-4" />
                             {errors.soldPrice}
                           </p>
                         )}
@@ -740,6 +951,13 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                           Amount Received
                         </label>
                         <div className="relative">
+                          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                            <img
+                              src={newCurrency.src}
+                              alt="Currency"
+                              className="w-3 h-3 md:w-4 md:h-4"
+                            />
+                          </div>
                           <input
                             type="number"
                             name="receivingAmount"
@@ -747,7 +965,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                             onChange={handleChange}
                             step="0.01"
                             min="0"
-                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            className={`w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base ${
                               errors.receivingAmount
                                 ? "border-red-300 bg-red-50"
                                 : "border-gray-300"
@@ -755,80 +973,103 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
                           />
                         </div>
                         {errors.receivingAmount && (
-                          <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                            <InformationCircleIcon className="w-4 h-4" />
+                          <p className="mt-1 text-xs md:text-sm text-red-600 flex items-center gap-1">
+                            <InformationCircleIcon className="w-3 h-3 md:w-4 md:h-4" />
                             {errors.receivingAmount}
                           </p>
                         )}
                       </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Payment Method
+                        </label>
+                        <select
+                          name="paymentMethod"
+                          value={formData.paymentMethod}
+                          onChange={handleChange}
+                          className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                        >
+                          <option value="cash">💵 Cash</option>
+                          <option value="stripe">💳 Stripe</option>
+                          <option value="tabby">🏦 Tabby</option>
+                          <option value="chrono">⌚ Chrono</option>
+                          <option value="bank_transfer">
+                            🏛️ Bank Transfer
+                          </option>
+                          <option value="other">📄 Other</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Balance Due
+                        </label>
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 md:px-4 py-2 md:py-3">
+                          <div className="text-sm md:text-base font-medium text-gray-900">
+                            {formatCurrency(
+                              formData.soldPrice - formData.receivingAmount
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6 mt-8 shadow-sm">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-              <div className="text-sm text-gray-600">
-                <p>
-                  Make sure all required fields (*) are completed before saving.
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  type="button"
-                  onClick={onCancel || handleBackToInventory}
-                  className="px-6 py-3 text-base font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 min-w-[140px]"
-                  disabled={saving}
-                >
-                  <ArrowLeftIcon className="w-5 h-5" />
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-base font-semibold flex items-center justify-center gap-2 min-w-[140px] shadow-sm"
-                >
-                  {saving ? (
-                    <>
-                      <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <CheckIcon className="w-5 h-5" />
-                      Save Changes
-                    </>
-                  )}
-                </button>
-              </div>
+              )}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    Object.keys(errors).length === 0
-                      ? "bg-green-500"
-                      : "bg-red-500"
-                  }`}
-                ></div>
-                <span
-                  className={
-                    Object.keys(errors).length === 0
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }
-                >
-                  {Object.keys(errors).length === 0
-                    ? "All required fields are complete"
-                    : `${
-                        Object.keys(errors).length
-                      } validation error(s) need attention`}
-                </span>
+            {/* Form Actions - Mobile Optimized */}
+            <div className="bg-gray-50 border-t border-gray-200 p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="text-xs md:text-sm text-gray-600 w-full sm:w-auto">
+                  <p className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        Object.keys(errors).length === 0
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                      }`}
+                    ></span>
+                    {Object.keys(errors).length === 0
+                      ? "All fields are valid"
+                      : `${Object.keys(errors).length} error(s) need attention`}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Editor: {currentAdmin?.username || "Unknown"} | 
+                    Time: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 md:gap-3 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={onCancel || handleBackToInventory}
+                    className="px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full sm:w-auto"
+                    disabled={saving}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="px-4 md:px-6 py-2 md:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base font-semibold flex items-center justify-center gap-2 w-full sm:w-auto"
+                  >
+                    {saving ? (
+                      <>
+                        <ArrowPathIcon className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+                        <span className="hidden sm:inline">Saving...</span>
+                        <span className="sm:hidden">Save...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckIcon className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="hidden sm:inline">Save Changes</span>
+                        <span className="sm:hidden">Save</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -843,6 +1084,16 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
           padding: 12px 20px;
           font-weight: 500;
+          font-size: 14px;
+        }
+
+        @media (max-width: 640px) {
+          .toastify-custom {
+            margin: 10px;
+            width: calc(100% - 20px);
+            font-size: 13px;
+            padding: 10px 16px;
+          }
         }
       `}</style>
     </div>
