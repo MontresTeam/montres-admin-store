@@ -64,6 +64,30 @@ export async function fetchInventory({ id } = {}) {
   }
 }
 
+// In your productService.js file, add this function:
+
+// In your productService.js file, add this function:
+
+export const moveToInventory = async (moveData) => {
+  try {
+    const response = await axios.post(
+      "https://api.montres.ae/api/products/inventory/move",
+      moveData,
+     
+    );
+    
+    return {
+      data: response.data,
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error moving to inventory:", error);
+    return {
+      data: null,
+      error: error.response?.data?.message || error.message,
+    };
+  }
+};
 
 export async function addProduct(formData) {
   try {

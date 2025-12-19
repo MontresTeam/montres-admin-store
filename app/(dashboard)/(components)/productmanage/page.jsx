@@ -23,12 +23,14 @@ import {
   FiTag,
   FiTrendingUp,
   FiLayers,
-  FiBox
+  FiBox,
+  FiRefreshCw,
+  FiArchive
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
 import { Button } from "@/components/ui/button";
-import { fetchProduct, deleteProduct, updateProduct } from "@/service/productService";
+import { fetchProduct, deleteProduct, updateProduct, moveToInventory } from "@/service/productService";
 import newCurrency from '../../../../public/assets/newSymbole.png';
 import Image from "next/image";
 import Toastify from "toastify-js";
@@ -49,6 +51,9 @@ const ProductManagement = () => {
   const [isAllowed, setIsAllowed] = useState(false);
   const [checked, setChecked] = useState(false); 
 
+  // Move to inventory loading state
+  const [movingToInventory, setMovingToInventory] = useState(null);
+
   useEffect(() => {
     // Get adminData from localStorage
     const adminDataJSON = localStorage.getItem("adminData");
@@ -65,11 +70,6 @@ const ProductManagement = () => {
 
     setChecked(true); // check complete
   }, [router]);
-
-
-  
-
-
 
   // Timeline sorting states
   const [sortConfig, setSortConfig] = useState({
@@ -576,6 +576,44 @@ const ProductManagement = () => {
     }
   };
 
+  // Handle move to inventory
+  const handleMoveToInventory = async (productId) => {
+    setMovingToInventory(productId);
+    
+    try {
+      const { data, error } = await moveToInventory({ productId });
+      
+      if (!error) {
+        Toastify({
+          text: `Product moved to inventory successfully! ${data.movedCount ? `(${data.movedCount} moved)` : ''}`,
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#10B981",
+          stopOnFocus: true,
+        }).showToast();
+        
+        // Refresh products list
+        loadProducts();
+      } else {
+        throw new Error(error);
+      }
+    } catch (error) {
+      console.error("Error moving to inventory:", error);
+      Toastify({
+        text: error.message || "Failed to move product to inventory",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#EF4444",
+        stopOnFocus: true,
+      }).showToast();
+    } finally {
+      setMovingToInventory(null);
+      setDropdownOpen(null);
+    }
+  };
+
   // Get schedule status badge
   const getScheduleBadge = (product) => {
     if (!product.publishSchedule) {
@@ -911,6 +949,7 @@ const ProductManagement = () => {
           </div>
 
           {/* Modals */}
+          {/* Schedule Publishing Modal */}
           {scheduleModal && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-xl p-6 w-full max-w-sm sm:max-w-md mx-auto">
@@ -967,6 +1006,7 @@ const ProductManagement = () => {
             </div>
           )}
 
+          {/* Date Details Modal */}
           {dateDetailsModal && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-xl p-6 w-full max-w-sm sm:max-w-md mx-auto max-h-[90vh] overflow-y-auto">
@@ -1174,7 +1214,7 @@ const ProductManagement = () => {
                         </button>
 
                         {dropdownOpen === product._id && (
-                          <div className="absolute right-3 mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
+                          <div className="absolute right-3 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
                             <button
                               onClick={() => {
                                 handleViewDateDetails(product);
@@ -1197,6 +1237,25 @@ const ProductManagement = () => {
                               Edit Product
                             </button>
                             
+                            {/* Move to Inventory Action */}
+                            <button
+                              onClick={() => handleMoveToInventory(product._id)}
+                              disabled={movingToInventory === product._id}
+                              className="flex items-center w-full px-3 py-2.5 text-left text-indigo-600 hover:bg-indigo-50 transition-colors text-sm border-t border-gray-100"
+                            >
+                              {movingToInventory === product._id ? (
+                                <>
+                                  <FiRefreshCw className="mr-2 animate-spin" />
+                                  Moving to Inventory...
+                                </>
+                              ) : (
+                                <>
+                                  <FiArchive className="mr-2" />
+                                  Move to Inventory
+                                </>
+                              )}
+                            </button>
+                            
                             {(!product.publishSchedule || product.publishSchedule.status === 'draft') && (
                               <>
                                 <button
@@ -1206,7 +1265,7 @@ const ProductManagement = () => {
                                     setScheduleTime("12:00");
                                     setDropdownOpen(null);
                                   }}
-                                  className="flex items-center w-full px-3 py-2.5 text-left text-blue-600 hover:bg-blue-50 transition-colors text-sm"
+                                  className="flex items-center w-full px-3 py-2.5 text-left text-blue-600 hover:bg-blue-50 transition-colors text-sm border-t border-gray-100"
                                 >
                                   <FiClock className="mr-2" />
                                   Schedule
@@ -1230,7 +1289,7 @@ const ProductManagement = () => {
                                   handleCancelSchedule(product._id);
                                   setDropdownOpen(null);
                                 }}
-                                className="flex items-center w-full px-3 py-2.5 text-left text-orange-600 hover:bg-orange-50 transition-colors text-sm"
+                                className="flex items-center w-full px-3 py-2.5 text-left text-orange-600 hover:bg-orange-50 transition-colors text-sm border-t border-gray-100"
                               >
                                 <FiClock className="mr-2" />
                                 Cancel Schedule
@@ -1243,7 +1302,7 @@ const ProductManagement = () => {
                                   handleUnpublish(product._id);
                                   setDropdownOpen(null);
                                 }}
-                                className="flex items-center w-full px-3 py-2.5 text-left text-gray-600 hover:bg-gray-50 transition-colors text-sm"
+                                className="flex items-center w-full px-3 py-2.5 text-left text-gray-600 hover:bg-gray-50 transition-colors text-sm border-t border-gray-100"
                               >
                                 <FiCalendar className="mr-2" />
                                 Unpublish
@@ -1448,6 +1507,25 @@ const ProductManagement = () => {
                         >
                           <FiEdit className="mr-2 text-gray-500" />
                           Edit Product
+                        </button>
+                        
+                        {/* Move to Inventory Action for Mobile */}
+                        <button
+                          onClick={() => handleMoveToInventory(product._id)}
+                          disabled={movingToInventory === product._id}
+                          className="flex items-center w-full px-3 py-2 text-left text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm"
+                        >
+                          {movingToInventory === product._id ? (
+                            <>
+                              <FiRefreshCw className="mr-2 animate-spin" />
+                              Moving to Inventory...
+                            </>
+                          ) : (
+                            <>
+                              <FiArchive className="mr-2" />
+                              Move to Inventory
+                            </>
+                          )}
                         </button>
                         
                         {(!product.publishSchedule || product.publishSchedule.status === 'draft') && (

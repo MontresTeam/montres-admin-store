@@ -45,10 +45,9 @@ export const data = {
     /* ================= INVENTORY ================= */
     {
       title: "Inventory & Stock",
-     url: "/InventoryStock",
+      url: "/InventoryStock",
       icon: Boxes,
       isActive: true,
-    
     },
 
     /* ================= ORDERS ================= */
@@ -70,6 +69,14 @@ export const data = {
       title: "Customers",
       url: "/users-list",
       icon: UsersRound,
+      isActive: true,
+    },
+
+    /* ================= WATCH SERVICES ================= */
+    {
+      title: "Watch Services",
+      url: "/watch-services",
+      icon: Package,
       isActive: true,
     },
 
@@ -104,9 +111,8 @@ export const data = {
     /* ================= INQUIRIES ================= */
     {
       title: "Inquiries",
-      url: "#",
+      url: "/contact-messages", // or "#" if it's just a placeholder
       icon: MessageSquare,
-      items: [{ title: "Contact Messages", url: "/contact-messages" }],
     },
 
     /* ================= SETTINGS ================= */
