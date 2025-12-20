@@ -3,7 +3,6 @@ import {
   Star,
   House,
   ImageUpscale,
-  Mail,
   Truck,
   ShoppingBasket,
   MessageSquare,
@@ -11,10 +10,7 @@ import {
   Boxes,
   Settings,
   Package,
-  Tag,
   BarChartBig,
-  TruckIcon,
-  Activity,
 } from "lucide-react";
 
 import newCurrency from "../public/assets/newSymbole.png";
@@ -49,6 +45,18 @@ export const data = {
       icon: Boxes,
       isActive: true,
     },
+
+     {
+    title: "Reports",
+    icon: BarChartBig,
+    items: [
+      { title: "Monthly Sales", url: "/reports/monthly-sales" },
+      { title: "Inventory Month-End", url: "/reports/inventory-monthly" },
+      { title: "Brand Report", url: "/reports/brand" },
+      { title: "Low Stock", url: "/reports/low-stock" },
+      { title: "Dead Stock", url: "/reports/dead-stock" },
+    ],
+  },
 
     /* ================= ORDERS ================= */
     {

@@ -188,7 +188,7 @@ const InventoryStockManagement = () => {
       
       // Send each item to API
       for (const item of importedData) {
-        await axios.post('http://localhost:9000/api/invontry/', item);
+        await axios.post('https://api.montres.ae/api/invontry/', item);
       }
       
       // Refresh inventory
@@ -277,7 +277,7 @@ const InventoryStockManagement = () => {
   const handleDeleteItem = async (id) => {
     if (confirm('Are you sure you want to delete this item?')) {
       try {
-        await axios.delete(`http://localhost:9000/api/invontry/${id}`);
+        await axios.delete(`https://api.montres.ae/api/invontry/${id}`);
         setInventory(prev => prev.filter(item => item._id !== id));
         showNotification('Item deleted successfully!', 'success');
       } catch (err) {
@@ -289,7 +289,7 @@ const InventoryStockManagement = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await axios.put(`http://localhost:9000/api/invontry/${id}`, { status: newStatus });
+      await axios.put(`https://api.montres.ae/api/invontry/${id}`, { status: newStatus });
       setInventory(prev => prev.map(item => 
         item._id === id ? { ...item, status: newStatus } : item
       ));
@@ -308,7 +308,7 @@ const InventoryStockManagement = () => {
           case 'delete':
             if (confirm(`Are you sure you want to delete ${selectedItems.size} items?`)) {
               for (const id of selectedItems) {
-                await axios.delete(`http://localhost:9000/api/invontry/${id}`);
+                await axios.delete(`https://api.montres.ae/api/invontry/${id}`);
               }
               setInventory(prev => prev.filter(item => !selectedItems.has(item._id)));
               setSelectedItems(new Set());
@@ -317,7 +317,7 @@ const InventoryStockManagement = () => {
             break;
           case 'mark_sold':
             for (const id of selectedItems) {
-              await axios.put(`http://localhost:9000/api/invontry/${id}`, { status: 'sold' });
+              await axios.put(`https://api.montres.ae/api/invontry/${id}`, { status: 'sold' });
             }
             setInventory(prev => prev.map(item => 
               selectedItems.has(item._id) ? { ...item, status: 'sold' } : item

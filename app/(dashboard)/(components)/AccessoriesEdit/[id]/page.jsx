@@ -561,7 +561,7 @@ const EditAccessories = () => {
 
       // API call to update accessory
       const response = await axios.put(
-        `http://localhost:9000/api/accessories/UpdatedAccessories/${id}`,
+        `https://api.montres.ae/api/accessories/UpdatedAccessories/${id}`,
         formDataToSubmit,
         {
           headers: {
