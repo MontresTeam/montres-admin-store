@@ -22,7 +22,7 @@ const BrandNew = () => {
   });
 
   // API Base URL
-  const API_BASE = 'http://localhost:9000/api';
+  const API_BASE = 'https://api.montres.ae/api';
 
   // Fetch products from API
 
