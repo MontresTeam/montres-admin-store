@@ -203,7 +203,7 @@ const DeliveryManagement = () => {
   // Action handlers
   const handleUpdateOrderStatus = async (orderId, newStatus, additionalData = {}) => {
     try {
-      await axios.put(`http://localhost:9000/api/admin/order/${orderId}`, {
+      await axios.put(`https://api.montres.ae/api/admin/order/${orderId}`, {
         orderStatus: newStatus,
         ...additionalData
       });
