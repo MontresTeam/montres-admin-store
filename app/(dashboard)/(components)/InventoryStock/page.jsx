@@ -54,7 +54,7 @@ const InventoryStockManagement = () => {
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('https://api.montres.ae/api/invontry/');
+      const response = await axios.get('https://api.montres.ae/api/invontry/InvontryAll');
       setInventory(response.data);
       setError(null);
     } catch (err) {

@@ -519,105 +519,146 @@ const EditAccessories = () => {
     };
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  setSuccess("");
 
-    try {
-      // Validation - REQUIRED FIELDS
-      if (!formData.brand || !formData.model) {
-        throw new Error("Brand and Model are required fields");
-      }
-
-      if (!formData.accessoryCategory) {
-        throw new Error("Category is required");
-      }
-
-      // 1. Prepare the JSON payload
-      const payload = prepareFormData();
-
-      // 2. Create FormData for file uploads and JSON payload
-      const formDataToSubmit = new FormData();
-
-      // Append JSON payload as a string
-      formDataToSubmit.append("data", JSON.stringify(payload));
-
-      // Append main image with field name 'main'
-      if (mainImage) {
-        formDataToSubmit.append("main", mainImage);
-      }
-
-      // Append cover images with field name 'covers'
-      if (coverImages.length > 0) {
-        coverImages.forEach((file) => {
-          formDataToSubmit.append("covers", file);
-        });
-      }
-
-      // Debug: log the payload
-      console.log("Update payload:", payload);
-
-      // API call to update accessory
-      const response = await axios.put(
-        `https://api.montres.ae/api/accessories/UpdatedAccessories/${id}`,
-        formDataToSubmit,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true,
-        }
-      );
-
-      if (response.data?.success) {
-        setSuccess("Accessory updated successfully!");
-
-        // Show success toast
-        if (typeof window !== "undefined") {
-          const Toastify = require("toastify-js");
-          Toastify({
-            text: "Accessory updated successfully!",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            style: {
-              background: "linear-gradient(to right, #00b09b, #96c93d)",
-            },
-          }).showToast();
-        }
-
-        // Redirect after success
-        setTimeout(() => {
-          router.push("/productmanage");
-        }, 2000);
-      }
-    } catch (err) {
-      console.error("Error updating accessory:", err);
-      const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.errors?.[0] ||
-        "Failed to update accessory";
-      setError(errorMessage);
-
-      // Show error toast
-      if (typeof window !== "undefined") {
-        const Toastify = require("toastify-js");
-        Toastify({
-          text: errorMessage,
-          duration: 3000,
-          close: true,
-          gravity: "top",
-          position: "right",
-          style: { background: "linear-gradient(to right, #ff5f6d, #ffc371)" },
-        }).showToast();
-      }
-    } finally {
-      setLoading(false);
+  try {
+    // Validation - REQUIRED FIELDS
+    if (!formData.brand || !formData.model) {
+      throw new Error("Brand and Model are required fields");
     }
-  };
+
+    if (!formData.accessoryCategory) {
+      throw new Error("Category is required");
+    }
+
+    // 1. Prepare the JSON payload
+    const payload = {
+      // Basic info
+      brand: formData.brand || "",
+      model: formData.model || "",
+      name: formData.name || `${formData.brand} ${formData.model}`.trim(),
+      sku: formData.sku || "",
+      referenceNumber: formData.referenceNumber || "",
+      serialNumber: formData.serialNumber || "",
+      additionalTitle: formData.additionalTitle || "",
+
+      // Category info
+      accessoryCategory: formData.accessoryCategory || "",
+      accessorySubCategory: formData.accessorySubCategory || "",
+
+      // Year info
+      productionYear: formData.productionYear || "",
+      approximateYear: Boolean(formData.approximateYear),
+      unknownYear: Boolean(formData.unknownYear),
+
+      // Condition info
+      condition: formData.condition || "",
+      itemCondition: formData.itemCondition || "",
+
+      // Specifications
+      accessoryMaterial: Array.isArray(formData.accessoryMaterial)
+        ? formData.accessoryMaterial
+        : [],
+      accessoryColor: Array.isArray(formData.accessoryColor)
+        ? formData.accessoryColor
+        : [],
+      gender: formData.gender || "Men/Unisex",
+
+      // Delivery & Accessories
+      accessoryDelivery: Array.isArray(formData.accessoryDelivery)
+        ? formData.accessoryDelivery
+        : [],
+      accessoryScopeOfDelivery: Array.isArray(formData.accessoryScopeOfDelivery)
+        ? formData.accessoryScopeOfDelivery
+        : [],
+
+      // Pricing
+      regularPrice: formData.regularPrice ? parseFloat(formData.regularPrice) : 0,
+      salePrice: formData.salePrice ? parseFloat(formData.salePrice) : 0,
+      taxStatus: formData.taxStatus || "taxable",
+
+      // Inventory
+      stockQuantity: parseInt(formData.stockQuantity) || 1,
+      inStock: Boolean(formData.inStock),
+
+      // Marketing
+      badges: Array.isArray(formData.badges) ? formData.badges : [],
+
+      // Featured
+      featured: Boolean(formData.featured),
+
+      // SEO
+      seoTitle: formData.seoTitle || "",
+      seoDescription: formData.seoDescription || "",
+      seoKeywords: formData.seoKeywords || "",
+
+      // Content
+      description: formData.description || "",
+
+      // Visibility
+      visibility: formData.visibility || "visible",
+      published: Boolean(formData.published),
+
+      // Ensure category is set
+      category: "Accessories",
+    };
+
+    // 2. Create FormData
+    const formDataToSubmit = new FormData();
+
+    // Append the payload as JSON
+    formDataToSubmit.append("data", JSON.stringify(payload));
+
+    // Append main image
+    if (mainImage) {
+      formDataToSubmit.append("main", mainImage);
+    }
+
+    // Append cover images
+    if (coverImages.length > 0) {
+      coverImages.forEach((file) => {
+        formDataToSubmit.append("covers", file);
+      });
+    }
+
+    // console.log("Updating with payload:", payload);
+
+    // 3. API call
+    const response = await axios.put(
+      `https://api.montres.ae/api/accessories/UpdatedAccessories/${id}`,
+      formDataToSubmit,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      }
+    );
+
+    if (response.data?.success) {
+      setSuccess("Accessory updated successfully!");
+      
+      // Redirect after success
+      setTimeout(() => {
+        router.push("/productmanage");
+      }, 2000);
+    }
+  } catch (err) {
+    console.error("Error updating accessory:", err);
+    const errorMessage =
+      err.response?.data?.message ||
+      err.response?.data?.error ||
+      err.message ||
+      "Failed to update accessory";
+    setError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Remove main image
   const removeMainImage = () => {

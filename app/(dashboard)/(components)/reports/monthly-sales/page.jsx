@@ -117,195 +117,563 @@ const MonthlySalesReport = () => {
   const profit = totals.totalSales - totals.totalCost;
   const profitMargin = totals.totalSales > 0 ? ((profit / totals.totalSales) * 100).toFixed(1) : 0;
 
-  // Generate PDF function
-  const generatePDF = async () => {
-    setGeneratingPDF(true);
-    const toastId = toast.loading('Generating PDF report...');
+const generatePDF = async () => {
+  setGeneratingPDF(true);
+  const toastId = toast.loading('Generating professional PDF report...');
+  
+  try {
+    // Create a new PDF document with better settings
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'pt',
+      format: 'a4',
+      compress: true
+    });
     
-    try {
-      // Create a new PDF document
-      const doc = new jsPDF('landscape', 'pt', 'a4');
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 40;
+    const contentWidth = pageWidth - (2 * margin);
+    
+    // Company/Report Header with styling
+    doc.setFillColor(59, 130, 246);
+    doc.rect(0, 0, pageWidth, 80, 'F');
+    
+    // Company Name/Logo area
+    doc.setFontSize(28);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INVENTORY PRO', pageWidth / 2, 50, { align: 'center' });
+    
+    // Report title
+    doc.setFontSize(20);
+    doc.setTextColor(30, 41, 59);
+    doc.setFont('helvetica', 'bold');
+    doc.text(
+      `MONTHLY SALES REPORT - ${months[selectedMonth - 1].toUpperCase()} ${selectedYear}`,
+      pageWidth / 2,
+      120,
+      { align: 'center' }
+    );
+    
+    // Report metadata in a styled box
+    const metaBoxTop = 140;
+    doc.setDrawColor(226, 232, 240);
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(margin, metaBoxTop, contentWidth, 80, 5, 5, 'FD');
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('helvetica', 'normal');
+    
+    const metaData = [
+      { label: 'Generated', value: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) },
+      { label: 'Report Period', value: `${months[selectedMonth - 1]} 1, ${selectedYear} - ${months[selectedMonth - 1]} ${new Date(selectedYear, selectedMonth, 0).getDate()}, ${selectedYear}` },
+      { label: 'Category Filter', value: selectedCategory },
+      { label: 'Total Items', value: filteredData.length.toString() }
+    ];
+    
+    const metaColWidth = contentWidth / 4;
+    metaData.forEach((item, index) => {
+      const x = margin + (index * metaColWidth) + 15;
+      doc.text(item.label.toUpperCase(), x, metaBoxTop + 25);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text(item.value, x, metaBoxTop + 45);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+    });
+    
+    // KPI Cards Section - Fixed AED currency and better visibility
+    const kpiTop = metaBoxTop + 100;
+    doc.setFontSize(16);
+    doc.setTextColor(30, 41, 59);
+    doc.setFont('helvetica', 'bold');
+    doc.text('KEY PERFORMANCE INDICATORS', margin, kpiTop);
+    
+    // Calculate average order value properly
+    const avgOrderValue = totals.totalUnits > 0 ? (totals.totalSales / totals.totalUnits) : 0;
+    
+    // Ensure profitMargin is a number
+    const profitMarginNumber = typeof profitMargin === 'string' 
+      ? parseFloat(profitMargin.replace('%', '')) 
+      : Number(profitMargin);
+    
+    const kpis = [
+      { 
+        label: 'TOTAL REVENUE', 
+        value: totals.totalSales,
+        icon: '💰',
+        color: [59, 130, 246],
+        subtext: 'Gross Sales Amount',
+        format: 'currency'
+      },
+      { 
+        label: 'TOTAL PROFIT', 
+        value: profit,
+        icon: '📈',
+        color: [34, 197, 94],
+        subtext: 'Net Profit After Costs',
+        format: 'currency'
+      },
+      { 
+        label: 'PROFIT MARGIN', 
+        value: profitMarginNumber, // Use the numeric value
+        icon: '🎯',
+        color: [168, 85, 247],
+        subtext: 'Margin Percentage',
+        format: 'percent'
+      },
+      { 
+        label: 'UNITS SOLD', 
+        value: totals.totalUnits,
+        icon: '📦',
+        color: [245, 158, 11],
+        subtext: 'Total Items Sold',
+        format: 'number'
+      },
+      { 
+        label: 'AVG. ORDER VALUE', 
+        value: avgOrderValue,
+        icon: '📊',
+        color: [239, 68, 68],
+        subtext: 'Average Per Unit',
+        format: 'currency'
+      }
+    ];
+    
+    const kpiCardWidth = (contentWidth - 40) / 3;
+    const kpiCardHeight = 90;
+    const kpiGap = 20;
+    
+    kpis.forEach((kpi, index) => {
+      const row = Math.floor(index / 3);
+      const col = index % 3;
+      const x = margin + (col * (kpiCardWidth + kpiGap));
+      const y = kpiTop + 30 + (row * (kpiCardHeight + 15));
       
-      // Add title
-      doc.setFontSize(24);
-      doc.setTextColor(40, 40, 40);
-      doc.text(`Monthly Sales Report - ${months[selectedMonth - 1]} ${selectedYear}`, pageWidth / 2, 60, { align: 'center' });
-      
-      // Add report details
-      doc.setFontSize(12);
-      doc.setTextColor(100, 100, 100);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 50, 100);
-      doc.text(`Category: ${selectedCategory}`, 50, 120);
-      doc.text(`Total Items: ${filteredData.length}`, pageWidth - 150, 100);
-      doc.text(`Report Period: ${months[selectedMonth - 1]} ${selectedYear}`, pageWidth - 150, 120);
-      
-      // Add stats section
-      doc.setFontSize(16);
-      doc.setTextColor(40, 40, 40);
-      doc.text('Sales Overview', 50, 160);
-      
-      doc.setFontSize(12);
-      const stats = [
-        { label: 'Total Revenue', value: totals.totalSales.toLocaleString(), color: [59, 130, 246] },
-        { label: 'Total Profit', value: profit.toLocaleString(), color: [34, 197, 94] },
-        { label: 'Total Cost', value: totals.totalCost.toLocaleString(), color: [147, 51, 234] },
-        { label: 'Units Sold', value: totals.totalUnits.toString(), color: [245, 158, 11] },
-        { label: 'Profit Margin', value: `${profitMargin}%`, color: [239, 68, 68] },
-      ];
-      
-      stats.forEach((stat, index) => {
-        const x = 50 + (index % 3) * 180;
-        const y = 200 + Math.floor(index / 3) * 40;
-        
-        doc.setFontSize(11);
-        doc.setTextColor(100, 100, 100);
-        doc.text(stat.label, x, y);
-        
-        doc.setFontSize(12);
-        doc.setTextColor(stat.color[0], stat.color[1], stat.color[2]);
-        doc.text(stat.value.toString(), x, y + 20);
-      });
-      
-      // Add table header
-      doc.setFontSize(14);
-      doc.setTextColor(40, 40, 40);
-      doc.text('Sales Details', 50, 300);
-      
-      // Create table
-      const tableTop = 320;
-      const tableHeaders = ['Product', 'Category', 'Date', 'Revenue', 'Profit'];
-      const columnWidths = [150, 100, 100, 100, 100];
-      let currentX = 50;
-      
-      // Draw table headers
-      doc.setFillColor(248, 250, 252);
-      doc.rect(50, tableTop, pageWidth - 100, 30, 'F');
+      // KPI Card background
+      doc.setFillColor(255, 255, 255);
       doc.setDrawColor(226, 232, 240);
       doc.setLineWidth(1);
-      doc.rect(50, tableTop, pageWidth - 100, 30);
+      doc.roundedRect(x, y, kpiCardWidth, kpiCardHeight, 8, 8, 'FD');
       
-      doc.setFontSize(11);
-      doc.setTextColor(100, 116, 139);
-      tableHeaders.forEach((header, index) => {
-        doc.text(header, currentX + 10, tableTop + 20);
-        if (index < tableHeaders.length - 1) {
-          doc.line(currentX + columnWidths[index], tableTop, currentX + columnWidths[index], tableTop + 30);
-        }
-        currentX += columnWidths[index];
-      });
+      // Format the value based on type - FIXED: Ensure value is a number
+      let formattedValue;
+      const numericValue = Number(kpi.value);
       
-      // Draw table rows
-      let currentY = tableTop + 30;
-      filteredData.slice(0, 15).forEach((item, rowIndex) => {
-        if (currentY > pageHeight - 50) {
-          doc.addPage();
-          currentY = 50;
-        }
-        
-        const itemProfit = (item.soldPrice || 0) - (item.cost || 0);
-        const rowData = [
-          item.productName || 'Product',
-          item.category || 'Uncategorized',
-          item.soldAt ? new Date(item.soldAt).toLocaleDateString() : 'N/A',
-          `$${(item.soldPrice || 0).toLocaleString()}`,
-          `$${itemProfit.toLocaleString()}`
-        ];
-        
-        // Alternate row background
-        if (rowIndex % 2 === 0) {
-          doc.setFillColor(249, 250, 251);
-          doc.rect(50, currentY, pageWidth - 100, 25, 'F');
-        }
-        
-        // Draw row border
-        doc.setDrawColor(226, 232, 240);
-        doc.rect(50, currentY, pageWidth - 100, 25);
-        
-        // Add row data
-        currentX = 50;
-        doc.setFontSize(10);
-        doc.setTextColor(30, 41, 59);
-        
-        rowData.forEach((cell, cellIndex) => {
-          // Special styling for profit column
-          if (cellIndex === 4) {
-            doc.setTextColor(itemProfit >= 0 ? 34 : 239, itemProfit >= 0 ? 197 : 68, itemProfit >= 0 ? 94 : 68);
-          }
-          
-          doc.text(cell, currentX + 5, currentY + 17, { maxWidth: columnWidths[cellIndex] - 10 });
-          
-          if (cellIndex < rowData.length - 1) {
-            doc.line(currentX + columnWidths[cellIndex], currentY, currentX + columnWidths[cellIndex], currentY + 25);
-          }
-          
-          doc.setTextColor(30, 41, 59);
-          currentX += columnWidths[cellIndex];
-        });
-        
-        currentY += 25;
-      });
-      
-      // Add category breakdown
-      doc.addPage();
-      doc.setFontSize(16);
-      doc.setTextColor(40, 40, 40);
-      doc.text('Category Breakdown', 50, 60);
-      
-      let categoryY = 100;
-      categories.filter(cat => cat !== 'All').forEach((cat, index) => {
-        const catItems = salesData.filter(item => item.category === cat);
-        const catTotal = catItems.reduce((sum, item) => sum + (item.soldPrice || 0), 0);
-        const percentage = totals.totalSales > 0 ? ((catTotal / totals.totalSales) * 100).toFixed(1) : 0;
-        
-        doc.setFontSize(12);
-        doc.setTextColor(100, 100, 100);
-        doc.text(`${cat}:`, 50, categoryY);
-        
-        doc.setTextColor(40, 40, 40);
-        doc.text(`$${catTotal.toLocaleString()} (${catItems.length} items)`, 200, categoryY);
-        
-        doc.text(`${percentage}% of total revenue`, 400, categoryY);
-        
-        // Draw progress bar
-        doc.setDrawColor(200, 200, 200);
-        doc.rect(50, categoryY + 10, 300, 8);
-        
-        const barColor = cat === 'watch' ? [59, 130, 246] :
-                        cat === 'Accessories' ? [34, 197, 94] :
-                        cat === 'Leather Goods' ? [147, 51, 234] :
-                        [245, 158, 11];
-        
-        doc.setFillColor(barColor[0], barColor[1], barColor[2]);
-        doc.rect(50, categoryY + 10, 300 * (percentage / 100), 8, 'F');
-        
-        categoryY += 40;
-      });
-      
-      // Add footer
-      const totalPages = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        doc.setFontSize(10);
-        doc.setTextColor(150, 150, 150);
-        doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 20, { align: 'center' });
-        doc.text('Generated by Inventory Management System', pageWidth / 2, pageHeight - 40, { align: 'center' });
+      switch(kpi.format) {
+        case 'currency':
+          formattedValue = `AED ${numericValue.toLocaleString('en-US', { 
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0 
+          })}`;
+          break;
+        case 'percent':
+          formattedValue = `${numericValue.toFixed(1)}%`;
+          break;
+        case 'number':
+          formattedValue = numericValue.toLocaleString('en-US');
+          break;
+        default:
+          formattedValue = numericValue.toString();
       }
       
-      // Save the PDF
-      const fileName = `sales-report-${months[selectedMonth - 1].toLowerCase()}-${selectedYear}.pdf`;
-      doc.save(fileName);
+      // KPI Icon
+      doc.setFontSize(20);
+      doc.text(kpi.icon, x + 20, y + 30);
       
-      toast.success(`PDF report generated: ${fileName}`, { id: toastId, duration: 4000 });
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast.error('Failed to generate PDF report', { id: toastId });
-    } finally {
-      setGeneratingPDF(false);
+      // KPI Value - Better visible
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(kpi.color[0], kpi.color[1], kpi.color[2]);
+      
+      // Calculate text width and center if needed
+      const valueWidth = doc.getTextWidth(formattedValue);
+      const valueX = Math.min(x + 50, x + (kpiCardWidth - valueWidth) / 2 + 10);
+      doc.text(formattedValue, valueX, y + 32);
+      
+      // KPI Label
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont('helvetica', 'normal');
+      doc.text(kpi.label, x + 20, y + 55);
+      
+      // KPI Subtext
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.text(kpi.subtext, x + 20, y + 70);
+    });
+    
+    // Sales Details Table
+    const tableTop = kpiTop + (Math.ceil(kpis.length / 3) * (kpiCardHeight + 15)) + 50;
+    
+    // Table Title
+    doc.setFontSize(16);
+    doc.setTextColor(30, 41, 59);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SALES TRANSACTIONS', margin, tableTop);
+    
+    // Create table with better structure
+    const tableHeaders = [
+      { text: 'PRODUCT', width: 180 },
+      { text: 'CATEGORY', width: 100 },
+      { text: 'DATE', width: 100 },
+      { text: 'QUANTITY', width: 80 },
+      { text: 'UNIT PRICE', width: 100 },
+      { text: 'REVENUE', width: 100 },
+      { text: 'PROFIT', width: 100 },
+      { text: 'MARGIN', width: 80 }
+    ];
+    
+    const tableStartY = tableTop + 30;
+    let currentY = tableStartY;
+    
+    // Table Header
+    doc.setFillColor(59, 130, 246);
+    doc.roundedRect(margin, currentY, contentWidth, 35, 3, 3, 'F');
+    
+    let headerX = margin + 10;
+    tableHeaders.forEach(header => {
+      doc.setFontSize(10);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text(header.text, headerX, currentY + 23);
+      headerX += header.width;
+    });
+    
+    currentY += 35;
+    
+    // Table Rows with proper text wrapping
+    let pageNumber = 1;
+    
+    filteredData.forEach((item, index) => {
+      // Add new page if needed
+      if (currentY > pageHeight - 100 && index < filteredData.length - 1) {
+        doc.addPage();
+        pageNumber++;
+        currentY = margin + 50;
+        
+        // Add page header
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Sales Transactions - Page ${pageNumber}`, margin, currentY - 20);
+      }
+      
+      // Alternate row background
+      doc.setFillColor(index % 2 === 0 ? 255 : 248, index % 2 === 0 ? 255 : 250, index % 2 === 0 ? 255 : 251);
+      doc.rect(margin, currentY, contentWidth, 30, 'F');
+      
+      // Calculate values
+      const quantity = item.quantity || 1;
+      const revenue = (item.soldPrice || 0) * quantity;
+      const cost = (item.cost || 0) * quantity;
+      const itemProfit = revenue - cost;
+      const itemMargin = revenue > 0 ? ((itemProfit / revenue) * 100) : 0;
+      
+      // Format currency values with AED
+      const formatAED = (value) => `AED ${Number(value).toFixed(2)}`;
+      
+      // Prepare row data with proper formatting
+      const rowData = [
+        { 
+          text: item.productName || 'Unnamed Product',
+          width: 180,
+          style: { fontStyle: 'bold', color: [30, 41, 59] }
+        },
+        { 
+          text: item.category || 'Uncategorized',
+          width: 100,
+          style: { color: [100, 116, 139] }
+        },
+        { 
+          text: item.soldAt ? new Date(item.soldAt).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: 'numeric'
+          }) : 'N/A',
+          width: 100,
+          style: { color: [100, 116, 139] }
+        },
+        { 
+          text: quantity.toString(),
+          width: 80,
+          style: { align: 'center', color: [30, 41, 59] }
+        },
+        { 
+          text: formatAED(item.soldPrice || 0),
+          width: 100,
+          style: { align: 'right', color: [30, 41, 59] }
+        },
+        { 
+          text: formatAED(revenue),
+          width: 100,
+          style: { align: 'right', fontStyle: 'bold', color: [30, 41, 59] }
+        },
+        { 
+          text: formatAED(itemProfit),
+          width: 100,
+          style: { 
+            align: 'right', 
+            fontStyle: 'bold', 
+            color: itemProfit >= 0 ? [34, 197, 94] : [239, 68, 68]
+          }
+        },
+        { 
+          text: `${Number(itemMargin).toFixed(1)}%`,
+          width: 80,
+          style: { 
+            align: 'right',
+            color: itemMargin >= 20 ? [34, 197, 94] : 
+                   itemMargin >= 10 ? [245, 158, 11] : 
+                   [239, 68, 68]
+          }
+        }
+      ];
+      
+      // Draw cell borders and text
+      let cellX = margin;
+      rowData.forEach(cell => {
+        // Cell border
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.5);
+        doc.line(cellX, currentY, cellX, currentY + 30);
+        
+        // Set cell text style
+        doc.setFontSize(9);
+        doc.setFont('helvetica', cell.style.fontStyle || 'normal');
+        doc.setTextColor(...cell.style.color);
+        
+        // Calculate text position
+        let textX = cellX + 5;
+        if (cell.style.align === 'center') {
+          textX = cellX + (cell.width / 2);
+        } else if (cell.style.align === 'right') {
+          textX = cellX + cell.width - 5;
+        }
+        
+        // Draw text with word wrapping
+        const textOptions = {
+          align: cell.style.align || 'left',
+          maxWidth: cell.width - 10
+        };
+        
+        const lines = doc.splitTextToSize(cell.text, cell.width - 10);
+        if (lines.length > 1) {
+          // For multi-line text, adjust position
+          doc.text(lines, textX, currentY + 12, textOptions);
+        } else {
+          doc.text(cell.text, textX, currentY + 18, textOptions);
+        }
+        
+        cellX += cell.width;
+      });
+      
+      // Right border
+      doc.line(cellX, currentY, cellX, currentY + 30);
+      
+      // Bottom border
+      doc.line(margin, currentY + 30, cellX, currentY + 30);
+      
+      currentY += 30;
+    });
+    
+    // Category Breakdown Page
+    doc.addPage();
+    
+    // Page Header
+    doc.setFontSize(24);
+    doc.setTextColor(30, 41, 59);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CATEGORY ANALYSIS', pageWidth / 2, 80, { align: 'center' });
+    
+    // Subtitle
+    doc.setFontSize(12);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Revenue Distribution by Product Category', pageWidth / 2, 110, { align: 'center' });
+    
+    // Calculate category stats
+    const categoryStats = categories
+      .filter(cat => cat !== 'All')
+      .map(cat => {
+        const catItems = salesData.filter(item => item.category === cat);
+        const catRevenue = catItems.reduce((sum, item) => sum + (item.soldPrice || 0) * (item.quantity || 1), 0);
+        const catCost = catItems.reduce((sum, item) => sum + (item.cost || 0) * (item.quantity || 1), 0);
+        const catProfit = catRevenue - catCost;
+        const catMargin = catRevenue > 0 ? (catProfit / catRevenue) * 100 : 0;
+        const percentage = totals.totalSales > 0 ? (catRevenue / totals.totalSales) * 100 : 0;
+        
+        return {
+          category: cat,
+          revenue: catRevenue,
+          cost: catCost,
+          profit: catProfit,
+          margin: catMargin,
+          items: catItems.length,
+          units: catItems.reduce((sum, item) => sum + (item.quantity || 1), 0),
+          percentage
+        };
+      })
+      .sort((a, b) => b.revenue - a.revenue);
+    
+    // Category cards
+    const cardStartY = 150;
+    const cardWidth = (contentWidth - 40) / 2;
+    const cardHeight = 120;
+    const cardGap = 40;
+    
+    categoryStats.forEach((stat, index) => {
+      const row = Math.floor(index / 2);
+      const col = index % 2;
+      const x = margin + (col * (cardWidth + cardGap));
+      const y = cardStartY + (row * (cardHeight + 20));
+      
+      // Category color
+      const categoryColors = {
+        'watch': [59, 130, 246],
+        'accessories': [34, 197, 94],
+        'leather goods': [168, 85, 247],
+        'default': [245, 158, 11]
+      };
+      
+      const color = categoryColors[stat.category.toLowerCase()] || categoryColors.default;
+      
+      // Category header
+      doc.setFillColor(...color);
+      doc.roundedRect(x, y, cardWidth, 30, 5, 5, 'F');
+      
+      doc.setFontSize(12);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text(stat.category.toUpperCase(), x + 15, y + 20);
+      
+      // Category stats
+      const statY = y + 55;
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont('helvetica', 'normal');
+      
+      // Left column stats
+      doc.text('Revenue:', x + 15, statY);
+      doc.text('Profit:', x + 15, statY + 18);
+      doc.text('Margin:', x + 15, statY + 36);
+      
+      // Right column stats
+      doc.text(`Items: ${stat.items}`, x + cardWidth / 2 + 10, statY);
+      doc.text(`Units: ${stat.units}`, x + cardWidth / 2 + 10, statY + 18);
+      doc.text(`Share: ${stat.percentage.toFixed(1)}%`, x + cardWidth / 2 + 10, statY + 36);
+      
+      // Values with AED currency
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 41, 59);
+      doc.text(`AED ${stat.revenue.toLocaleString('en-US', { minimumFractionDigits: 0 })}`, x + 70, statY);
+      doc.text(`AED ${stat.profit.toLocaleString('en-US', { minimumFractionDigits: 0 })}`, x + 70, statY + 18);
+      doc.text(`${stat.margin.toFixed(1)}%`, x + 70, statY + 36);
+      
+      // Progress bar
+      const barY = y + 90;
+      doc.setDrawColor(226, 232, 240);
+      doc.rect(x + 15, barY, cardWidth - 30, 8);
+      doc.setFillColor(...color);
+      doc.rect(x + 15, barY, (cardWidth - 30) * (stat.percentage / 100), 8, 'F');
+    });
+    
+    // Summary section at bottom
+    const summaryY = cardStartY + (Math.ceil(categoryStats.length / 2) * (cardHeight + 20)) + 50;
+    
+    doc.setFontSize(14);
+    doc.setTextColor(30, 41, 59);
+    doc.setFont('helvetica', 'bold');
+    doc.text('EXECUTIVE SUMMARY', margin, summaryY);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    doc.setFont('helvetica', 'normal');
+    
+    // Use the numeric profit margin for summary
+    const profitMarginSummary = profitMarginNumber || 0;
+    
+    const summaryText = [
+      `• The ${months[selectedMonth - 1]} ${selectedYear} sales report shows ${filteredData.length} transactions across ${categoryStats.length} categories.`,
+      `• Top performing category: ${categoryStats[0]?.category || 'N/A'} with ${categoryStats[0]?.percentage.toFixed(1)}% revenue share.`,
+      `• Overall profit margin of ${profitMarginSummary.toFixed(1)}% indicates ${profitMarginSummary > 20 ? 'strong' : profitMarginSummary > 10 ? 'moderate' : 'weak'} profitability.`,
+      `• Report generated for ${selectedCategory === 'All' ? 'all categories' : selectedCategory + ' category'}.`,
+      `• Total revenue for the period: AED ${totals.totalSales.toLocaleString('en-US', { minimumFractionDigits: 0 })}`
+    ];
+    
+    summaryText.forEach((line, index) => {
+      doc.text(line, margin, summaryY + 30 + (index * 20));
+    });
+    
+    // Add professional footer to all pages (removed "Confidential")
+    const totalPages = doc.internal.getNumberOfPages();
+    
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      
+      // Footer background
+      doc.setFillColor(248, 250, 252);
+      doc.rect(0, pageHeight - 60, pageWidth, 60, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.line(0, pageHeight - 60, pageWidth, pageHeight - 60);
+      
+      // Footer text
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont('helvetica', 'normal');
+      
+      // Left footer (removed "Confidential")
+      doc.text(`Inventory Management System`, margin, pageHeight - 35);
+      
+      // Center footer
+      doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 35, { align: 'center' });
+      
+      // Right footer
+      const now = new Date();
+      const timestamp = now.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      doc.text(`Generated: ${timestamp}`, pageWidth - margin, pageHeight - 35, { align: 'right' });
+      
+      // Optional: Subtle watermark for internal use
+      if (i > 1) {
+        doc.setFontSize(40);
+        doc.setTextColor(240, 240, 240);
+        doc.setFont('helvetica', 'bold');
+        doc.text('INTERNAL USE', pageWidth / 2, pageHeight / 2, { 
+          align: 'center',
+          angle: 45
+        });
+        doc.setTextColor(100, 116, 139);
+      }
     }
-  };
-
+    
+    // Save the PDF with timestamp
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    const fileName = `Sales_Report_${months[selectedMonth - 1]}_${selectedYear}_${timestamp}.pdf`;
+    
+    doc.save(fileName);
+    
+    toast.success(`Professional PDF report generated: ${fileName}`, { 
+      id: toastId, 
+      duration: 5000 
+    });
+    
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    toast.error('Failed to generate PDF report. Please try again.', { 
+      id: toastId,
+      duration: 3000 
+    });
+  } finally {
+    setGeneratingPDF(false);
+  }
+};
   // Alternative PDF generation using html2canvas (for capturing the entire report view)
   const generatePDFFromView = async () => {
     setGeneratingPDF(true);
