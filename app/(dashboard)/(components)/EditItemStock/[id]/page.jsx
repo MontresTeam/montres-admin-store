@@ -92,7 +92,9 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
   "Salvatore Ferragamo", "Seiko", "Swarovski", "Swatch", "Tag Heuer", "Techno Com",
   "Technomarine", "Tiffany & Co.", "Tissot", "Tonino Lamborghini", "Trussardi",
   "Tudor", "U-Boat", "Ulysse Nardin", "Vacheron Constantin", "Valentino", "Van Cleef & Arpels", "Versace",
-  "Yves Saint Laurent", "Zenith", "Other"
+  "Yves Saint Laurent", "Zenith", "Other",
+  "Sandoz","Bentley","Elgin","Jacques Lendl","Tom ford","Lord king table clock","Tower quartz"
+
   ];
 
   // Filtered brands based on search
@@ -251,7 +253,7 @@ const EditItemPage = ({ itemId: propItemId, onSave, onCancel }) => {
         lastEditedAt: itemData.lastEditedAt || "",
       });
 
-      showToast("Item loaded successfully", "success");
+      // showToast("Item loaded successfully", "success");
     } catch (error) {
       console.error("Error fetching item:", error);
       const errorMessage =
