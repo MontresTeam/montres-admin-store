@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 
 // API base URL
-const API_BASE_URL = 'http://localhost:9000/api/seo-pages'
+const API_BASE_URL = 'https://api.montres.ae/api/seo-pages'
 
 const Page = () => {
   const [pages, setPages] = useState([])
