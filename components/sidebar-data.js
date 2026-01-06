@@ -105,24 +105,18 @@ export const data = {
       isActive: true,
     },
 
-    /* ================= MARKETING ================= */
+    /* ================= SEO ================= */
+    /* ================= SEO & CONTENT ================= */
     {
-      title: "Marketing & Offers",
-      url: "#",
+      title: "SEO & Content Management",
       icon: Star,
-      items: [
-        { title: "Coupons", url: "/coupons" },
-        { title: "Campaigns", url: "/campaigns" },
-        { title: "Push Notifications", url: "/push-notification" },
-      ],
-    },
-
-    /* ================= FINANCIAL ================= */
-    {
-      title: "Financial Overview",
-      url: "/financial-overview",
-      icon: CurrencyPngIcon,
       isActive: true,
+      items: [
+        { title: "All Pages", url: "/seo-content/pages" },
+        { title: "Category Pages", url: "/seo-content/categories" },
+        { title: "Product SEO", url: "/seo-content/products" },
+        { title: "Landing Pages", url: "/seo-content/landing" },
+      ],
     },
 
     /* ================= INQUIRIES ================= */
@@ -130,7 +124,7 @@ export const data = {
       title: "Inquiries",
       url: "/contact-messages",
       icon: MessageSquare,
-    },
+    },  
 
     /* ================= SETTINGS ================= */
     {
