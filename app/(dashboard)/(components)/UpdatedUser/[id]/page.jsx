@@ -43,7 +43,7 @@ const UpdatedUser = () => {
     const fetchUser = async () => {
       try {
         setFetchLoading(true);
-        const response = await axios.get(`http://localhost:9000/api/customers/All/${params.id}`);
+        const response = await axios.get(`https://api.montres.ae/api/customers/All/${params.id}`);
         
         if (response.data && response.data.customer) {
           const userData = response.data.customer;
