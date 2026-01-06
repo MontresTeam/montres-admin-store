@@ -588,7 +588,7 @@ const Page = () => {
                     Page URL
                   </label>
                   <div className="text-gray-800 font-mono text-sm break-all">
-                    https://yoursite.com{selectedPage.slug}
+                    https://montres.ae/{selectedPage.slug}
                   </div>
                 </div>
 
