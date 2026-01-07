@@ -61,7 +61,7 @@ const ProductRestockWaitlist = () => {
   });
 
   // API endpoint
-  const API_URL = "http://localhost:9000/api/products/restock/subscribers";
+  const API_URL = "https://api.montres.ae/api/products/restock/subscribers";
   const exportMenuRef = useRef(null);
 
   // Status options
