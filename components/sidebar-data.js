@@ -108,14 +108,13 @@ export const data = {
     /* ================= SEO ================= */
     /* ================= SEO & CONTENT ================= */
     {
-      title: "SEO & Content Management",
+      title: "SEO & Content ",
       icon: Star,
       isActive: true,
       items: [
         { title: "All Pages", url: "/seo-content/pages" },
         { title: "Category Pages", url: "/seo-content/categories" },
         { title: "Product SEO", url: "/seo-content/products" },
-        { title: "Landing Pages", url: "/seo-content/landing" },
       ],
     },
 
