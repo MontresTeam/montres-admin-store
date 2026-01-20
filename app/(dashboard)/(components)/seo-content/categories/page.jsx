@@ -25,7 +25,7 @@ import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
 
 // API base URL
-const API_BASE_URL = 'http://localhost:9000/api/seo-pages'
+const API_BASE_URL = 'https://api.montres.ae/api/seo-pages'
 
 const CategorySeoPage = () => {
   const [pages, setPages] = useState([])
@@ -69,7 +69,7 @@ const CategorySeoPage = () => {
       setError(null);
 
       // Changed endpoint to /Categories
-      const response = await axios.get(`${API_BASE_URL}/Categories`);
+      const response = await axios.get(`${API_BASE_URL}/Allpages`);
 
       if (response.status === 200 && Array.isArray(response.data?.data)) {
         setPages(
