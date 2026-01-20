@@ -9,6 +9,7 @@ import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion"; // Ensure framer-motion is installed
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,22 +18,16 @@ import {
   FormItem,
   FormControl,
   FormMessage,
+  FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
 import { Separator } from "@/components/ui/separator";
 
 import {
   Eye,
   EyeOff,
   Lock,
-  Mail,
   Loader2,
   User,
   Shield,
@@ -41,32 +36,32 @@ import {
   Camera,
   X,
   AlertCircle,
+  LayoutDashboard,
 } from "lucide-react";
 
-// Zod Schema
+// --- Configuration ---
+const API_URL = "https://api.montres.ae/api/admin/login"; // Centralized API URL
+
+// --- Zod Schema ---
 const adminLoginSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
 });
 
-// Demo credentials mapping
-const DEMO_CREDENTIALS = {
-  ceo: { username: "ceo", password: "ceo123" },
-  sales: { username: "sales", password: "sales123" },
-  developer: { username: "developer", password: "dev123" },
-};
-
 const AdminLoginForm = () => {
+  // --- State ---
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [apiError, setApiError] = useState("");
+
+  // --- Refs ---
   const fileInputRef = useRef(null);
-  const formRef = useRef(null);
   const loadingToastRef = useRef(null);
 
+  // --- Form Methods ---
   const methods = useForm({
     resolver: zodResolver(adminLoginSchema),
     defaultValues: {
@@ -75,7 +70,7 @@ const AdminLoginForm = () => {
     },
   });
 
-  // Load saved credentials on mount
+  // --- Effects ---
   useEffect(() => {
     const savedUsername = localStorage.getItem("adminUsername");
     const savedRemember = localStorage.getItem("rememberAdmin") === "true";
@@ -86,41 +81,42 @@ const AdminLoginForm = () => {
     }
   }, [methods]);
 
+  // --- Helpers ---
   const showToast = (message, type = "success", duration = 4000) => {
     const background =
       type === "success"
-        ? "linear-gradient(to right, #00b09b, #96c93d)"
+        ? "linear-gradient(to right, #059669, #10B981)" // Emerald Green
         : type === "error"
-          ? "linear-gradient(to right, #ff416c, #ff4b2b)"
-          : "linear-gradient(to right, #3498db, #2980b9)";
+          ? "linear-gradient(to right, #DC2626, #EF4444)" // Red
+          : "linear-gradient(to right, #2563EB, #3B82F6)"; // Blue
 
-    const icon = type === "success" ? "✅ " : type === "error" ? "❌ " : "ℹ️ ";
+    const icon = type === "success" ? "✨" : type === "error" ? "⚠️" : "ℹ️";
 
     return Toastify({
-      text: icon + message,
+      text: `${icon} ${message}`,
       duration: duration,
-      newWindow: true,
       close: true,
       gravity: "top",
       position: "right",
       stopOnFocus: true,
       style: {
         background: background,
-        borderRadius: "8px",
+        borderRadius: "12px",
         padding: "16px 24px",
         fontSize: "14px",
-        fontWeight: "500",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+        fontWeight: "600",
+        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
         color: "#fff",
-        minWidth: "300px",
+        minWidth: "320px",
+        border: "1px solid rgba(255,255,255,0.1)",
       },
+      onClick: function () { }, // Callback after click
     }).showToast();
   };
 
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       const validTypes = [
         "image/jpeg",
         "image/png",
@@ -129,37 +125,30 @@ const AdminLoginForm = () => {
         "image/webp",
       ];
       if (!validTypes.includes(file.type)) {
-        showToast(
-          "Please upload a valid image file (JPEG, PNG, GIF, WebP)",
-          "error"
-        );
+        showToast("Invalid file type. Please use JPEG, PNG, or WebP.", "error");
         return;
       }
 
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        showToast("Image size should be less than 5MB", "error");
+        showToast("File is too large. Max size is 5MB.", "error");
         return;
       }
 
-      // Create preview
       setProfileImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfilePreview(reader.result);
       };
       reader.readAsDataURL(file);
-      showToast("Profile image selected successfully", "success");
+      showToast("Profile image updated!", "success");
     }
   };
 
   const handleRemoveProfileImage = () => {
     setProfileImage(null);
     setProfilePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    showToast("Profile image removed", "info");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    showToast("Profile image removed.", "info");
   };
 
   const onSubmit = async (values) => {
@@ -167,7 +156,7 @@ const AdminLoginForm = () => {
     setApiError("");
 
     try {
-      // Save remember me preference
+      // Manage "Remember Me"
       if (rememberMe) {
         localStorage.setItem("adminUsername", values.username);
         localStorage.setItem("rememberAdmin", "true");
@@ -176,430 +165,337 @@ const AdminLoginForm = () => {
         localStorage.removeItem("rememberAdmin");
       }
 
-      // Prepare FormData for API request
+      // FormData Construction
       const formData = new FormData();
       formData.append("username", values.username);
       formData.append("password", values.password);
-
       if (profileImage) {
         formData.append("profile", profileImage);
       }
 
-      // Show loading toast
-      loadingToastRef.current = showToast(
-        "🔐 Authenticating...",
-        "info",
-        10000
-      );
+      // Feedback
+      // loadingToastRef.current = showToast("Authenticating credentials...", "info", 50000);
 
-      // Make API call to your backend
-      const response = await axios.post(
-        "http://localhost:9000/api/admin/login",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          timeout: 10000,
-          withCredentials: true,
-        }
-      );
+      const response = await axios.post(API_URL, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 10000,
+        withCredentials: true,
+      });
 
       if (response.data.message === "Login successful") {
-        showToast("🎉 Admin login successful!", "success");
+        showToast("Access Granted. Redirecting...", "success");
 
-        // Store authentication data
         if (response.data.token) {
-          // Store token
           localStorage.setItem("adminToken", response.data.token);
           sessionStorage.setItem("adminToken", response.data.token);
+          axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
 
-          // Set default headers for future requests
-          axios.defaults.headers.common[
-            "Authorization"
-          ] = `Bearer ${response.data.token}`;
-
-          // Store admin data
           const adminData = {
             id: response.data.id || 1,
             username: values.username,
-            role: response.data.role || values.username, // Use username as role if not provided
+            role: response.data.role || values.username,
             profile: response.data.profile || profilePreview || null,
             loginTime: new Date().toISOString(),
             token: response.data.token,
           };
 
           localStorage.setItem("adminData", JSON.stringify(adminData));
-
-          // Store a simple flag to indicate user is logged in
           localStorage.setItem("isAdminLoggedIn", "true");
           sessionStorage.setItem("isAdminLoggedIn", "true");
         }
 
-        // Redirect to dashboard after delay
         setTimeout(() => {
           window.location.href = "/dashboard";
-        }, 1500);
+        }, 1000);
       } else {
-        showToast(response.data.message || "Login failed", "error");
-        setApiError(response.data.message || "Invalid credentials");
+        // Fallback for successful request but failed logic
+        throw new Error(response.data.message || "Authentication failed.");
       }
     } catch (error) {
-      console.error("Login error:", error);
-
-      let errorMessage = "An unexpected error occurred. Please try again.";
+      console.error("Login attempt failed:", error);
+      let errMsg = "Something went wrong. Please try again.";
 
       if (axios.isAxiosError(error)) {
         if (error.code === "ECONNABORTED") {
-          errorMessage = "Request timeout. Please check your connection.";
+          errMsg = "Connection timed out.";
         } else if (error.response) {
-          // Server responded with error status
-          const serverError = error.response.data;
-          errorMessage =
-            serverError?.message || `Error: ${error.response.status}`;
-
-          // Handle specific status codes
-          switch (error.response.status) {
-            case 400:
-              errorMessage =
-                serverError.message || "Invalid username or password";
-              break;
-            case 401:
-              errorMessage = "Invalid credentials";
-              break;
-            case 403:
-              errorMessage = "Access denied. Admin privileges required.";
-              break;
-            case 404:
-              errorMessage = "Login endpoint not found";
-              break;
-            case 422:
-              errorMessage = "Validation error. Please check your input.";
-              break;
-            case 500:
-              errorMessage = "Server error. Please try again later.";
-              break;
-          }
-        } else if (error.request) {
-          // Request made but no response
-          errorMessage =
-            "Network error. Please check your internet connection.";
+          errMsg = error.response.data?.message || `Server Error (${error.response.status})`;
+          if (error.response.status === 401) errMsg = "Invalid username or password.";
+          if (error.response.status === 403) errMsg = "Access denied. Insufficient permissions.";
+        } else {
+          errMsg = "Network error. Check your internet.";
         }
       } else if (error instanceof Error) {
-        errorMessage = error.message;
+        errMsg = error.message;
       }
 
-      showToast(errorMessage, "error");
-      setApiError(errorMessage);
+      setApiError(errMsg);
+      showToast(errMsg, "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row items-center justify-center p-4 md:p-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Left Side - Brand/Logo Section */}
-      <div className="hidden md:flex flex-1 flex-col items-center justify-center p-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <Shield className="w-12 h-12 text-primary" />
-              </div>
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 overflow-hidden bg-background">
+      {/* --- Left Column: Form & Interaction --- */}
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="mx-auto grid w-full max-w-[420px] gap-8"
+        >
+          {/* Header */}
+          <div className="flex flex-col space-y-2 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
+              <Shield className="h-8 w-8" />
             </div>
-            <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100 mb-4">
-              Montres Admin Portal
-            </h1>
-            <p className="text-lg text-slate-600 dark:text-slate-300">
-              Secure access to luxury watch inventory & management
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome Back</h1>
+            <p className="text-muted-foreground text-sm">
+              Enter your credentials to access the admin portal.
             </p>
           </div>
-        </div>
-      </div>
 
-      {/* Right Side - Login Form */}
-      <div className="w-full max-w-md md:max-w-lg lg:max-w-xl">
-        <Card className="w-full border-none shadow-xl rounded-2xl overflow-hidden">
-          {/* Mobile Header */}
-          <div className="md:hidden bg-gradient-to-r from-primary to-primary/80 text-white p-6">
-            <div className="flex items-center space-x-3">
-              <Shield className="w-8 h-8" />
-              <div>
-                <h1 className="text-xl font-bold">Admin Login</h1>
-                <p className="text-sm text-white/80">Secure access portal</p>
-              </div>
-            </div>
-          </div>
+          <FormProvider {...methods}>
+            <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
 
-          <CardHeader className="hidden md:block">
-            <div className="text-center space-y-2">
-              <CardTitle className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100">
-                Admin Login
-              </CardTitle>
-              <CardDescription className="text-slate-600 dark:text-slate-400">
-                Enter your credentials to access the admin dashboard
-              </CardDescription>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-6 md:p-8">
-            <FormProvider {...methods}>
-              <form
-                ref={formRef}
-                onSubmit={methods.handleSubmit(onSubmit)}
-                className="space-y-5 md:space-y-6"
-              >
-                {/* Profile Image Upload */}
-                <div className="flex flex-col items-center mb-4">
-                  <div className="relative group">
-                    <div className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-800 shadow-lg overflow-hidden bg-slate-100 dark:bg-slate-700">
-                      {profilePreview ? (
-                        <div className="relative w-full h-full">
-                          <Image
-                            src={profilePreview}
-                            alt="Profile preview"
-                            width={96}
-                            height={96}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <User className="w-12 h-12 text-slate-400" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Upload Button */}
-                    <label
-                      htmlFor="profile-upload"
-                      className={`absolute bottom-0 right-0 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 shadow-lg ${isSubmitting
-                        ? "bg-slate-300 dark:bg-slate-600 cursor-not-allowed"
-                        : "bg-primary hover:bg-primary/90 hover:shadow-xl active:scale-95"
-                        }`}
-                    >
-                      {profilePreview ? (
-                        <Camera className="w-5 h-5 text-white" />
-                      ) : (
-                        <Upload className="w-5 h-5 text-white" />
-                      )}
-                      <input
-                        id="profile-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleProfileImageChange}
-                        ref={fileInputRef}
-                        disabled={isSubmitting}
+              {/* Profile Picture Upload Section (Optional) */}
+              <div className="flex justify-center">
+                <div className="relative group">
+                  <div className="relative h-28 w-28 overflow-hidden rounded-full border-4 border-background bg-muted shadow-xl ring-2 ring-muted">
+                    {profilePreview ? (
+                      <Image
+                        src={profilePreview}
+                        alt="Avatar"
+                        fill
+                        className="object-cover"
                       />
-                    </label>
-                  </div>
-
-                  {/* Upload Instructions */}
-                  <div className="text-center mt-3">
-                    <p
-                      className={`text-sm ${profilePreview
-                        ? "text-green-600 dark:text-green-400 font-medium"
-                        : "text-slate-600 dark:text-slate-400"
-                        }`}
-                    >
-                      {profilePreview
-                        ? "✓ Profile image selected"
-                        : "Upload admin profile (optional)"}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                      JPEG, PNG, GIF, WebP • Max 5MB
-                    </p>
-
-                    {/* Remove button if image is selected */}
-                    {profilePreview && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRemoveProfileImage}
-                        className="mt-2 text-xs h-7 px-3 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-                        disabled={isSubmitting}
-                      >
-                        <X className="w-3 h-3 mr-1" />
-                        Remove
-                      </Button>
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
+                        <User className="h-10 w-10 opacity-50" />
+                      </div>
                     )}
+                    {/* Dark overlay on hover */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
+                      <Camera className="h-6 w-6 text-white" />
+                    </div>
                   </div>
+                  {/* Input Trigger */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 cursor-pointer opacity-0 rounded-full z-20"
+                    onChange={handleProfileImageChange}
+                    disabled={isSubmitting}
+                    ref={fileInputRef}
+                    title="Change profile picture"
+                  />
+                  {/* Utility Button: Remove */}
+                  {profilePreview && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveProfileImage}
+                      className="absolute -right-2 top-0 z-30 rounded-full bg-destructive p-1.5 text-white shadow-sm hover:bg-destructive/90 transition-colors"
+                      title="Remove image"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
+              </div>
 
-                {/* Username Field */}
+              {/* Input Fields */}
+              <div className="space-y-4">
                 <FormField
                   control={methods.control}
                   name="username"
                   render={({ field }) => (
                     <FormItem>
+                      <FormLabel>Username</FormLabel>
                       <FormControl>
-                        <div className="relative group">
-                          <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
-                            <User className="w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                          </div>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/60" />
                           <Input
-                            {...field}
-                            type="text"
-                            placeholder="Enter username"
-                            className="pl-12 pr-4 h-14 rounded-xl bg-white dark:bg-slate-800 
-                            border-2 border-slate-200 dark:border-slate-700 
-                            focus:border-primary focus:ring-2 focus:ring-primary/20 
-                            transition-all duration-200
-                            text-base placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                            placeholder="admin"
+                            className="pl-10 h-11 bg-muted/50 border-input/60 focus:bg-background transition-colors"
                             disabled={isSubmitting}
+                            {...field}
                           />
                         </div>
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Password Field */}
                 <FormField
                   control={methods.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Password</FormLabel>
+                        <Link
+                          href="/admin/forgot-password"
+                          className="text-xs font-medium text-primary hover:text-primary/80 hover:underline"
+                        >
+                          Forgot password?
+                        </Link>
+                      </div>
                       <FormControl>
-                        <div className="relative group">
-                          <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
-                            <Lock className="w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                          </div>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/60" />
                           <Input
-                            {...field}
                             type={showPassword ? "text" : "password"}
-                            placeholder="Enter your password"
-                            className="pl-12 pr-12 h-14 rounded-xl bg-white dark:bg-slate-800 
-                            border-2 border-slate-200 dark:border-slate-700 
-                            focus:border-primary focus:ring-2 focus:ring-primary/20 
-                            transition-all duration-200
-                            text-base placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                            placeholder="••••••••"
+                            className="pl-10 pr-10 h-11 bg-muted/50 border-input/60 focus:bg-background transition-colors"
                             disabled={isSubmitting}
+                            {...field}
                           />
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground/60 hover:text-foreground"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 p-0 
-                            hover:bg-transparent text-muted-foreground disabled:opacity-50"
                             disabled={isSubmitting}
                           >
                             {showPassword ? (
-                              <EyeOff className="w-4 h-4" />
+                              <EyeOff className="h-4 w-4" />
                             ) : (
-                              <Eye className="w-4 h-4" />
+                              <Eye className="h-4 w-4" />
                             )}
                           </Button>
                         </div>
                       </FormControl>
-                      <div className="flex justify-between items-center mt-2">
-                        <Link
-                          href="/admin/forgot-password"
-                          className={`text-sm text-primary hover:text-primary/80 hover:underline transition-colors ${isSubmitting ? "opacity-50 pointer-events-none" : ""
-                            }`}
-                        >
-                          Forgot Password?
-                        </Link>
-                      </div>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
 
-                {/* Remember Me Checkbox */}
+              {/* Remember Me & Error */}
+              <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="remember"
+                    id="rememberMe"
                     checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked)}
-                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    onCheckedChange={setRememberMe}
                     disabled={isSubmitting}
                   />
                   <label
-                    htmlFor="remember"
-                    className={`text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none ${isSubmitting ? "opacity-50" : ""
-                      }`}
+                    htmlFor="rememberMe"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
                   >
-                    Remember this device
+                    Remember me on this device
                   </label>
                 </div>
 
-                {/* API Error Display */}
                 {apiError && (
-                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 animate-in fade-in duration-200">
-                    <div className="flex items-start space-x-2">
-                      <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-red-700 dark:text-red-300">
-                        {apiError}
-                      </p>
-                    </div>
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-md bg-destructive/10 p-3 text-sm text-destructive flex items-center gap-2 border border-destructive/20"
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <p>{apiError}</p>
+                  </motion.div>
                 )}
+              </div>
 
-                {/* Security Note */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                  <div className="flex items-start space-x-2">
-                    <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                      For security reasons, please logout after completing your
-                      administrative tasks. Session expires after 24 hours.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
+              {/* Submit Action */}
+              <div className="space-y-4">
                 <Button
                   type="submit"
-                  className="w-full h-14 rounded-xl text-base font-semibold
-                  bg-gradient-to-r from-primary to-primary/90
-                  hover:from-primary/90 hover:to-primary
-                  shadow-lg hover:shadow-xl
-                  transition-all duration-200 transform hover:-translate-y-0.5
-                  disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  size="lg"
+                  className="w-full font-semibold text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    <>
-                      <Loader2 className="animate-spin h-5 w-5 mr-3" />
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="animate-spin h-5 w-5" />
                       Authenticating...
-                    </>
+                    </span>
                   ) : (
-                    <>
-                      <LogIn className="w-5 h-5 mr-3" />
-                      Sign In as Admin
-                    </>
+                    <span className="flex items-center gap-2">
+                      Sign In <LogIn className="h-4 w-4" />
+                    </span>
                   )}
                 </Button>
 
-                {/* Divider */}
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <Separator className="w-full" />
+                    <span className="w-full border-t border-muted" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white dark:bg-slate-800 px-3 text-muted-foreground">
-                      Secure Connection
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or
                     </span>
                   </div>
                 </div>
 
-                {/* Return to Main Site */}
-                <div className="text-center pt-4">
-                  <Link
-                    href="https://www.montres.ae"
-                    className={`inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors ${isSubmitting ? "opacity-50 pointer-events-none" : ""
-                      }`}
-                  >
-                    ← Return to main website
-                  </Link>
+                <div className="text-center">
+                  <Button variant="link" asChild className="text-muted-foreground hover:text-foreground">
+                    <Link href="https://montres.ae">Back to Website</Link>
+                  </Button>
                 </div>
-              </form>
-            </FormProvider>
-          </CardContent>
-        </Card>
+              </div>
+            </form>
+          </FormProvider>
+        </motion.div>
+      </div>
+
+      {/* --- Right Column: Visual / Branding --- */}
+      <div className="hidden lg:block relative bg-slate-900 border-l border-white/10">
+        {/* Background Decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-[20%] -right-[10%] w-[700px] h-[700px] rounded-full bg-primary/20 blur-[120px]" />
+          <div className="absolute bottom-[10%] left-[10%] w-[500px] h-[500px] rounded-full bg-purple-500/10 blur-[100px]" />
+        </div>
+
+        {/* Content */}
+        <div className="relative h-full flex flex-col items-center justify-center p-12 text-center text-white z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="space-y-6 max-w-lg"
+          >
+            <div className="inline-flex items-center justify-center p-4 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl mb-8">
+              <LayoutDashboard className="h-16 w-16 text-primary" />
+            </div>
+
+            <h2 className="text-4xl lg:text-5xl font-bold tracking-tight">
+              Montres <span className="text-primary">Admin</span>
+            </h2>
+            <p className="text-lg text-slate-300 leading-relaxed font-light">
+              Manage your inventory, track sales, and oversee operations with our comprehensive dashboard.
+              Designed for efficiency and elegance.
+            </p>
+
+            {/* Stats or Trust Badge Example */}
+            <div className="pt-12 grid grid-cols-3 gap-8 border-t border-white/10 mt-12">
+              <div>
+                <div className="text-2xl font-bold">24/7</div>
+                <div className="text-xs text-slate-400 uppercase tracking-widest mt-1">Uptime</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold">Secure</div>
+                <div className="text-xs text-slate-400 uppercase tracking-widest mt-1">Encrypted</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold">Fast</div>
+                <div className="text-xs text-slate-400 uppercase tracking-widest mt-1">Performance</div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Footer copyright on right side */}
+        <div className="absolute bottom-8 w-full text-center text-xs text-slate-500">
+          &copy; {new Date().getFullYear()} Montres Admin Portal. All rights reserved.
+        </div>
       </div>
     </div>
   );
