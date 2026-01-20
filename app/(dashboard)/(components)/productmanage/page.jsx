@@ -25,7 +25,9 @@ import {
   FiLayers,
   FiBox,
   FiRefreshCw,
-  FiArchive
+  FiArchive,
+  FiPlus,
+  FiList
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import DashboardBreadcrumb from "@/components/layout/dashboard-breadcrumb";
@@ -35,6 +37,35 @@ import newCurrency from '../../../../public/assets/newSymbole.png';
 import Image from "next/image";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { motion, AnimatePresence } from "framer-motion";
 
 const ProductManagement = () => {
   const [page, setPage] = useState(1);
@@ -44,12 +75,11 @@ const ProductManagement = () => {
   const limit = 15;
   const router = useRouter();
   const [products, setProducts] = useState([]);
-  const [dropdownOpen, setDropdownOpen] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileView, setMobileView] = useState(false);
-  const [searchField, setSearchField] = useState("all"); 
+  const [searchField, setSearchField] = useState("all");
   const [isAllowed, setIsAllowed] = useState(false);
-  const [checked, setChecked] = useState(false); 
+  const [checked, setChecked] = useState(false);
 
   // Move to inventory loading state
   const [movingToInventory, setMovingToInventory] = useState(null);
@@ -76,14 +106,16 @@ const ProductManagement = () => {
     key: 'createdAt',
     direction: 'desc'
   });
-  
+
   // Schedule publishing states
-  const [scheduleModal, setScheduleModal] = useState(null);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [scheduleProductId, setScheduleProductId] = useState(null);
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("12:00");
 
   // Date details modal state
-  const [dateDetailsModal, setDateDetailsModal] = useState(null);
+  const [dateDetailsModalOpen, setDateDetailsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   // Product categories - standardized format
   const productCategories = [
@@ -178,16 +210,16 @@ const ProductManagement = () => {
   // Enhanced search function with multiple fields
   const productMatchesSearch = (product, term) => {
     if (!term) return true;
-    
+
     const searchTerm = safeToLowerCase(term);
-    
+
     // Always search these basic fields
     const basicSearch = (
       safeToLowerCase(product.name).includes(searchTerm) ||
       safeToLowerCase(product.sku).includes(searchTerm) ||
       safeToLowerCase(getCategoryName(product)).includes(searchTerm)
     );
-    
+
     // If searchField is "all", search all possible fields
     if (searchField === "all") {
       return (
@@ -195,13 +227,13 @@ const ProductManagement = () => {
         (product.brand && safeToLowerCase(product.brand).includes(searchTerm)) ||
         (product.model && safeToLowerCase(product.model).includes(searchTerm)) ||
         (product.referenceNumber && safeToLowerCase(product.referenceNumber).includes(searchTerm)) ||
-        (product.brands && Array.isArray(product.brands) && 
-         product.brands.some(brand => safeToLowerCase(brand).includes(searchTerm))) ||
-        (product.tags && Array.isArray(product.tags) && 
-         product.tags.some(tag => safeToLowerCase(tag).includes(searchTerm)))
+        (product.brands && Array.isArray(product.brands) &&
+          product.brands.some(brand => safeToLowerCase(brand).includes(searchTerm))) ||
+        (product.tags && Array.isArray(product.tags) &&
+          product.tags.some(tag => safeToLowerCase(tag).includes(searchTerm)))
       );
     }
-    
+
     // Search specific field based on searchField
     switch (searchField) {
       case "name":
@@ -211,8 +243,8 @@ const ProductManagement = () => {
       case "brand":
         return (
           (product.brand && safeToLowerCase(product.brand).includes(searchTerm)) ||
-          (product.brands && Array.isArray(product.brands) && 
-           product.brands.some(brand => safeToLowerCase(brand).includes(searchTerm)))
+          (product.brands && Array.isArray(product.brands) &&
+            product.brands.some(brand => safeToLowerCase(brand).includes(searchTerm)))
         );
       case "model":
         return product.model && safeToLowerCase(product.model).includes(searchTerm);
@@ -226,7 +258,7 @@ const ProductManagement = () => {
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    
+
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -245,7 +277,7 @@ const ProductManagement = () => {
   // Calculate time since creation/update (mobile friendly)
   const getTimeAgo = (dateString) => {
     if (!dateString) return "N/A";
-    
+
     const date = new Date(dateString);
     const now = new Date();
     const diffInMs = now - date;
@@ -275,14 +307,14 @@ const ProductManagement = () => {
   // Get sort icon
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) {
-      return <FiArrowUp className="opacity-30" />;
+      return <FiArrowUp className="opacity-30 ml-2 h-4 w-4" />;
     }
-    return sortConfig.direction === 'asc' ? <FiArrowUp /> : <FiArrowDown />;
+    return sortConfig.direction === 'asc' ? <FiArrowUp className="ml-2 h-4 w-4" /> : <FiArrowDown className="ml-2 h-4 w-4" />;
   };
 
   // Sort products based on criteria
   const sortedProducts = useMemo(() => {
-    const filtered = products.filter(product => 
+    const filtered = products.filter(product =>
       productMatchesSearch(product, searchTerm)
     );
 
@@ -332,13 +364,13 @@ const ProductManagement = () => {
   // Handle delete product
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
-    
+
     try {
       const { error } = await deleteProduct(id);
-      
+
       if (!error) {
         setProducts(prevProducts => prevProducts.filter(product => product._id !== id));
-        
+
         Toastify({
           text: "Product deleted successfully!",
           duration: 3000,
@@ -347,7 +379,7 @@ const ProductManagement = () => {
           backgroundColor: "#10B981",
           stopOnFocus: true,
         }).showToast();
-        
+
         loadProducts();
       } else {
         throw new Error(error);
@@ -363,8 +395,6 @@ const ProductManagement = () => {
         stopOnFocus: true,
       }).showToast();
     }
-    
-    setDropdownOpen(null);
   };
 
   // Handle edit product
@@ -376,17 +406,17 @@ const ProductManagement = () => {
     }
 
     // Accessories SKUs
-    const accessoriesSKUs = ["MON0056", "MON0270"," MON0416","MON0475","MON0480"];
-    
+    const accessoriesSKUs = ["MON0056", "MON0270", " MON0416", "MON0475", "MON0480"];
+
     // Forced Leather SKUs
     const forcedLeatherSKUs = ["MON0044", "MON0042", "MON0295", "MON0300"];
-    
+
     // Check SKU first
     if (accessoriesSKUs.includes(product.sku)) {
       router.push(`/AccessoriesEdit/${id}`);
       return;
     }
-    
+
     if (forcedLeatherSKUs.includes(product.sku)) {
       router.push(`/LeatherGoodsEdit/${id}`);
       return;
@@ -395,9 +425,9 @@ const ProductManagement = () => {
     // Check category or name
     const name = (product.name || "").toLowerCase();
     const category = (product.category || "").toLowerCase();
-    
+
     const leatherKeywords = ["bag", "wallet", "holder", "card", "leather", "case"];
-    const isLeatherGoods = leatherKeywords.some(keyword => 
+    const isLeatherGoods = leatherKeywords.some(keyword =>
       name.includes(keyword) || category.includes(keyword)
     );
 
@@ -417,11 +447,13 @@ const ProductManagement = () => {
 
   // View date details
   const handleViewDateDetails = (product) => {
-    setDateDetailsModal(product);
+    setSelectedProduct(product);
+    setDateDetailsModalOpen(true);
   };
 
   // Schedule product publishing
-  const handleSchedulePublish = async (productId) => {
+  const handleSchedulePublish = async () => {
+    const productId = scheduleProductId;
     if (!scheduleDate) {
       Toastify({
         text: "Please select a date and time",
@@ -434,7 +466,7 @@ const ProductManagement = () => {
     }
 
     const publishDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
-    
+
     if (publishDateTime <= new Date()) {
       Toastify({
         text: "Please select a future date and time",
@@ -462,8 +494,8 @@ const ProductManagement = () => {
           position: "right",
           backgroundColor: "#10B981",
         }).showToast();
-        
-        setScheduleModal(null);
+
+        setScheduleModalOpen(false);
         loadProducts();
       } else {
         throw new Error(error);
@@ -579,10 +611,10 @@ const ProductManagement = () => {
   // Handle move to inventory
   const handleMoveToInventory = async (productId) => {
     setMovingToInventory(productId);
-    
+
     try {
       const { data, error } = await moveToInventory({ productId });
-      
+
       if (!error) {
         Toastify({
           text: `Product moved to inventory successfully! ${data.movedCount ? `(${data.movedCount} moved)` : ''}`,
@@ -592,7 +624,7 @@ const ProductManagement = () => {
           backgroundColor: "#10B981",
           stopOnFocus: true,
         }).showToast();
-        
+
         // Refresh products list
         loadProducts();
       } else {
@@ -610,81 +642,57 @@ const ProductManagement = () => {
       }).showToast();
     } finally {
       setMovingToInventory(null);
-      setDropdownOpen(null);
     }
   };
 
   // Get schedule status badge
   const getScheduleBadge = (product) => {
     if (!product.publishSchedule) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-          Draft
-        </span>
-      );
+      return <Badge variant="secondary">Draft</Badge>;
     }
 
     const { scheduledPublish, publishDate, status } = product.publishSchedule;
-    
+
     if (status === 'published') {
       return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          <FiCalendar className="mr-1 w-3 h-3" />
-          Published
-        </span>
+        <Badge variant="success" className="gap-1">
+          <FiCalendar className="w-3 h-3" /> Published
+        </Badge>
       );
     }
 
     if (scheduledPublish && status === 'scheduled') {
       const now = new Date();
       const publishDateObj = new Date(publishDate);
-      
+
       if (publishDateObj <= now) {
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            <FiClock className="mr-1 w-3 h-3" />
-            Publishing...
-          </span>
+          <Badge variant="info" className="gap-1">
+            <FiClock className="w-3 h-3" /> Publishing...
+          </Badge>
         );
       }
-      
+
       return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          <FiClock className="mr-1 w-3 h-3" />
-          Scheduled
-        </span>
+        <Badge variant="warning" className="gap-1">
+          <FiClock className="w-3 h-3" /> Scheduled
+        </Badge>
       );
     }
 
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-        Draft
-      </span>
-    );
+    return <Badge variant="secondary">Draft</Badge>;
   };
 
   // Get stock status badge
   const getStockBadge = (product) => {
     const stock = product.stockQuantity || product.stock || 0;
-    
+
     if (stock > 15) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          In Stock
-        </span>
-      );
+      return <Badge variant="success">In Stock</Badge>;
     } else if (stock > 0) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          Low Stock
-        </span>
-      );
+      return <Badge variant="warning">Low Stock</Badge>;
     } else {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-          Out of Stock
-        </span>
-      );
+      return <Badge variant="danger">Out of Stock</Badge>;
     }
   };
 
@@ -699,18 +707,6 @@ const ProductManagement = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Close dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownOpen && !event.target.closest('.dropdown-container')) {
-        setDropdownOpen(null);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [dropdownOpen]);
-
   // Get scheduled products count for stats
   const scheduledProductsCount = products.filter(
     product => product.publishSchedule?.status === 'scheduled'
@@ -719,15 +715,6 @@ const ProductManagement = () => {
   const publishedProductsCount = products.filter(
     product => product.publishSchedule?.status === 'published'
   ).length;
-
-  // Get recently added products (last 7 days)
-  const recentProductsCount = products.filter(product => {
-    if (!product.createdAt) return false;
-    const createdDate = new Date(product.createdAt);
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    return createdDate > weekAgo;
-  }).length;
 
   // Calculate low stock products
   const lowStockProductsCount = products.filter(product => {
@@ -739,914 +726,470 @@ const ProductManagement = () => {
     loadProducts();
   }, [page, searchTerm, searchField, loadProducts]);
 
-  // Mobile-friendly pagination component
-  const MobilePagination = () => (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-gray-200 bg-white">
-      <div className="text-xs sm:text-sm text-gray-600">
-        Showing {sortedProducts.length} of {totalProducts}
-      </div>
-      <div className="flex items-center gap-1">
-        <Button
-          onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-          disabled={page === 1}
-          variant="outline"
-          size="sm"
-          className="h-8 w-8 p-0"
-        >
-          <FiChevronLeft className="w-4 h-4" />
-        </Button>
-        
-        <div className="flex items-center">
-          {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-            let pageNum;
-            if (totalPages <= 3) {
-              pageNum = i + 1;
-            } else if (page === 1) {
-              pageNum = i + 1;
-            } else if (page === totalPages) {
-              pageNum = totalPages - 2 + i;
-            } else {
-              pageNum = page - 1 + i;
-            }
-            
-            return (
-              <Button
-                key={pageNum}
-                onClick={() => setPage(pageNum)}
-                variant={page === pageNum ? "default" : "outline"}
-                size="sm"
-                className="h-8 w-8 p-0"
-              >
-                {pageNum}
-              </Button>
-            );
-          })}
-        </div>
-        
-        <Button
-          onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-          disabled={page === totalPages}
-          variant="outline"
-          size="sm"
-          className="h-8 w-8 p-0"
-        >
-          <FiChevronRight className="w-4 h-4" />
-        </Button>
-      </div>
-    </div>
-  );
-
   return (
     <>
       <DashboardBreadcrumb text="Product Management" />
-      <div className="min-h-screen bg-gradient-to-br p-3 sm:p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          {/* Header Section */}
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  Product Management
-                </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  Manage your products, inventory, and publishing schedule
-                </p>
-              </div>
-            </div>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900/50 p-4 lg:p-8 space-y-8">
 
-            {/* Category Selection Cards - Standardized Format */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Add New Product</h2>
-                <span className="text-sm text-gray-500">Select category</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-                {productCategories.map((category) => {
-                  const IconComponent = category.icon;
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => handleAddProduct(category)}
-                      className={`flex flex-col items-center justify-center p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98] text-white ${category.color}`}
-                    >
-                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-3">
-                        <IconComponent className="text-xl" />
-                      </div>
-                      <span className="font-semibold text-sm sm:text-base mb-1">{category.name}</span>
-                      <span className="text-xs text-white/80 text-center leading-tight">{category.description}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Stats Cards - Mobile Optimized */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                    <FiPackage className="text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Total Products</p>
-                    <p className="text-xl font-bold">{totalProducts}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                    <FiCalendar className="text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Published</p>
-                    <p className="text-xl font-bold">{publishedProductsCount}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
-                    <FiClock className="text-yellow-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Scheduled</p>
-                    <p className="text-xl font-bold">{scheduledProductsCount}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-                    <FiTrendingUp className="text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Low Stock</p>
-                    <p className="text-xl font-bold">{lowStockProductsCount}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Search Bar */}
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
-              <div className="flex flex-col sm:flex-row gap-3">
-                {/* Search Field Selector */}
-                <div className="relative flex-shrink-0">
-                  <select
-                    value={searchField}
-                    onChange={(e) => setSearchField(e.target.value)}
-                    className="appearance-none w-full pl-10 pr-8 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-                  >
-                    {searchOptions.map((option) => {
-                      const Icon = option.icon;
-                      return (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                    {(() => {
-                      const option = searchOptions.find(opt => opt.value === searchField);
-                      const Icon = option?.icon || FiGrid;
-                      return <Icon className="text-gray-400 text-sm" />;
-                    })()}
-                  </div>
-                  <FiArrowDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs" />
-                </div>
-
-                {/* Search Input */}
-                <div className="flex-1 relative">
-                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
-                  <input
-                    type="text"
-                    placeholder={`Search by ${searchOptions.find(opt => opt.value === searchField)?.label.toLowerCase()}...`}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm("")}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <FiX className="text-sm" />
-                    </button>
-                  )}
-                </div>
-
-                <button className="flex items-center justify-center px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm">
-                  <FiFilter className="mr-2" />
-                  Filter
-                </button>
-              </div>
-            </div>
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              Product Overview
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your products, inventory, and publishing schedule securely.
+            </p>
           </div>
-
-          {/* Modals */}
-          {/* Schedule Publishing Modal */}
-          {scheduleModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl p-6 w-full max-w-sm sm:max-w-md mx-auto">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold">Schedule Publishing</h3>
-                  <button
-                    onClick={() => setScheduleModal(null)}
-                    className="p-1 hover:bg-gray-100 rounded-full"
-                  >
-                    <FiX className="w-5 h-5" />
-                  </button>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">Set when this product should be published.</p>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Publish Date</label>
-                    <input
-                      type="date"
-                      value={scheduleDate}
-                      onChange={(e) => setScheduleDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Publish Time</label>
-                    <input
-                      type="time"
-                      value={scheduleTime}
-                      onChange={(e) => setScheduleTime(e.target.value)}
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex gap-3 mt-6">
-                  <Button
-                    onClick={() => handleSchedulePublish(scheduleModal)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm py-2"
-                  >
-                    <FiClock className="mr-2" />
-                    Schedule
-                  </Button>
-                  <Button
-                    onClick={() => setScheduleModal(null)}
-                    variant="outline"
-                    className="flex-1 text-sm py-2"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Date Details Modal */}
-          {dateDetailsModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl p-6 w-full max-w-sm sm:max-w-md mx-auto max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold">Product Timeline</h3>
-                  <button
-                    onClick={() => setDateDetailsModal(null)}
-                    className="p-1 hover:bg-gray-100 rounded-full"
-                  >
-                    <FiX className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="font-medium text-sm">Product:</span>
-                    <span className="text-gray-900 text-sm">{dateDetailsModal.name}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="font-medium text-sm">SKU:</span>
-                    <span className="text-gray-600 text-sm">{dateDetailsModal.sku}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="font-medium text-sm">Created:</span>
-                    <div className="text-right">
-                      <div className="text-gray-900 text-sm">{formatDate(dateDetailsModal.createdAt)}</div>
-                      <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.createdAt)} ago</div>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="font-medium text-sm">Updated:</span>
-                    <div className="text-right">
-                      <div className="text-gray-900 text-sm">{formatDate(dateDetailsModal.updatedAt)}</div>
-                      <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.updatedAt)} ago</div>
-                    </div>
-                  </div>
-                  {dateDetailsModal.publishSchedule?.publishDate && (
-                    <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                      <span className="font-medium text-sm">Scheduled:</span>
-                      <div className="text-right">
-                        <div className="text-gray-900 text-sm">{formatDate(dateDetailsModal.publishSchedule.publishDate)}</div>
-                        <div className="text-xs text-gray-500">{getTimeAgo(dateDetailsModal.publishSchedule.publishDate)} ago</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-3 mt-6">
-                  <Button
-                    onClick={() => setDateDetailsModal(null)}
-                    className="flex-1 text-sm py-2"
-                  >
-                    Close
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Products Table/Cards */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            {/* Desktop Table View */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                      <button
-                        onClick={() => handleSort('name')}
-                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-                      >
-                        Product
-                        {getSortIcon('name')}
-                      </button>
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                      <button
-                        onClick={() => handleSort('price')}
-                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-                      >
-                        Price
-                        {getSortIcon('price')}
-                      </button>
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                      Stock
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                      <button
-                        onClick={() => handleSort('createdAt')}
-                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-                      >
-                        Created
-                        {getSortIcon('createdAt')}
-                      </button>
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {sortedProducts.map((product, i) => (
-                    <tr 
-                      key={product._id || i} 
-                      className="transition-colors hover:bg-gray-50"
-                    >
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
-                            <Image
-                              src={product.image || "/placeholder.png"}
-                              alt={product.name || "Product image"}
-                              width={48}
-                              height={48}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="font-medium text-gray-900 truncate max-w-[200px]">{product.name}</div>
-                            <div className="text-xs text-gray-500 truncate">
-                              SKU: {product.sku}
-                            </div>
-                            {product.brand && (
-                              <div className="text-xs text-gray-500 truncate">
-                                Brand: {product.brand}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {getCategoryName(product)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-gray-900 flex items-center text-sm">
-                            <Image 
-                              src={newCurrency} 
-                              alt="Currency" 
-                              width={14} 
-                              height={14}
-                              className="mr-1"
-                            />
-                            {product.salePrice || product.price || 0}
-                          </span>
-                          {product.salePrice && product.price && product.salePrice < product.price && (
-                            <span className="text-xs text-gray-500 line-through flex items-center">
-                              <Image 
-                                src={newCurrency} 
-                                alt="Currency" 
-                                width={12} 
-                                height={12}
-                                className="mr-1"
-                              />
-                              {product.price}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col gap-1">
-                          <span className={`font-medium text-sm ${
-                            (product.stockQuantity || product.stock) < 10 ? 'text-red-600' : 'text-gray-900'
-                          }`}>
-                            {product.stockQuantity || product.stock || 0}
-                          </span>
-                          {getStockBadge(product)}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => handleViewDateDetails(product)}
-                          className="text-left hover:text-blue-600 transition-colors group"
-                        >
-                          <div className="text-sm font-medium group-hover:text-blue-600">
-                            {getTimeAgo(product.createdAt)}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {formatDate(product.createdAt)}
-                          </div>
-                        </button>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col gap-1">
-                          {getScheduleBadge(product)}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 relative dropdown-container">
-                        <button
-                          onClick={() =>
-                            setDropdownOpen(
-                              dropdownOpen === product._id ? null : product._id
-                            )
-                          }
-                          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                        >
-                          <FiMoreVertical className="text-gray-600 w-5 h-5" />
-                        </button>
-
-                        {dropdownOpen === product._id && (
-                          <div className="absolute right-3 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
-                            <button
-                              onClick={() => {
-                                handleViewDateDetails(product);
-                                setDropdownOpen(null);
-                              }}
-                              className="flex items-center w-full px-3 py-2.5 text-left text-gray-700 hover:bg-gray-50 transition-colors text-sm"
-                            >
-                              <FiEye className="mr-2 text-gray-500" />
-                              View Timeline
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                handleEdit(product._id);
-                                setDropdownOpen(null);
-                              }}
-                              className="flex items-center w-full px-3 py-2.5 text-left text-gray-700 hover:bg-gray-50 transition-colors text-sm"
-                            >
-                              <FiEdit className="mr-2 text-gray-500" />
-                              Edit Product
-                            </button>
-                            
-                            {/* Move to Inventory Action */}
-                            <button
-                              onClick={() => handleMoveToInventory(product._id)}
-                              disabled={movingToInventory === product._id}
-                              className="flex items-center w-full px-3 py-2.5 text-left text-indigo-600 hover:bg-indigo-50 transition-colors text-sm border-t border-gray-100"
-                            >
-                              {movingToInventory === product._id ? (
-                                <>
-                                  <FiRefreshCw className="mr-2 animate-spin" />
-                                  Moving to Inventory...
-                                </>
-                              ) : (
-                                <>
-                                  <FiArchive className="mr-2" />
-                                  Move to Inventory
-                                </>
-                              )}
-                            </button>
-                            
-                            {(!product.publishSchedule || product.publishSchedule.status === 'draft') && (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    setScheduleModal(product._id);
-                                    setScheduleDate("");
-                                    setScheduleTime("12:00");
-                                    setDropdownOpen(null);
-                                  }}
-                                  className="flex items-center w-full px-3 py-2.5 text-left text-blue-600 hover:bg-blue-50 transition-colors text-sm border-t border-gray-100"
-                                >
-                                  <FiClock className="mr-2" />
-                                  Schedule
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    handlePublishNow(product._id);
-                                    setDropdownOpen(null);
-                                  }}
-                                  className="flex items-center w-full px-3 py-2.5 text-left text-green-600 hover:bg-green-50 transition-colors text-sm"
-                                >
-                                  <FiCalendar className="mr-2" />
-                                  Publish Now
-                                </button>
-                              </>
-                            )}
-                            
-                            {product.publishSchedule?.status === 'scheduled' && (
-                              <button
-                                onClick={() => {
-                                  handleCancelSchedule(product._id);
-                                  setDropdownOpen(null);
-                                }}
-                                className="flex items-center w-full px-3 py-2.5 text-left text-orange-600 hover:bg-orange-50 transition-colors text-sm border-t border-gray-100"
-                              >
-                                <FiClock className="mr-2" />
-                                Cancel Schedule
-                              </button>
-                            )}
-                            
-                            {product.publishSchedule?.status === 'published' && (
-                              <button
-                                onClick={() => {
-                                  handleUnpublish(product._id);
-                                  setDropdownOpen(null);
-                                }}
-                                className="flex items-center w-full px-3 py-2.5 text-left text-gray-600 hover:bg-gray-50 transition-colors text-sm border-t border-gray-100"
-                              >
-                                <FiCalendar className="mr-2" />
-                                Unpublish
-                              </button>
-                            )}
-                            
-                            <button
-                              onClick={() => {
-                                handleDelete(product._id);
-                              }}
-                              className="flex items-center w-full px-3 py-2.5 text-left text-red-600 hover:bg-red-50 transition-colors text-sm border-t border-gray-100"
-                            >
-                              <FiTrash2 className="mr-2" />
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              
-              {/* Desktop Pagination */}
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 py-3 border-t border-gray-200 bg-gray-50">
-                <div className="text-sm text-gray-600">
-                  Showing {sortedProducts.length} of {totalProducts} products
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={page === 1}
-                    variant="outline"
-                    size="sm"
-                    className="px-3 py-1.5 text-sm"
-                  >
-                    Previous
-                  </Button>
-                  <span className="px-3 py-1.5 text-sm text-gray-600">
-                    Page {page} of {totalPages}
-                  </span>
-                  <Button
-                    onClick={() =>
-                      setPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={page === totalPages}
-                    variant="outline"
-                    size="sm"
-                    className="px-3 py-1.5 text-sm"
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile Card View - Enhanced for better clarity */}
-            <div className="lg:hidden">
-              <div className="p-3 space-y-3">
-                {sortedProducts.map((product, i) => (
-                  <div
-                    key={product._id || i}
-                    className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm"
-                  >
-                    {/* Product Header */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
-                          <Image
-                            src={product.image || "/placeholder.png"}
-                            alt={product.name || "Product image"}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1">
-                            {product.name}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-1 mb-2">
-                            <span className="text-xs text-gray-500">
-                              SKU: {product.sku}
-                            </span>
-                            {product.brand && (
-                              <span className="text-xs text-gray-500">
-                                • Brand: {product.brand}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              {getCategoryName(product)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="relative dropdown-container">
-                        <button
-                          onClick={() =>
-                            setDropdownOpen(
-                              dropdownOpen === product._id ? null : product._id
-                            )
-                          }
-                          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                        >
-                          <FiMoreVertical className="text-gray-600 w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Product Details Grid - Better organized */}
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-gray-600 text-xs mb-1">Price</p>
-                          <p className="font-semibold text-gray-900 flex items-center">
-                            <Image 
-                              src={newCurrency} 
-                              alt="Currency" 
-                              width={14} 
-                              height={14}
-                              className="mr-1"
-                            />
-                            {product.salePrice || product.price || 0}
-                          </p>
-                          {product.salePrice && product.price && product.salePrice < product.price && (
-                            <p className="text-xs text-gray-500 line-through flex items-center mt-1">
-                              <Image 
-                                src={newCurrency} 
-                                alt="Currency" 
-                                width={12} 
-                                height={12}
-                                className="mr-1"
-                              />
-                              {product.price}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-gray-600 text-xs mb-1">Stock</p>
-                          <p className="font-semibold text-gray-900">
-                            {product.stockQuantity || product.stock || 0}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-gray-600 text-xs mb-1">Created</p>
-                          <button
-                            onClick={() => handleViewDateDetails(product)}
-                            className="text-left hover:text-blue-600 transition-colors"
-                          >
-                            <p className="font-semibold text-gray-900">
-                              {getTimeAgo(product.createdAt)}
-                            </p>
-                            <p className="text-xs text-gray-500 truncate">
-                              {formatDate(product.createdAt)}
-                            </p>
-                          </button>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 text-xs mb-1">Updated</p>
-                          <button
-                            onClick={() => handleViewDateDetails(product)}
-                            className="text-left hover:text-blue-600 transition-colors"
-                          >
-                            <p className="font-semibold text-gray-900">
-                              {getTimeAgo(product.updatedAt)}
-                            </p>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status Badges */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {getStockBadge(product)}
-                      {getScheduleBadge(product)}
-                    </div>
-
-                    {/* Dropdown Menu for Mobile */}
-                    {dropdownOpen === product._id && (
-                      <div className="mt-4 border-t border-gray-200 pt-4 space-y-1">
-                        <button
-                          onClick={() => {
-                            handleViewDateDetails(product);
-                            setDropdownOpen(null);
-                          }}
-                          className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-                        >
-                          <FiEye className="mr-2 text-gray-500" />
-                          View Timeline
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            handleEdit(product._id);
-                            setDropdownOpen(null);
-                          }}
-                          className="flex items-center w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-                        >
-                          <FiEdit className="mr-2 text-gray-500" />
-                          Edit Product
-                        </button>
-                        
-                        {/* Move to Inventory Action for Mobile */}
-                        <button
-                          onClick={() => handleMoveToInventory(product._id)}
-                          disabled={movingToInventory === product._id}
-                          className="flex items-center w-full px-3 py-2 text-left text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm"
-                        >
-                          {movingToInventory === product._id ? (
-                            <>
-                              <FiRefreshCw className="mr-2 animate-spin" />
-                              Moving to Inventory...
-                            </>
-                          ) : (
-                            <>
-                              <FiArchive className="mr-2" />
-                              Move to Inventory
-                            </>
-                          )}
-                        </button>
-                        
-                        {(!product.publishSchedule || product.publishSchedule.status === 'draft') && (
-                          <>
-                            <button
-                              onClick={() => {
-                                setScheduleModal(product._id);
-                                setScheduleDate("");
-                                setScheduleTime("12:00");
-                                setDropdownOpen(null);
-                              }}
-                              className="flex items-center w-full px-3 py-2 text-left text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
-                            >
-                              <FiClock className="mr-2" />
-                              Schedule Publishing
-                            </button>
-                            <button
-                              onClick={() => {
-                                handlePublishNow(product._id);
-                                setDropdownOpen(null);
-                              }}
-                              className="flex items-center w-full px-3 py-2 text-left text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm"
-                            >
-                              <FiCalendar className="mr-2" />
-                              Publish Now
-                            </button>
-                          </>
-                        )}
-                        
-                        {product.publishSchedule?.status === 'scheduled' && (
-                          <button
-                            onClick={() => {
-                              handleCancelSchedule(product._id);
-                              setDropdownOpen(null);
-                            }}
-                            className="flex items-center w-full px-3 py-2 text-left text-orange-600 hover:bg-orange-50 rounded-lg transition-colors text-sm"
-                          >
-                            <FiClock className="mr-2" />
-                            Cancel Schedule
-                          </button>
-                        )}
-                        
-                        {product.publishSchedule?.status === 'published' && (
-                          <button
-                            onClick={() => {
-                              handleUnpublish(product._id);
-                              setDropdownOpen(null);
-                            }}
-                            className="flex items-center w-full px-3 py-2 text-left text-gray-600 hover:bg-gray-50 rounded-lg transition-colors text-sm"
-                          >
-                            <FiCalendar className="mr-2" />
-                            Unpublish
-                          </button>
-                        )}
-                        
-                        <button
-                          onClick={() => {
-                            handleDelete(product._id);
-                          }}
-                          className="flex items-center w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
-                        >
-                          <FiTrash2 className="mr-2" />
-                          Delete Product
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Mobile Pagination */}
-              <MobilePagination />
-            </div>
-
-            {/* Empty State */}
-            {sortedProducts.length === 0 && !loading && (
-              <div className="py-12 text-center px-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiSearch className="text-2xl text-gray-400" />
-                </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">
-                  No products found
-                </h3>
-                <p className="text-gray-600 text-sm mb-6 max-w-sm mx-auto">
-                  {searchTerm 
-                    ? `No products matching "${searchTerm}" in ${searchOptions.find(opt => opt.value === searchField)?.label.toLowerCase()}.` 
-                    : "Get started by adding your first product."}
-                </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {productCategories.slice(0, 3).map((category) => {
-                    const IconComponent = category.icon;
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => handleAddProduct(category)}
-                        className={`flex items-center px-3 py-2 rounded-lg text-white text-sm ${category.color}`}
-                      >
-                        <IconComponent className="mr-2" />
-                        Add {category.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Loading State */}
-            {loading && (
-              <div className="py-12 text-center px-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-2">
-                  Loading products...
-                </h3>
-                <p className="text-gray-600 text-sm">Please wait while we fetch your products.</p>
-              </div>
-            )}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="hidden md:flex">
+              <FiRefreshCw className="mr-2 h-4 w-4" />
+              Sync Inventory
+            </Button>
+            <Button className="hidden md:flex">
+              <FiPlus className="mr-2 h-4 w-4" />
+              New Product
+            </Button>
           </div>
         </div>
+
+        {/* Categories Grid */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Add New By Category</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {productCategories.map((category) => {
+              const IconComponent = category.icon;
+              return (
+                <motion.button
+                  key={category.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleAddProduct(category)}
+                  className={`flex flex-col items-center justify-center p-6 rounded-xl shadow-md border-0 text-white transition-all ${category.color} relative overflow-hidden group`}
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <IconComponent className="w-24 h-24" />
+                  </div>
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="bg-white/20 p-3 rounded-full mb-3 backdrop-blur-sm">
+                      <IconComponent className="w-6 h-6 text-white" />
+                    </div>
+                    <span className="font-bold text-lg">{category.name}</span>
+                    <span className="text-xs text-white/80 mt-1">{category.description}</span>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Stats Section */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-6 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Products</p>
+                <h3 className="text-2xl font-bold mt-2">{totalProducts}</h3>
+              </div>
+              <div className="h-12 w-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                <FiPackage className="h-6 w-6" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Published</p>
+                <h3 className="text-2xl font-bold mt-2">{publishedProductsCount}</h3>
+              </div>
+              <div className="h-12 w-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                <FiCalendar className="h-6 w-6" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Scheduled</p>
+                <h3 className="text-2xl font-bold mt-2">{scheduledProductsCount}</h3>
+              </div>
+              <div className="h-12 w-12 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center">
+                <FiClock className="h-6 w-6" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Low Stock</p>
+                <h3 className="text-2xl font-bold mt-2">{lowStockProductsCount}</h3>
+              </div>
+              <div className="h-12 w-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
+                <FiTrendingUp className="h-6 w-6" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content Area */}
+        <Card className="border-none shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col md:flex-row gap-4 justify-between">
+              <CardTitle>Inventory List</CardTitle>
+              <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <Select value={searchField} onValueChange={setSearchField}>
+                    <SelectTrigger className="w-[140px] border-none shadow-none bg-transparent h-9">
+                      <SelectValue placeholder="Search field" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {searchOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <div className="flex items-center gap-2">
+                            <option.icon className="w-4 h-4" />
+                            {option.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                  <div className="relative">
+                    <FiSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Input
+                      placeholder="Search..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="border-none shadow-none bg-transparent h-9 pl-8 w-full md:w-[200px] focus-visible:ring-0"
+                    />
+                  </div>
+                </div>
+                <Button variant="outline">
+                  <FiFilter className="mr-2 h-4 w-4" /> Filter
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Desktop Table View */}
+            <div className="hidden lg:block rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[300px]">
+                      <Button variant="ghost" className="p-0 hover:bg-transparent font-bold text-xs uppercase" onClick={() => handleSort('name')}>
+                        Product {getSortIcon('name')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>
+                      <Button variant="ghost" className="p-0 hover:bg-transparent font-bold text-xs uppercase" onClick={() => handleSort('price')}>
+                        Price {getSortIcon('price')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>Stock</TableHead>
+                    <TableHead>
+                      <Button variant="ghost" className="p-0 hover:bg-transparent font-bold text-xs uppercase" onClick={() => handleSort('createdAt')}>
+                        Created {getSortIcon('createdAt')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center">
+                        Loading products...
+                      </TableCell>
+                    </TableRow>
+                  ) : sortedProducts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                        No products found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sortedProducts.map((product) => (
+                      <TableRow key={product._id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="relative h-12 w-12 rounded-lg overflow-hidden border bg-slate-100">
+                              <Image
+                                src={product.image || "/placeholder.png"}
+                                alt={product.name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-sm truncate max-w-[200px]" title={product.name}>{product.name}</p>
+                              <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-medium">
+                            {getCategoryName(product)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm font-medium flex items-center">
+                            <Image src={newCurrency} alt="currency" width={10} height={10} className="mr-1" />
+                            {product.salePrice || product.price || 0}
+                          </div>
+                          {product.salePrice && product.price && product.salePrice < product.price && (
+                            <div className="text-xs text-muted-foreground line-through flex items-center">
+                              <Image src={newCurrency} alt="currency" width={8} height={8} className="mr-1" />
+                              {product.price}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm font-medium">{product.stockQuantity || product.stock || 0}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="link" className="p-0 h-auto text-muted-foreground hover:text-primary" onClick={() => handleViewDateDetails(product)}>
+                            {getTimeAgo(product.createdAt)} ago
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {getStockBadge(product)}
+                            {getScheduleBadge(product)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <FiMoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleViewDateDetails(product)}>
+                                <FiEye className="mr-2 h-4 w-4" /> View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEdit(product._id)}>
+                                <FiEdit className="mr-2 h-4 w-4" /> Edit Product
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleMoveToInventory(product._id)} disabled={movingToInventory === product._id}>
+                                {movingToInventory === product._id ? <FiRefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <FiArchive className="mr-2 h-4 w-4" />}
+                                Move to Inventory
+                              </DropdownMenuItem>
+
+                              {/* Schedule Actions */}
+                              {(!product.publishSchedule || product.publishSchedule.status === 'draft') && (
+                                <>
+                                  <DropdownMenuItem onClick={() => {
+                                    setScheduleProductId(product._id);
+                                    setScheduleDate("");
+                                    setScheduleTime("12:00");
+                                    setScheduleModalOpen(true);
+                                  }}>
+                                    <FiClock className="mr-2 h-4 w-4" /> Schedule
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handlePublishNow(product._id)}>
+                                    <FiCalendar className="mr-2 h-4 w-4" /> Publish Now
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+
+                              {product.publishSchedule?.status === 'scheduled' && (
+                                <DropdownMenuItem onClick={() => handleCancelSchedule(product._id)}>
+                                  <FiX className="mr-2 h-4 w-4" /> Cancel Schedule
+                                </DropdownMenuItem>
+                              )}
+
+                              {product.publishSchedule?.status === 'published' && (
+                                <DropdownMenuItem onClick={() => handleUnpublish(product._id)}>
+                                  <FiArchive className="mr-2 h-4 w-4" /> Unpublish
+                                </DropdownMenuItem>
+                              )}
+
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleDelete(product._id)} className="text-red-600 focus:text-red-600">
+                                <FiTrash2 className="mr-2 h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className="lg:hidden space-y-4">
+              {loading ? (
+                <div className="text-center py-8">Loading...</div>
+              ) : sortedProducts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">No products found</div>
+              ) : (
+                sortedProducts.map((product) => (
+                  <Card key={product._id} className="overflow-hidden">
+                    <div className="flex p-4 gap-4">
+                      <div className="relative h-20 w-20 rounded-lg overflow-hidden border bg-slate-100 shrink-0">
+                        <Image
+                          src={product.image || "/placeholder.png"}
+                          alt={product.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-semibold text-sm line-clamp-2 leading-tight">{product.name}</p>
+                            <p className="text-xs text-muted-foreground mt-1">SKU: {product.sku}</p>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 -mr-2 -mt-2">
+                                <FiMoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEdit(product._id)}>Edit</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleViewDateDetails(product)}>View Stats</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleDelete(product._id)} className="text-red-600">Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-[10px] h-5">{getCategoryName(product)}</Badge>
+                          {getStockBadge(product)}
+                        </div>
+
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="flex items-center font-bold">
+                            <Image src={newCurrency} alt="currency" width={12} height={12} className="mr-1" />
+                            {product.salePrice || product.price || 0}
+                          </div>
+                          <Button variant="secondary" size="sm" className="h-7 text-xs" onClick={() => handleEdit(product._id)}>
+                            Manage
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+
+            {/* Pagination */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 pt-4 border-t">
+              <span className="text-sm text-muted-foreground w-full text-center sm:text-left">
+                Showing {sortedProducts.length} of {totalProducts} products
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                  <FiChevronLeft className="h-4 w-4" /> Previous
+                </Button>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+                  Next <FiChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+          </CardContent>
+        </Card>
+
       </div>
+
+      {/* Schedule Publishing Dialog */}
+      <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule Publishing</DialogTitle>
+            <DialogDescription>
+              Choose a date and time to automatically publish this product.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="date" className="text-sm font-medium">Date</label>
+              <Input
+                id="date"
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="time" className="text-sm font-medium">Time</label>
+              <Input
+                id="time"
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-end gap-2">
+            <Button variant="outline" onClick={() => setScheduleModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" onClick={handleSchedulePublish}>
+              Schedule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Date Details Dialog */}
+      <Dialog open={dateDetailsModalOpen} onOpenChange={setDateDetailsModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Product Timeline</DialogTitle>
+          </DialogHeader>
+          {selectedProduct && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="text-sm font-medium">Product</span>
+                <span className="text-sm">{selectedProduct.name}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="text-sm font-medium">Created</span>
+                <div className="text-right">
+                  <p className="text-sm">{formatDate(selectedProduct.createdAt)}</p>
+                  <p className="text-xs text-muted-foreground">{getTimeAgo(selectedProduct.createdAt)} ago</p>
+                </div>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b">
+                <span className="text-sm font-medium">Last Updated</span>
+                <div className="text-right">
+                  <p className="text-sm">{formatDate(selectedProduct.updatedAt)}</p>
+                  <p className="text-xs text-muted-foreground">{getTimeAgo(selectedProduct.updatedAt)} ago</p>
+                </div>
+              </div>
+              {selectedProduct.publishSchedule?.publishDate && (
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-sm font-medium">Scheduled Publication</span>
+                  <div className="text-right">
+                    <p className="text-sm">{formatDate(selectedProduct.publishSchedule.publishDate)}</p>
+                    <p className="text-xs text-muted-foreground">{selectedProduct.publishSchedule.status}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setDateDetailsModalOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

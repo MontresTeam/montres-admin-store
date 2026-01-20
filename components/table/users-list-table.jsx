@@ -25,7 +25,7 @@ export default function UserTable() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const response = await axios.get("https://api.montres.ae/api/customers/");
+        const response = await axios.get("https://api.montres.ae/api/customers/All");
         setCustomers(response.data.customers);
       } catch (err) {
         setError(err.message);

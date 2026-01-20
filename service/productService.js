@@ -117,9 +117,9 @@ export async function updateProduct(id, updatedData) {
 // Home Product Grid - Example Usage
 export async function getHomeProductGrid() {
   try {
-    let endpoint = `home`;
+  
     // ✅ Add search if provided
-    const response = await api.get(endpoint);
+    const response = await axios.get('https://api.montres,ae/api/home/homeAll');
 
     return { data: response.data, error: null, isLoading: false };
   } catch (error) {

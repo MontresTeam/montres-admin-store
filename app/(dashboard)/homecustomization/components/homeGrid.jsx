@@ -55,7 +55,7 @@ const HomeGrid = () => {
 
       // Extract only product IDs for backend
       const productIds = updatedProducts.map((p) => p?._id || p);
-      console.log("🛠️ Updating product slot:", productIds, editingCategory);
+      // console.log("🛠️ Updating product slot:", productIds, editingCategory);
       // Step 2️⃣: Update backend
       const res = await updateHomeProductGrid(editingCategory._id, {
         title: editingCategory.title,
