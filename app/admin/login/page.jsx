@@ -91,8 +91,8 @@ const AdminLoginForm = () => {
       type === "success"
         ? "linear-gradient(to right, #00b09b, #96c93d)"
         : type === "error"
-        ? "linear-gradient(to right, #ff416c, #ff4b2b)"
-        : "linear-gradient(to right, #3498db, #2980b9)";
+          ? "linear-gradient(to right, #ff416c, #ff4b2b)"
+          : "linear-gradient(to right, #3498db, #2980b9)";
 
     const icon = type === "success" ? "✅ " : type === "error" ? "❌ " : "ℹ️ ";
 
@@ -194,7 +194,7 @@ const AdminLoginForm = () => {
 
       // Make API call to your backend
       const response = await axios.post(
-        "https://api.montres.ae/api/admin/login",
+        "http://localhost:9000/api/admin/login",
         formData,
         {
           headers: {
@@ -374,11 +374,10 @@ const AdminLoginForm = () => {
                     {/* Upload Button */}
                     <label
                       htmlFor="profile-upload"
-                      className={`absolute bottom-0 right-0 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 shadow-lg ${
-                        isSubmitting
-                          ? "bg-slate-300 dark:bg-slate-600 cursor-not-allowed"
-                          : "bg-primary hover:bg-primary/90 hover:shadow-xl active:scale-95"
-                      }`}
+                      className={`absolute bottom-0 right-0 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 shadow-lg ${isSubmitting
+                        ? "bg-slate-300 dark:bg-slate-600 cursor-not-allowed"
+                        : "bg-primary hover:bg-primary/90 hover:shadow-xl active:scale-95"
+                        }`}
                     >
                       {profilePreview ? (
                         <Camera className="w-5 h-5 text-white" />
@@ -400,11 +399,10 @@ const AdminLoginForm = () => {
                   {/* Upload Instructions */}
                   <div className="text-center mt-3">
                     <p
-                      className={`text-sm ${
-                        profilePreview
-                          ? "text-green-600 dark:text-green-400 font-medium"
-                          : "text-slate-600 dark:text-slate-400"
-                      }`}
+                      className={`text-sm ${profilePreview
+                        ? "text-green-600 dark:text-green-400 font-medium"
+                        : "text-slate-600 dark:text-slate-400"
+                        }`}
                     >
                       {profilePreview
                         ? "✓ Profile image selected"
@@ -501,9 +499,8 @@ const AdminLoginForm = () => {
                       <div className="flex justify-between items-center mt-2">
                         <Link
                           href="/admin/forgot-password"
-                          className={`text-sm text-primary hover:text-primary/80 hover:underline transition-colors ${
-                            isSubmitting ? "opacity-50 pointer-events-none" : ""
-                          }`}
+                          className={`text-sm text-primary hover:text-primary/80 hover:underline transition-colors ${isSubmitting ? "opacity-50 pointer-events-none" : ""
+                            }`}
                         >
                           Forgot Password?
                         </Link>
@@ -523,9 +520,8 @@ const AdminLoginForm = () => {
                   />
                   <label
                     htmlFor="remember"
-                    className={`text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none ${
-                      isSubmitting ? "opacity-50" : ""
-                    }`}
+                    className={`text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none ${isSubmitting ? "opacity-50" : ""
+                      }`}
                   >
                     Remember this device
                   </label>
@@ -594,9 +590,8 @@ const AdminLoginForm = () => {
                 <div className="text-center pt-4">
                   <Link
                     href="https://www.montres.ae"
-                    className={`inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors ${
-                      isSubmitting ? "opacity-50 pointer-events-none" : ""
-                    }`}
+                    className={`inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors ${isSubmitting ? "opacity-50 pointer-events-none" : ""
+                      }`}
                   >
                     ← Return to main website
                   </Link>

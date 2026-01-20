@@ -12,6 +12,10 @@ import {
   Package,
   BarChartBig,
   Bell,
+  Wrench,
+  FileText,
+  CreditCard,
+  UserCog
 } from "lucide-react";
 
 import newCurrency from "../public/assets/newSymbole.png";
@@ -23,7 +27,10 @@ const CurrencyPngIcon = () => (
 
 export const data = {
   navMain: [
-    /* ================= DASHBOARD ================= */
+    /* ================= MAIN ================= */
+    {
+      label: "Overview",
+    },
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -31,50 +38,40 @@ export const data = {
       isActive: true,
     },
 
-    /* ================= PRODUCTS ================= */
+    /* ================= INVENTORY & PRODUCTS ================= */
+    {
+      label: "Inventory & Products",
+    },
     {
       title: "Products",
       url: "/productmanage",
       icon: ShoppingBasket,
-      isActive: true,
     },
-
-    /* ================= INVENTORY ================= */
     {
       title: "Inventory & Stock",
       url: "/InventoryStock",
       icon: Boxes,
-      isActive: true,
     },
-
-    /* ========= BACK-IN-STOCK SUBSCRIBERS (NEW) ========= */
     {
-      title: "Back-in-Stock Subscribers",
-      url: "/back-in-stock-subscribers",
-      icon: Bell,
-      isActive: true,
+      title: "Purchase Management",
+      url: "/PurchaseManaging",
+      icon: Package,
     },
-
     {
-      title: "Reports",
-      icon: BarChartBig,
-      items: [
-        { title: "Monthly Sales", url: "/reports/monthly-sales" },
-        { title: "Inventory Month-End", url: "/reports/inventory-monthly" },
-        { title: "Brand Report", url: "/reports/brand" },
-        { title: "Low Stock", url: "/reports/low-stock" },
-        { title: "Dead Stock", url: "/reports/dead-stock" },
-      ],
+      title: "Watch Services",
+      url: "/watch-services",
+      icon: Wrench,
     },
 
-    /* ================= ORDERS ================= */
+    /* ================= SALES & ORDERS ================= */
+    {
+      label: "Sales & Orders",
+    },
     {
       title: "Order Management",
       url: "/orderManagment",
       icon: ClipboardList,
     },
-
-    /* ================= DELIVERY ================= */
     {
       title: "Delivery Management",
       url: "/DeliveryManagement",
@@ -83,60 +80,58 @@ export const data = {
 
     /* ================= CUSTOMERS ================= */
     {
+      label: "Customers & Support",
+    },
+    {
       title: "Customers",
       url: "/users-list",
       icon: UsersRound,
-      isActive: true,
     },
-
-    /* ================= WATCH SERVICES ================= */
     {
-      title: "Watch Services",
-      url: "/watch-services",
-      icon: Package,
-      isActive: true,
+      title: "Subscribers",
+      url: "/back-in-stock-subscribers",
+      icon: Bell,
     },
-
-    /* ================= HOME CUSTOMIZATION ================= */
-    {
-      title: "Homepage Customization",
-      url: "/homecustomization",
-      icon: ImageUpscale,
-      isActive: true,
-    },
-
-    /* ================= SEO ================= */
-    /* ================= SEO & CONTENT ================= */
-    {
-      title: "SEO & Content ",
-      icon: Star,
-      isActive: true,
-      items: [
-        { title: "All Pages", url: "/seo-content/pages" },
-        { title: "Category Pages", url: "/seo-content/categories" },
-        { title: "Product SEO", url: "/seo-content/products" },
-      ],
-    },
-
-    /* ================= INQUIRIES ================= */
     {
       title: "Inquiries",
       url: "/contact-messages",
       icon: MessageSquare,
-    },  
+    },
 
-    /* ================= SETTINGS ================= */
+    /* ================= CONTENT ================= */
     {
-      title: "Settings",
-      url: "#",
-      icon: Settings,
+      label: "Content Management",
+    },
+    {
+      title: "Homepage Setup",
+      url: "/homecustomization",
+      icon: ImageUpscale,
+    },
+    {
+      title: "SEO & Content",
+      icon: Star,
       items: [
-        { title: "Company Info", url: "/company" },
-        { title: "Staff & Permissions", url: "/staff" },
-        { title: "Notification Settings", url: "/settings-notification" },
-        { title: "Alert Settings", url: "/notification-alert" },
-        { title: "System Settings", url: "/system" },
+        { title: "All Pages", url: "/seo-content/AllPages", circleColor: "bg-blue-500" },
+        { title: "Category Pages", url: "/seo-content/categories", circleColor: "bg-purple-500" },
       ],
     },
+
+    /* ================= ANALYTICS ================= */
+    {
+      label: "Analytics",
+    },
+    {
+      title: "Reports",
+      icon: BarChartBig,
+      items: [
+        { title: "Monthly Sales", url: "/reports/monthly-sales", circleColor: "bg-green-500" },
+        { title: "Inventory Status", url: "/reports/inventory-monthly", circleColor: "bg-orange-500" },
+        { title: "Brand Performance", url: "/reports/brand", circleColor: "bg-blue-500" },
+        { title: "Low Stock", url: "/reports/low-stock", circleColor: "bg-red-500" },
+        { title: "Dead Stock", url: "/reports/dead-stock", circleColor: "bg-gray-500" },
+      ],
+    },
+
+ 
   ],
 };
