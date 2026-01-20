@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 
 // --- Configuration ---
-const API_URL = "https://api.montres.ae/api/admin/login"; // Centralized API URL
+const API_URL = "https://api.montres.ae/api/admin/login"; // Centralized 
 
 // --- Zod Schema ---
 const adminLoginSchema = z.object({
